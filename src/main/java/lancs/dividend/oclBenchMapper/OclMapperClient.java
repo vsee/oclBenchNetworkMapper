@@ -3,9 +3,9 @@ package lancs.dividend.oclBenchMapper;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
-
-import javax.swing.JOptionPane;
+import java.util.Scanner;
 
 public class OclMapperClient {
 
@@ -16,14 +16,49 @@ public class OclMapperClient {
 	}
 
 	public void start() throws IOException {
-		String serverAddress = JOptionPane
-				.showInputDialog("Enter IP Address of a machine that is\n"
-						+ "running the date service on port " + port + ":");
+		System.out.println("Running as client.");
+		String serverAddress = "127.0.0.1";
 		Socket s = new Socket(serverAddress, port);
-		BufferedReader input = new BufferedReader(new InputStreamReader(
-				s.getInputStream()));
-		String answer = input.readLine();
-		JOptionPane.showMessageDialog(null, answer);
+        
+        BufferedReader socketIn = new BufferedReader(new InputStreamReader(s.getInputStream()));
+        PrintWriter socketOut = new PrintWriter(s.getOutputStream(), true);
+
+        Scanner cmdIn = new Scanner(System.in);
+        
+        boolean serverReady = false;
+        boolean waitingForResponse = false;
+
+        while (true) {
+        	if(!serverReady) {    	
+	        	// wait for server to be ready
+	        	String msg = socketIn.readLine();
+	        	if(msg.equals("READY")) {
+	        		serverReady = true;
+	                System.out.println("Server ready to receive.");
+	        	}
+        	} else if(waitingForResponse) {
+                String response;
+                try {
+                    response = socketIn.readLine();
+                } catch (IOException ex) {
+                       response = "Error: " + ex;
+                }
+                System.out.println("RECEIVED: " + response);
+                waitingForResponse = false;
+        	} else {
+        		String command = cmdIn.nextLine();
+        		
+        		if(command.equals("exit")) break;
+        		
+        		System.out.println("SENDING: " + command);
+                socketOut.println(command);
+                waitingForResponse = true;
+        	}
+        }
+
+        cmdIn.close();
+        socketIn.close();
+        socketOut.close();
 		s.close();
 		System.exit(0);
 	}
