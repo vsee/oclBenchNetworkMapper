@@ -12,8 +12,11 @@ public class Main {
 			+ "' as argument to specify role.";
 	
 	private static final int DEFAULT_PORT = 9090;
+	private static final String DEFAULT_SERVER_ADDRESS = "127.0.0.1";
+
 	
 	// TODO use argparse4j as argument parser
+	// TODO constructor null checks for messages
 	public static void main(String[] args) {
 
 		if(args.length < 1) throw new RuntimeException(USAGE);
@@ -28,7 +31,7 @@ public class Main {
 		switch(role) {
 			case CLIENT:
 				try {
-					new OclMapperClient(DEFAULT_PORT).start();
+					new OclMapperClient(DEFAULT_PORT, DEFAULT_SERVER_ADDRESS).start();
 				} catch (IOException e) {
 					throw new UncheckedIOException("Error during communication with server.", e);
 				}

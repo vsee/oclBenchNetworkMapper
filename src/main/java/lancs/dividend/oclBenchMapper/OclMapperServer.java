@@ -1,11 +1,15 @@
 package lancs.dividend.oclBenchMapper;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+
+import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage;
+import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage.CmdType;
+import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
+import lancs.dividend.oclBenchMapper.message.response.TextResponseMessage;
 
 /**
  * 
@@ -18,6 +22,8 @@ import java.net.Socket;
  */
 public class OclMapperServer {
 
+	public static final String READY_MSG = "READY";
+	
 	private final int port;
 	
 	public OclMapperServer(int port) {
@@ -35,33 +41,35 @@ public class OclMapperServer {
                 System.out.println("Connection successful.");
                 
                 try {
-	                // Decorate the streams so we can send characters
-	                // and not just bytes.  Ensure output is flushed
-	                // after every newline.
-	                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-	                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            		ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+            		ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
 	
 	                // Send a welcome message to the client acknowledging the successful connection.
-	                out.println("READY");
-	                out.flush();
+            		oos.writeObject(new TextResponseMessage(READY_MSG));
+            		oos.flush();
 	                
-	                // Get messages from the client, line by line; return them
-	                // capitalized
 	                while (true) {
-	                    String input = in.readLine();
-	                    if (input == null || input.equals(".")) {
+	                    CommandMessage cmd = (CommandMessage) ois.readObject();
+	                    if (cmd == null || cmd.getType() == CmdType.EXIT) {
 	                        break;
 	                    }
-	                    System.out.println("RECEIVED: " + input);
-	                    String response = input.toUpperCase();
-	                    out.println(response);
-		                out.flush();
+	                    
+	                    System.out.println("RECEIVED: " + cmd);
+	                    ResponseMessage response = executeCmd(cmd);
+	                    
+	            		oos.writeObject(response);
+	            		oos.flush();
 	                    System.out.println("SENDING: " + response);
 	                }
 	                
+	                oos.close();
+	                ois.close();
+	                
 	            } catch (IOException e) {
-	            	System.out.println("Error handling client: " + e);
-	            } finally {
+	            	System.err.println("Error handling client: " + e);
+	            } catch (ClassNotFoundException e) {
+	            	System.err.println("Error handling client: " + e);
+				} finally {
 	                try {
 	                    socket.close();
 	                } catch (IOException e) {
@@ -74,5 +82,17 @@ public class OclMapperServer {
         finally {
             listener.close();
         }
+	}
+
+	private ResponseMessage executeCmd(CommandMessage cmd) {
+		switch (cmd.getType()) {
+			case RUNBENCH:
+				return new TextResponseMessage("executed: " + cmd);
+			case CONSOLE:
+				return new TextResponseMessage("executed: " + cmd);
+			default:
+				System.err.println("Unhandled command type: " + cmd.getType());
+				return new TextResponseMessage("Unable to execute command: " + cmd);
+			}
 	}
 }
