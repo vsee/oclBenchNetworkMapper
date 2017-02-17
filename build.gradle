@@ -25,6 +25,13 @@ dependencies {
 	testCompile 'org.testng:testng:6.9.13'
 }
 
+run {
+    enableAssertions = true
+    if ( project.hasProperty("appArgs") ) {
+        args Eval.me(appArgs)
+    }
+}
+
 test {
     useTestNG()
 
