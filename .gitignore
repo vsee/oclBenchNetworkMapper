@@ -1,12 +1,25 @@
-*.class
+# Ignore eclipse project settings #
+###################################
+.settings/
+.classpath
+.project
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+# Ignore generated folders #
+############################
+build-eclipse
 
-# Package Files #
-*.jar
-*.war
-*.ear
+# gnu global files #
+####################
+*.orig
+*~
+\#*#
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
+### Gradle ###
+.gradle
+build/
+
+# Ignore Gradle GUI config
+gradle-app.setting
+
+## Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar

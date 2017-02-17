@@ -1,0 +1,49 @@
+apply plugin: 'eclipse'
+apply plugin: 'java'
+apply plugin: 'application'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+mainClassName = 'lancs.dividend.oclBenchMapper.Main'
+
+jar {
+	baseName = 'oclBenchMapper'
+	version = '1.0.0'
+	manifest {
+		attributes("Implementation-Title": baseName,
+			   "Implementation-Version": version,
+			   "Main-Class": mainClassName)
+	}
+}
+
+repositories {
+	jcenter()
+}
+
+dependencies {
+	testCompile 'org.testng:testng:6.9.13'
+}
+
+test {
+    useTestNG()
+
+    testLogging {
+        showStandardStreams = true
+        // log results to "build/test-results" directory
+        exceptionFormat "full"
+        events "started", "passed", "skipped", "failed", "standardOut", "standardError"
+    }
+}
+
+eclipse {
+  classpath {
+    defaultOutputDir = file('build-eclipse')
+    downloadSources = true
+    downloadJavadoc = true
+  }
+}
+
+task wrapper(type: Wrapper) {
+	gradleVersion = '2.11'
+}
