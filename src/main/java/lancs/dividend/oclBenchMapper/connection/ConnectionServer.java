@@ -7,7 +7,6 @@ import java.net.ServerSocket;
 
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage;
 import lancs.dividend.oclBenchMapper.message.cmd.ExitCmdMessage;
-import lancs.dividend.oclBenchMapper.message.cmd.IllegalCommandMessageException;
 
 public class ConnectionServer extends ConnectionHandler {
 
@@ -40,21 +39,20 @@ public class ConnectionServer extends ConnectionHandler {
 		return connectionEstablished = false;
 	}
 	
-	public CommandMessage waitForCmd() throws IllegalCommandMessageException {
+	public CommandMessage waitForCmd() {
 		if(!isConnected()) 
 			throw new RuntimeException("Established connection needed before messages can be received.");
 		
 		try {
 			CommandMessage cmd = (CommandMessage) ois.readObject();
-			
-			if (cmd == null) return new ExitCmdMessage();
-			else return cmd;
+			if (cmd != null) return cmd;
 			
 		} catch (ClassNotFoundException | IOException e) {
-			String errorMsg = "ERROR: Reading client message failed: " + e;
-			System.err.println(errorMsg);
-			throw new IllegalCommandMessageException(errorMsg);
+			System.err.println("ERROR: Reading client message failed: " + e);
+			e.printStackTrace();
 		}
+		
+		return new ExitCmdMessage();
 	}
 
 	public void shutDown() throws IOException {

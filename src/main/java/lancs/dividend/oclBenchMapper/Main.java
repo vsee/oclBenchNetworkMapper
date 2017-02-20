@@ -13,7 +13,6 @@ public class Main {
 	
 	private static final int DEFAULT_PORT = 9090;
 	private static final String DEFAULT_SERVER_ADDRESS = "127.0.0.1";
-
 	
 	// TODO use argparse4j as argument parser
 	// TODO constructor null checks for messages

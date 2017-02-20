@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import lancs.dividend.oclBenchMapper.connection.ConnectionServer;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage;
-import lancs.dividend.oclBenchMapper.message.cmd.IllegalCommandMessageException;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage.CmdType;
 import lancs.dividend.oclBenchMapper.message.cmd.RunBenchCmdMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
@@ -57,23 +56,17 @@ public class OclMapperServer {
 			
             CommandMessage cmd = null;
             ResponseMessage response = null;
-			try {
-				cmd = server.waitForCmd();
+			cmd = server.waitForCmd();
+			
+            if (cmd.getType() == CmdType.EXIT) {
+                closeConnection = true;
+            } else if(cmd.getType() == CmdType.RUNBENCH) {
+                response = executeCmd((RunBenchCmdMessage) cmd);
+            } else {
+            	System.err.println("ERROR: Unknown command type: " + cmd.getType().name());
+				response = new ErrorResponseMessage("Unknown command type: " + cmd.getType().name());
+            }
 				
-	            if (cmd.getType() == CmdType.EXIT) {
-	                closeConnection = true;
-	            } else if(cmd.getType() == CmdType.RUNBENCH) {
-	                response = executeCmd((RunBenchCmdMessage) cmd);
-	            } else {
-	            	String error = "ERROR: Unknown command type: " + cmd.getType().name();
-	            	System.err.println(error);
-	            	throw new IllegalCommandMessageException(error);
-	            }
-				
-			} catch (IllegalCommandMessageException e) {
-				response = new ErrorResponseMessage(e.getMessage());
-			}
-            
             if(response != null) {
             	try {
 					server.sendMessage(response);
