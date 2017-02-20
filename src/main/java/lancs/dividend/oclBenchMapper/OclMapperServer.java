@@ -1,15 +1,16 @@
 package lancs.dividend.oclBenchMapper;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
 
+import lancs.dividend.oclBenchMapper.connection.ConnectionServer;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage;
+import lancs.dividend.oclBenchMapper.message.cmd.IllegalCommandMessageException;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage.CmdType;
+import lancs.dividend.oclBenchMapper.message.cmd.RunBenchCmdMessage;
+import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.TextResponseMessage;
+import lancs.dividend.oclBenchMapper.utils.ShellCmdExecutor;
 
 /**
  * 
@@ -22,75 +23,84 @@ import lancs.dividend.oclBenchMapper.message.response.TextResponseMessage;
  */
 public class OclMapperServer {
 
-	public static final String READY_MSG = "READY";
+	// TODO add graceful server shutdown
 	
-	private final int port;
+	private final ConnectionServer server;
 	
-	public OclMapperServer(int port) {
-		this.port = port;
+	public OclMapperServer(int port) throws IOException {
+		server = new ConnectionServer(port);
 	}
 
-	public void start() throws IOException {
-        ServerSocket listener = new ServerSocket(port);
-        System.out.println("Running as server.");
-        try {
-            while (true) {
-            	System.out.println("Listening on port " + port);
-            	
-                Socket socket = listener.accept();
-                System.out.println("Connection successful.");
-                
-                try {
-            		ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-            		ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+	public void runServer() {
+		try {
+			while(true) {
+				System.out.println("Waiting for client ...");
+				if(server.establishConnection())  {
+					System.out.println("Connection established with client.");
+					handleMessages();
+				}
+			}
+		} finally {
+            try {
+                server.shutDown();
+            } catch (IOException e) {
+            	System.out.println("ERROR: Shutting down server failed: " + e);
+            	e.printStackTrace();
+            }
+		}
+	}
 	
-	                // Send a welcome message to the client acknowledging the successful connection.
-            		oos.writeObject(new TextResponseMessage(READY_MSG));
-            		oos.flush();
-	                
-	                while (true) {
-	                    CommandMessage cmd = (CommandMessage) ois.readObject();
-	                    if (cmd == null || cmd.getType() == CmdType.EXIT) {
-	                        break;
-	                    }
-	                    
-	                    System.out.println("RECEIVED: " + cmd);
-	                    ResponseMessage response = executeCmd(cmd);
-	                    
-	            		oos.writeObject(response);
-	            		oos.flush();
-	                    System.out.println("SENDING: " + response);
-	                }
-	                
-	                oos.close();
-	                ois.close();
-	                
-	            } catch (IOException e) {
-	            	System.err.println("Error handling client: " + e);
-	            } catch (ClassNotFoundException e) {
-	            	System.err.println("Error handling client: " + e);
-				} finally {
-	                try {
-	                    socket.close();
-	                } catch (IOException e) {
-	                	System.out.println("Couldn't close a socket, what's going on?");
-	                }
-	                System.out.println("Connection with client closed");
+	private void handleMessages() {
+		boolean closeConnection = false;
+		
+		while (!closeConnection) {
+			
+            CommandMessage cmd = null;
+            ResponseMessage response = null;
+			try {
+				cmd = server.waitForCmd();
+				
+	            if (cmd.getType() == CmdType.EXIT) {
+	                closeConnection = true;
+	            } else if(cmd.getType() == CmdType.RUNBENCH) {
+	                response = executeCmd((RunBenchCmdMessage) cmd);
+	            } else {
+	            	String error = "ERROR: Unknown command type: " + cmd.getType().name();
+	            	System.err.println(error);
+	            	throw new IllegalCommandMessageException(error);
 	            }
+				
+			} catch (IllegalCommandMessageException e) {
+				response = new ErrorResponseMessage(e.getMessage());
+			}
+            
+            if(response != null) {
+            	try {
+					server.sendMessage(response);
+				} catch (IOException e) {
+					System.err.println("ERROR: sending response failed: " + e);
+					e.printStackTrace();
+					closeConnection = true;
+				}
             }
         }
-        finally {
-            listener.close();
-        }
+		
+		server.closeConnection();
 	}
 
+	
 	private ResponseMessage executeCmd(CommandMessage cmd) {
 		switch (cmd.getType()) {
 			case RUNBENCH:
-				return new TextResponseMessage("executed: " + cmd);
+				RunBenchCmdMessage rbMsg = (RunBenchCmdMessage) cmd;
+				System.out.println("Executing: " + rbMsg.getName() + " " + rbMsg.getArgs());
+				String result = ShellCmdExecutor.executeCmd(
+						rbMsg.getName() + " " + rbMsg.getArgs(), true);
+				
+				return new TextResponseMessage(result);
 			default:
 				System.err.println("Unhandled command type: " + cmd.getType());
 				return new TextResponseMessage("Unable to execute command: " + cmd);
-			}
+		}
 	}
 }

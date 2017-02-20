@@ -1,92 +1,77 @@
 package lancs.dividend.oclBenchMapper;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
 import java.util.Scanner;
 
+import lancs.dividend.oclBenchMapper.connection.ConnectionClient;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage.CmdType;
 import lancs.dividend.oclBenchMapper.message.cmd.ExitCmdMessage;
 import lancs.dividend.oclBenchMapper.message.cmd.RunBenchCmdMessage;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
-import lancs.dividend.oclBenchMapper.message.response.ResponseMessage.ResponseType;
 import lancs.dividend.oclBenchMapper.message.response.TextResponseMessage;
 
 public class OclMapperClient {
 
-	private int port;
-	private String saddr;
-
-	public OclMapperClient(int port, String serverAddr) {
-		this.port = port;
-		saddr = serverAddr;
+	private final ConnectionClient client;
+	
+	public OclMapperClient(int port, String serverAddr) throws IOException {
+		client = new ConnectionClient(port, serverAddr);
+	}
+	
+	public void runClient() {
+		if(!client.isConnected()) {
+			System.err.println("ERROR: Could not establish connection with server.");
+			return;
+		}
+		
+		handleMessages();
 	}
 
-	public void start() throws IOException {
-		System.out.println("Running as client.");
-		Socket socket = new Socket(saddr, port);
-        
-		ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-		ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-		
-        Scanner cmdIn = new Scanner(System.in);
-        
-        boolean serverReady = false;
-        boolean waitingForResponse = false;
+	private void handleMessages() {
 
-        while (true) {
-        	if(!serverReady || waitingForResponse) {
+		boolean waitingForResponse = false;
+        Scanner cmdIn = new Scanner(System.in);
+
+		while(true) {
+        	if(waitingForResponse) {
         		ResponseMessage response;
                 try {
-                	response = (ResponseMessage) ois.readObject();
-                } catch (IOException ioEx) {
-                       System.err.println("ERROR: " + ioEx);
-                       continue;
-                } catch (ClassNotFoundException cEx) {
-                    	System.err.println("ERROR: " + cEx);
-                    	continue;
-				}
-                
-                if(!serverReady) {
-		        	if(response.getType() == ResponseType.TEXT && 
-		        	   ((TextResponseMessage) response).getText().equals(OclMapperServer.READY_MSG)) {
-		        		
-		        		serverReady = true;
-		                System.out.println("Server ready to receive.");
-		                System.out.println("Enter benchmark name and arguments or 'exit' to end the connection.");
-		                System.out.println("Example: kmeans,args");
-		        	}
-                } else {
-                	processResponse(response);
-                	waitingForResponse = false;
+                	response = client.waitForCmdResponse();
+                } catch (IOException e) {
+                	System.err.println(e.getMessage());
+                	e.printStackTrace();
+                	break;
                 }
+                
+            	processResponse(response);
+            	waitingForResponse = false;
         	} else {
         		CommandMessage cmd = parseCmd(cmdIn.nextLine());
 
-        		System.out.println("SENDING: " + cmd);
-                oos.writeObject(cmd);
-                oos.flush();
+        		try {
+					client.sendMessage(cmd);
+				} catch (IOException e) {
+					System.err.println("ERROR: sending command failed: " + e);
+					e.printStackTrace();
+					break;
+				}
                 
         		if(cmd.getType() == CmdType.EXIT) break;
                 
                 waitingForResponse = true;
         	}
-        }
-
-        cmdIn.close();
-        ois.close();
-        oos.close();
-		socket.close();
-		System.exit(0);
+		}
+		
+		cmdIn.close();
+		client.closeConnection();
 	}
 
 	private CommandMessage parseCmd(String nextLine) {
 
 		if(nextLine.equals("exit")) return new ExitCmdMessage();
-		else return new RunBenchCmdMessage(nextLine,"testargs");
+		else return new RunBenchCmdMessage(nextLine,"");
 	}
 
 	private void processResponse(ResponseMessage response) {

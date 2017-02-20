@@ -17,6 +17,7 @@ public class Main {
 	
 	// TODO use argparse4j as argument parser
 	// TODO constructor null checks for messages
+	// TODO clean up log and exception messages
 	public static void main(String[] args) {
 
 		if(args.length < 1) throw new RuntimeException(USAGE);
@@ -31,16 +32,16 @@ public class Main {
 		switch(role) {
 			case CLIENT:
 				try {
-					new OclMapperClient(DEFAULT_PORT, DEFAULT_SERVER_ADDRESS).start();
+					new OclMapperClient(DEFAULT_PORT, DEFAULT_SERVER_ADDRESS).runClient();
 				} catch (IOException e) {
-					throw new UncheckedIOException("Error during communication with server.", e);
+					throw new UncheckedIOException("ERROR: Connecting to server failed: ", e);
 				}
 				break;
 			case SERVER:
 				try {
-					new OclMapperServer(DEFAULT_PORT).start();
+					new OclMapperServer(DEFAULT_PORT).runServer();
 				} catch (IOException e) {
-					throw new UncheckedIOException("Error during communication with client.", e);
+					throw new UncheckedIOException("ERROR: Starting server failed: ", e);
 				}
 				break;
 			default:
