@@ -9,10 +9,13 @@ import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage.CmdType;
 import lancs.dividend.oclBenchMapper.message.cmd.ExitCmdMessage;
 import lancs.dividend.oclBenchMapper.message.cmd.RunBenchCmdMessage;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
+import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.TextResponseMessage;
 
 public class OclMapperClient {
+	
+	public enum RodiniaBins { KMEANS }
 
 	private final ConnectionClient client;
 	
@@ -69,9 +72,8 @@ public class OclMapperClient {
 	}
 
 	private CommandMessage parseCmd(String nextLine) {
-
 		if(nextLine.equals("exit")) return new ExitCmdMessage();
-		else return new RunBenchCmdMessage(nextLine,"");
+		else return new RunBenchCmdMessage(RodiniaBins.KMEANS,"");
 	}
 
 	private void processResponse(ResponseMessage response) {
@@ -84,7 +86,9 @@ public class OclMapperClient {
 			BenchStatsResponseMessage br = (BenchStatsResponseMessage) response;
 			System.out.println(br.getEnergy() + " - " + br.getRuntime() + "ms");
 			break;
-
+		case ERROR:
+			System.err.println("ERROR: " + ((ErrorResponseMessage) response).getText());
+			break;
 		default:
 			System.err.println("Unknown response type: " + response.getType());
 			break;

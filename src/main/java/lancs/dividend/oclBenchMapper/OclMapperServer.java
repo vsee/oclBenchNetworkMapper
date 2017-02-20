@@ -1,6 +1,7 @@
 package lancs.dividend.oclBenchMapper;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 import lancs.dividend.oclBenchMapper.connection.ConnectionServer;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage;
@@ -8,8 +9,6 @@ import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage.CmdType;
 import lancs.dividend.oclBenchMapper.message.cmd.RunBenchCmdMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
-import lancs.dividend.oclBenchMapper.message.response.TextResponseMessage;
-import lancs.dividend.oclBenchMapper.utils.ShellCmdExecutor;
 
 /**
  * 
@@ -24,9 +23,11 @@ public class OclMapperServer {
 
 	// TODO add graceful server shutdown
 	
+	private final RodiniaRunner rodinia;
 	private final ConnectionServer server;
 	
-	public OclMapperServer(int port) throws IOException {
+	public OclMapperServer(int port, Path rodiniaHome) throws IOException {
+		rodinia = new RodiniaRunner(rodiniaHome);
 		server = new ConnectionServer(port);
 	}
 
@@ -60,6 +61,7 @@ public class OclMapperServer {
 			
             if (cmd.getType() == CmdType.EXIT) {
                 closeConnection = true;
+                System.out.println("Closing connection with client.");
             } else if(cmd.getType() == CmdType.RUNBENCH) {
                 response = executeCmd((RunBenchCmdMessage) cmd);
             } else {
@@ -86,14 +88,15 @@ public class OclMapperServer {
 		switch (cmd.getType()) {
 			case RUNBENCH:
 				RunBenchCmdMessage rbMsg = (RunBenchCmdMessage) cmd;
-				System.out.println("Executing: " + rbMsg.getName() + " " + rbMsg.getArgs());
-				String result = ShellCmdExecutor.executeCmd(
-						rbMsg.getName() + " " + rbMsg.getArgs(), true);
+				System.out.println("Executing: " + rbMsg.getBinaryName() + " " + rbMsg.getArgs());
 				
-				return new TextResponseMessage(result);
+				ResponseMessage result = rodinia.run(rbMsg.getBinaryName(), rbMsg.getArgs());
+							
+				System.out.println("Execution finished. Returning results.");
+				return result;
 			default:
 				System.err.println("Unhandled command type: " + cmd.getType());
-				return new TextResponseMessage("Unable to execute command: " + cmd);
+				return new ErrorResponseMessage("Unable to execute command: " + cmd);
 		}
 	}
 }

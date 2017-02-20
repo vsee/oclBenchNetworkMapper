@@ -2,6 +2,8 @@ package lancs.dividend.oclBenchMapper;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class Main {
 
@@ -13,6 +15,7 @@ public class Main {
 	
 	private static final int DEFAULT_PORT = 9090;
 	private static final String DEFAULT_SERVER_ADDRESS = "127.0.0.1";
+	private static final Path DEFAULT_RODINIA_HOME = Paths.get("../rodinia_3.1");
 	
 	// TODO use argparse4j as argument parser
 	// TODO constructor null checks for messages
@@ -38,7 +41,7 @@ public class Main {
 				break;
 			case SERVER:
 				try {
-					new OclMapperServer(DEFAULT_PORT).runServer();
+					new OclMapperServer(DEFAULT_PORT, DEFAULT_RODINIA_HOME).runServer();
 				} catch (IOException e) {
 					throw new UncheckedIOException("ERROR: Starting server failed: ", e);
 				}
