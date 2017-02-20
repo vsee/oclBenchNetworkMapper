@@ -88,8 +88,6 @@ public class OclMapperServer {
 		switch (cmd.getType()) {
 			case RUNBENCH:
 				return new TextResponseMessage("executed: " + cmd);
-			case CONSOLE:
-				return new TextResponseMessage("executed: " + cmd);
 			default:
 				System.err.println("Unhandled command type: " + cmd.getType());
 				return new TextResponseMessage("Unable to execute command: " + cmd);

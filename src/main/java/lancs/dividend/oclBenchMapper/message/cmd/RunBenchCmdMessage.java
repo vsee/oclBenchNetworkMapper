@@ -9,10 +9,10 @@ public class RunBenchCmdMessage extends CommandMessage {
 	private final String name;
 	private final String args;
 	
-	public RunBenchCmdMessage(String n, String a) {
+	public RunBenchCmdMessage(String benchName, String benchArgs) {
 		super(CmdType.RUNBENCH);
-		name = n;
-		args = a;
+		name = benchName;
+		args = benchArgs;
 	}
 	
 	public String getName() { return name; }

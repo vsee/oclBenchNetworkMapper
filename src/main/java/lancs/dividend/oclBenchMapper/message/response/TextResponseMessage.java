@@ -9,9 +9,9 @@ public class TextResponseMessage extends ResponseMessage {
 
 	private final String text;
 	
-	public TextResponseMessage(String t) {
+	public TextResponseMessage(String responseText) {
 		super(ResponseType.TEXT);
-		text = t;
+		text = responseText;
 	}
 	
 	public String getText() { return text; }

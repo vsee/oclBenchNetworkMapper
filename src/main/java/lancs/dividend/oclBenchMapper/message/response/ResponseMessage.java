@@ -15,8 +15,8 @@ public abstract class ResponseMessage extends Message {
 
 	protected final ResponseType type;
 	
-	public ResponseMessage(ResponseType t) {
-		this.type = t;
+	public ResponseMessage(ResponseType resType) {
+		this.type = resType;
 	}
 	
 	public ResponseType getType() { return type; }

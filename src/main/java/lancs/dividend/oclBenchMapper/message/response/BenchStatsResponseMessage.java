@@ -9,10 +9,10 @@ public class BenchStatsResponseMessage extends ResponseMessage {
 	private final double energy;
 	private final double runtimeMS;
 	
-	public BenchStatsResponseMessage(double e, double t) {
+	public BenchStatsResponseMessage(double energyRes, double runtimeResMS) {
 		super(ResponseType.BENCHSTATS);
-		energy = e;
-		runtimeMS = t;
+		energy = energyRes;
+		runtimeMS = runtimeResMS;
 	}
 	
 	public double getEnergy() { return energy; }

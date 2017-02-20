@@ -7,13 +7,13 @@ import java.net.Socket;
 import java.util.Scanner;
 
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage;
-import lancs.dividend.oclBenchMapper.message.cmd.ConsoleCmdMessage;
-import lancs.dividend.oclBenchMapper.message.cmd.ExitCmdMessage;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage.CmdType;
+import lancs.dividend.oclBenchMapper.message.cmd.ExitCmdMessage;
+import lancs.dividend.oclBenchMapper.message.cmd.RunBenchCmdMessage;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
-import lancs.dividend.oclBenchMapper.message.response.TextResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage.ResponseType;
+import lancs.dividend.oclBenchMapper.message.response.TextResponseMessage;
 
 public class OclMapperClient {
 
@@ -86,7 +86,7 @@ public class OclMapperClient {
 	private CommandMessage parseCmd(String nextLine) {
 
 		if(nextLine.equals("exit")) return new ExitCmdMessage();
-		else return new ConsoleCmdMessage(nextLine);
+		else return new RunBenchCmdMessage(nextLine,"testargs");
 	}
 
 	private void processResponse(ResponseMessage response) {
