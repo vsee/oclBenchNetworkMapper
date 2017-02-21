@@ -29,6 +29,7 @@ public class OclMapperServer {
 	public OclMapperServer(int port, Path rodiniaHome) throws IOException {
 		rodinia = new RodiniaRunner(rodiniaHome);
 		server = new ConnectionServer(port);
+		System.out.println("Starting server at port " + port);
 	}
 
 	public void runServer() {

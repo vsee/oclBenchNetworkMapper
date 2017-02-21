@@ -21,6 +21,7 @@ public class OclMapperClient {
 	
 	public OclMapperClient(int port, String serverAddr) throws IOException {
 		client = new ConnectionClient(port, serverAddr);
+		System.out.println("Connecting client with " + serverAddr + ":" + port + " ...");
 	}
 	
 	public void runClient() {

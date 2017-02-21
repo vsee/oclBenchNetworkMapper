@@ -15,6 +15,9 @@ jar {
 			   "Implementation-Version": version,
 			   "Main-Class": mainClassName)
 	}
+	from {
+            configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+        }
 }
 
 repositories {
@@ -23,6 +26,7 @@ repositories {
 
 dependencies {
 	testCompile 'org.testng:testng:6.9.13'
+	compile 'net.sourceforge.argparse4j:argparse4j:0.7.0'
 }
 
 run {
