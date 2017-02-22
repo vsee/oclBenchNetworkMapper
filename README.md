@@ -15,10 +15,7 @@ This tool provides client and server side to distribute the execution of an Open
 
 
 ## UNDER DEVELOPMENT
-<span style="color:red">
 The project is currently in alpha state and benchmark execution is not yet fully implemented. Also, at the moment a client can only connect to a single server at a time.
-</span>.
-
 
 ---
 
