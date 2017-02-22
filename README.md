@@ -15,7 +15,7 @@ This tool provides client and server side to distribute the execution of an Open
 
 
 ## UNDER DEVELOPMENT
-The project is currently in alpha state and benchmark execution is not yet fully implemented. Also, at the moment a client can only connect to a single server at a time.
+The project is currently in alpha state and benchmark execution is not yet fully implemented.
 
 ---
 
@@ -52,22 +52,30 @@ $ ./gradlew tasks
 ```
 $ java -jar ./build/libs/oclBenchMapper-x.x.x.jar client
 ```
-Starts the client with default configurations. Use
+Starts the client with default configuration trying to connect to a single server at `127.0.0.1:9090`. 
+
+Multiple server addresses can be configured using the `-a` attribute. For example:
+```
+$ java -jar ./build/libs/oclBenchMapper-x.x.x.jar client -a 192.168.0.1:9090 192.168.173.4:9091
+
+```
+To see additional help, execute:
 ```
 $ java -jar ./build/libs/oclBenchMapper-x.x.x.jar client -h
 ```
-to see additional command line options.
+
 
 #### Server
 ```
 $ java -jar ./build/libs/oclBenchMapper-x.x.x.jar server
 ```
-Starts the server with default configurations. Use
+Starts the server with default configurations.
+
+To see additional help, execute:
 ```
 $ java -jar ./build/libs/oclBenchMapper-x.x.x.jar server -h
 ```
-to see additional command line options.
 
-**ATTENTION: The server needs to be running and accessible before the client is started**
+**ATTENTION: All configured servers need to be running and accessible before a client is started**
 
 

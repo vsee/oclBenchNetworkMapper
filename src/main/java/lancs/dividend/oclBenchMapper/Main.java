@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
@@ -35,11 +37,16 @@ public class Main {
 	    		.help("The client connects to a server address and distributes benchmark work.")
 	    		.setDefault("role", ExecutionRole.CLIENT)
 			    .defaultHelp(true);
-	    clientParser.addArgument("-p","--port").type(Integer.class)
-	    	.help("Server port the client will connect to.").setDefault(DEFAULT_PORT);
-	    clientParser.addArgument("-a","--address").type(String.class)
-	    	.help("Server address the client will connect to.").setDefault(DEFAULT_SERVER_ADDRESS);
+	   
+	    final List<String> defaultAddressList = new ArrayList<>();
+	    defaultAddressList.add(DEFAULT_SERVER_ADDRESS + ":" + DEFAULT_PORT);
+	    clientParser.addArgument("-a","--addressList")
+		    .metavar("ADDR").type(String.class).nargs("+")
+		    .help("Space separated list of server addresses available for "
+		    		+ "benchmark execution. Format 'address:port'.")
+	        .setDefault(defaultAddressList);
 
+	    
 	    Subparser serverParser = subparsers.addParser("server")
 	    		.help("The server receives benchmark workloads from clients, "
 	    				+ "executes them and returns execution statistics.")
@@ -57,14 +64,12 @@ public class Main {
 	public static void main(String[] args) {
 	    
 		Namespace ns = parseArguments(args);
-	    
+	    System.out.println(ns.getAttrs());
 	    ExecutionRole role = ns.get("role");
 		switch(role) {
 			case CLIENT:
 				try {
-					int port = ns.getInt("port");
-					String address = ns.getString("address");
-					new OclMapperClient(port, address).runClient();
+					new OclMapperClient(ns.get("addressList")).runClient();
 				} catch (IOException e) {
 					throw new UncheckedIOException("ERROR: Connecting to server failed: ", e);
 				}
