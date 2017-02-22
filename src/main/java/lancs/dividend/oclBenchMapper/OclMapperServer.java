@@ -3,7 +3,7 @@ package lancs.dividend.oclBenchMapper;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import lancs.dividend.oclBenchMapper.connection.ConnectionServer;
+import lancs.dividend.oclBenchMapper.connection.ClientConnection;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage.CmdType;
 import lancs.dividend.oclBenchMapper.message.cmd.RunBenchCmdMessage;
@@ -24,11 +24,11 @@ public class OclMapperServer {
 	// TODO add graceful server shutdown
 	
 	private final RodiniaRunner rodinia;
-	private final ConnectionServer server;
+	private final ClientConnection client;
 	
 	public OclMapperServer(int port, Path rodiniaHome) throws IOException {
 		rodinia = new RodiniaRunner(rodiniaHome);
-		server = new ConnectionServer(port);
+		client = new ClientConnection(port);
 		System.out.println("Starting server at port " + port);
 	}
 
@@ -36,14 +36,14 @@ public class OclMapperServer {
 		try {
 			while(true) {
 				System.out.println("Waiting for client ...");
-				if(server.establishConnection())  {
+				if(client.establishConnection())  {
 					System.out.println("Connection established with client.");
 					handleMessages();
 				}
 			}
 		} finally {
             try {
-                server.shutDown();
+                client.shutDown();
             } catch (IOException e) {
             	System.out.println("ERROR: Shutting down server failed: " + e);
             	e.printStackTrace();
@@ -58,7 +58,7 @@ public class OclMapperServer {
 			
             CommandMessage cmd = null;
             ResponseMessage response = null;
-			cmd = server.waitForCmd();
+			cmd = client.waitForCmd();
 			
             if (cmd.getType() == CmdType.EXIT) {
                 closeConnection = true;
@@ -72,7 +72,7 @@ public class OclMapperServer {
 				
             if(response != null) {
             	try {
-					server.sendMessage(response);
+					client.sendMessage(response);
 				} catch (IOException e) {
 					System.err.println("ERROR: sending response failed: " + e);
 					e.printStackTrace();
@@ -81,7 +81,7 @@ public class OclMapperServer {
             }
         }
 		
-		server.closeConnection();
+		client.closeConnection();
 	}
 
 	

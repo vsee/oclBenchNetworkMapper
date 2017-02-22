@@ -8,9 +8,9 @@ import java.net.Socket;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 
 
-public class ConnectionClient extends ConnectionHandler {
+public class ServerConnection extends ConnectionHandler {
 
-	public ConnectionClient(int port, String serverAddr) throws IOException {
+	public ServerConnection(int port, String serverAddr) throws IOException {
 		super(port);
 		
 		connectionSocket = new Socket(serverAddr, port);

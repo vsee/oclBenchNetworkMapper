@@ -1,10 +1,12 @@
 package lancs.dividend.oclBenchMapper;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.StringJoiner;
 
-import lancs.dividend.oclBenchMapper.connection.ConnectionClient;
+import lancs.dividend.oclBenchMapper.connection.ServerConnection;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage.CmdType;
 import lancs.dividend.oclBenchMapper.message.cmd.ExitCmdMessage;
@@ -18,16 +20,20 @@ public class OclMapperClient {
 	
 	public enum RodiniaBin { KMEANS, LUD }
 
-	private final ConnectionClient client;
+	private final List<ServerConnection> servers;
 	
 	private final String EXIT_CMD = "exit";
 	private final String BENCHMARK_LIST;
 	private final String BENCHMARK_TOP_MENU;
 	
-	public OclMapperClient(int port, String serverAddr) throws IOException {
-		client = new ConnectionClient(port, serverAddr);
-		System.out.println("Connecting client with " + serverAddr + ":" + port + " ...");
+	public OclMapperClient(List<String> serverAddresses) throws IOException {
+		if(serverAddresses == null || serverAddresses.size() == 0)
+			throw new IllegalArgumentException("Given server address list must not be empty.");
 		
+		servers = new ArrayList<>(serverAddresses.size());
+		connectToClients(serverAddresses);
+		
+		// Generate menu strings
 		StringJoiner join = new StringJoiner(",","{","}");
 		for (RodiniaBin b : RodiniaBin.values()) join.add(b.name());
 		BENCHMARK_LIST = join.toString();
@@ -37,8 +43,32 @@ public class OclMapperClient {
 		"2. Enter '" + EXIT_CMD + "' to shut down client.\n>> ";
 	}
 	
+	private void connectToClients(List<String> serverAddresses) throws IOException {
+		for(String addr : serverAddresses) {
+			String[] addrParts = addr.split(":");
+			if(addrParts.length != 2)  throw new IllegalArgumentException("Given address invalid: " + addr);
+			
+			System.out.print("Connecting client with " + addr + " ...");
+			
+			int port;
+			try {
+				port = Integer.parseInt(addrParts[1]);
+			} catch (NumberFormatException e) {
+				throw new IllegalArgumentException("Given address port invalid: " + addr);
+			}
+			
+			ServerConnection s = new ServerConnection(port, addrParts[0]);
+			if(s.isConnected()) {
+				servers.add(s);
+				System.out.println(" connected!");
+			} else {
+				System.err.println(" failed!");
+			}
+		}
+	}
+
 	public void runClient() {
-		if(!client.isConnected()) {
+		if(servers.isEmpty()) {
 			System.err.println("ERROR: Could not establish connection with server.");
 			return;
 		}
@@ -47,7 +77,8 @@ public class OclMapperClient {
 	}
 
 	private void handleMessages() {
-
+		// XXX sending and receiving messages currently only 
+		// implemented for the first client - server connection in the list
 		boolean waitingForResponse = false;
         Scanner cmdIn = new Scanner(System.in);
 
@@ -55,7 +86,7 @@ public class OclMapperClient {
         	if(waitingForResponse) {
         		ResponseMessage response;
                 try {
-                	response = client.waitForCmdResponse();
+                	response = servers.get(0).waitForCmdResponse();
                 } catch (IOException e) {
                 	System.err.println(e.getMessage());
                 	e.printStackTrace();
@@ -68,7 +99,7 @@ public class OclMapperClient {
         		CommandMessage cmd = parseCmd(cmdIn);
 
         		try {
-					client.sendMessage(cmd);
+					servers.get(0).sendMessage(cmd);
 				} catch (IOException e) {
 					System.err.println("ERROR: sending command failed: " + e);
 					e.printStackTrace();
@@ -82,7 +113,8 @@ public class OclMapperClient {
 		}
 		
 		cmdIn.close();
-		client.closeConnection();
+		for(ServerConnection s : servers) s.closeConnection();
+		servers.clear();
 	}
 
 	private CommandMessage parseCmd(Scanner cmdIn) {
