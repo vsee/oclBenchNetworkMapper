@@ -8,11 +8,11 @@ import java.net.ServerSocket;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage;
 import lancs.dividend.oclBenchMapper.message.cmd.ExitCmdMessage;
 
-public class ConnectionServer extends ConnectionHandler {
+public class ClientConnection extends ConnectionHandler {
 
 	private ServerSocket listener;
 	
-	public ConnectionServer(int port) throws IOException {
+	public ClientConnection(int port) throws IOException {
 		super(port);
 	
         listener = new ServerSocket(port);
