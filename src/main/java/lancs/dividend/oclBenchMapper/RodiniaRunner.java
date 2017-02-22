@@ -2,7 +2,6 @@ package lancs.dividend.oclBenchMapper;
 
 import java.nio.file.Path;
 
-import lancs.dividend.oclBenchMapper.OclMapperClient.RodiniaBin;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
@@ -10,6 +9,8 @@ import lancs.dividend.oclBenchMapper.utils.ShellCmdExecutor;
 
 public class RodiniaRunner {
 
+	public enum RodiniaBin { KMEANS, LUD }
+	
 	private final Path rodiniaHome;
 	
 	public RodiniaRunner(Path rodiniaHome) {

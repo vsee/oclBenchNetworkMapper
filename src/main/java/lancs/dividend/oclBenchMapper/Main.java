@@ -64,8 +64,8 @@ public class Main {
 	public static void main(String[] args) {
 	    
 		Namespace ns = parseArguments(args);
-	    System.out.println(ns.getAttrs());
-	    ExecutionRole role = ns.get("role");
+
+		ExecutionRole role = ns.get("role");
 		switch(role) {
 			case CLIENT:
 				try {

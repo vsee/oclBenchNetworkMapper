@@ -2,7 +2,7 @@ package lancs.dividend.oclBenchMapper.message.cmd;
 
 import java.util.StringJoiner;
 
-import lancs.dividend.oclBenchMapper.OclMapperClient.RodiniaBin;
+import lancs.dividend.oclBenchMapper.RodiniaRunner.RodiniaBin;
 
 public class RunBenchCmdMessage extends CommandMessage {
 

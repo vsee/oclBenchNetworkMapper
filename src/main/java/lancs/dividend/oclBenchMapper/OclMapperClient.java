@@ -3,28 +3,20 @@ package lancs.dividend.oclBenchMapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
-import java.util.StringJoiner;
 
 import lancs.dividend.oclBenchMapper.connection.ServerConnection;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage.CmdType;
-import lancs.dividend.oclBenchMapper.message.cmd.ExitCmdMessage;
-import lancs.dividend.oclBenchMapper.message.cmd.RunBenchCmdMessage;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.TextResponseMessage;
+import lancs.dividend.oclBenchMapper.ui.ClientConsoleInterface;
+import lancs.dividend.oclBenchMapper.ui.UserInterface;
 
 public class OclMapperClient {
 	
-	public enum RodiniaBin { KMEANS, LUD }
-
 	private final List<ServerConnection> servers;
-	
-	private final String EXIT_CMD = "exit";
-	private final String BENCHMARK_LIST;
-	private final String BENCHMARK_TOP_MENU;
 	
 	public OclMapperClient(List<String> serverAddresses) throws IOException {
 		if(serverAddresses == null || serverAddresses.size() == 0)
@@ -32,15 +24,6 @@ public class OclMapperClient {
 		
 		servers = new ArrayList<>(serverAddresses.size());
 		connectToClients(serverAddresses);
-		
-		// Generate menu strings
-		StringJoiner join = new StringJoiner(",","{","}");
-		for (RodiniaBin b : RodiniaBin.values()) join.add(b.name());
-		BENCHMARK_LIST = join.toString();
-		
-		BENCHMARK_TOP_MENU = 
-		"\n1. Enter Benchmark name from selection: " + BENCHMARK_LIST + "\n" +
-		"2. Enter '" + EXIT_CMD + "' to shut down client.\n>> ";
 	}
 	
 	private void connectToClients(List<String> serverAddresses) throws IOException {
@@ -79,8 +62,11 @@ public class OclMapperClient {
 	private void handleMessages() {
 		// XXX sending and receiving messages currently only 
 		// implemented for the first client - server connection in the list
+		
+		// TODO differentiate between user command and command message
+		
 		boolean waitingForResponse = false;
-        Scanner cmdIn = new Scanner(System.in);
+		UserInterface ui = new ClientConsoleInterface();
 
 		while(true) {
         	if(waitingForResponse) {
@@ -96,7 +82,7 @@ public class OclMapperClient {
             	processResponse(response);
             	waitingForResponse = false;
         	} else {
-        		CommandMessage cmd = parseCmd(cmdIn);
+        		CommandMessage cmd = ui.parseCommand();
 
         		try {
 					servers.get(0).sendMessage(cmd);
@@ -111,37 +97,10 @@ public class OclMapperClient {
                 waitingForResponse = true;
         	}
 		}
-		
-		cmdIn.close();
+	
+		ui.exit();
 		for(ServerConnection s : servers) s.closeConnection();
 		servers.clear();
-	}
-
-	private CommandMessage parseCmd(Scanner cmdIn) {
-		
-		while(true) {
-			System.out.print(BENCHMARK_TOP_MENU);
-			String line = cmdIn.nextLine();
-			
-			RodiniaBin rbin = null;
-			if(line.trim().equals(EXIT_CMD)) {
-				return new ExitCmdMessage();
-			}
-			else if((rbin = isBenchmarkBin(line.trim())) != null) {
-				System.out.println("Benchmark: " + rbin + " selected. Running on server ...");
-				return new RunBenchCmdMessage(rbin, "");
-			} else {
-				System.err.println("ERROR: Invalid input.");
-			}
-		}
-	}
-
-	private RodiniaBin isBenchmarkBin(String rodiniaBin) {
-		try {
-			return RodiniaBin.valueOf(rodiniaBin);
-		} catch(IllegalArgumentException e) {
-			return null;
-		}
 	}
 
 	private void processResponse(ResponseMessage response) {
