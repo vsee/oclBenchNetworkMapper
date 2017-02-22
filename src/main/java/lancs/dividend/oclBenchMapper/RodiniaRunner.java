@@ -2,7 +2,7 @@ package lancs.dividend.oclBenchMapper;
 
 import java.nio.file.Path;
 
-import lancs.dividend.oclBenchMapper.OclMapperClient.RodiniaBins;
+import lancs.dividend.oclBenchMapper.OclMapperClient.RodiniaBin;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
@@ -16,7 +16,7 @@ public class RodiniaRunner {
 		this.rodiniaHome = rodiniaHome;
 	}
 
-	public ResponseMessage run(RodiniaBins binary, String args) {
+	public ResponseMessage run(RodiniaBin binary, String args) {
 		
 		switch(binary) {
 			case KMEANS:
@@ -36,7 +36,7 @@ public class RodiniaRunner {
 				// TODO evaluate results and send proper stats
 				return new BenchStatsResponseMessage(0.0, 0.0);
 			default:
-				return new ErrorResponseMessage("Unhandled rodinia benchmark binary: " + binary.name());
+				return new ErrorResponseMessage("Rodinia benchmark binary not handled by server: " + binary.name());
 		}
 	}
 
