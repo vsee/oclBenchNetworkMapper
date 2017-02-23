@@ -13,38 +13,21 @@ This tool provides client and server side to distribute the execution of an Open
 - It executes the workload according to specifications by the client.
 - It measures execution statistics and returns them.
 
+### Available Benchmarks
+In this version the available benchmarks are restricted to a Rodinia *Kmeans* kernel with
+a standard input set. A *Lud* kernel is also shown but not properly handled on server side yet.
 
-## UNDER DEVELOPMENT
-The project is currently in alpha state and benchmark execution is not yet fully implemented.
+### Available Workload Mapper
+- **First come first served mapper**: maps the selected benchmark to the default device on the first available server.
+- **Duplicate mapper**: maps the entire selected benchmark to the default device on each available server.
 
----
+The mapper to be used can be selected on client side with the ```-m``` or ```-mapperType``` argument.
 
-## Build Dependencies
-* java 8
+### TODO
+- Execution statistics are not evaluated yet. Only 0.0 is returned for both energy and runtime.
+- A dataset can not yet be selected for the executed benchmark. Only the default one works.
+- The execution device on a server, i.e. GPU or CPU, cannot be selected yet.
 
-(gradle automatically downloads the rest)
-
-## Building the Project
-This project uses gradle as build tool. A gradle wrapper is provided so gradle itself does not need to be installed on the build machine.
-
-#### Build and Generate Jar:
-```
-$ ./gradlew build
-```
-The initial run will download necessary dependencies and can be slow. Future executions will be much faster.
-
-The generated jar file can be found in ``./build/libs/oclBenchMapper-x.x.x.jar``
-
-#### Build Eclipse Project:
-To generate project files for the Eclipse IDE execute:
-```
-$ ./gradlew eclipse
-```
-#### Other Build Tasks:
-To list further build tasks for gradle execute:
-```
-$ ./gradlew tasks
-```
 ---
 
 ## Running the Client and Server
@@ -77,5 +60,34 @@ $ java -jar ./build/libs/oclBenchMapper-x.x.x.jar server -h
 ```
 
 **ATTENTION: All configured servers need to be running and accessible before a client is started**
+
+---
+
+## Build Dependencies
+* java 8
+
+(gradle automatically downloads the rest)
+
+## Building the Project
+This project uses gradle as build tool. A gradle wrapper is provided so gradle itself does not need to be installed on the build machine.
+
+#### Build and Generate Jar:
+```
+$ ./gradlew build
+```
+The initial run will download necessary dependencies and can be slow. Future executions will be much faster.
+
+The generated jar file can be found in ``./build/libs/oclBenchMapper-x.x.x.jar``
+
+#### Build Eclipse Project:
+To generate project files for the Eclipse IDE execute:
+```
+$ ./gradlew eclipse
+```
+#### Other Build Tasks:
+To list further build tasks for gradle execute:
+```
+$ ./gradlew tasks
+```
 
 
