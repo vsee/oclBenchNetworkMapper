@@ -7,7 +7,8 @@ import java.util.List;
 
 import lancs.dividend.oclBenchMapper.connection.ServerConnection;
 import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
-import lancs.dividend.oclBenchMapper.mapping.SimpleMapper;
+import lancs.dividend.oclBenchMapper.mapping.MapperFactory;
+import lancs.dividend.oclBenchMapper.mapping.MapperFactory.MapperType;
 import lancs.dividend.oclBenchMapper.mapping.WorkloadMapper;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage.CmdType;
@@ -20,10 +21,15 @@ import lancs.dividend.oclBenchMapper.ui.UserInterface;
 public class OclMapperClient {
 	
 	private final List<ServerConnection> servers;
+	private final WorkloadMapper wlMap;
 	
-	public OclMapperClient(List<String> serverAddresses) throws IOException {
+	public OclMapperClient(List<String> serverAddresses, MapperType mapper) throws IOException {
 		if(serverAddresses == null || serverAddresses.size() == 0)
 			throw new IllegalArgumentException("Given server address list must not be empty.");
+		if(mapper == null)
+			throw new IllegalArgumentException("Given mapper type must not be null.");
+		
+		wlMap = MapperFactory.createWorkloadMapper(mapper);
 		
 		servers = new ArrayList<>(serverAddresses.size());
 		connectToClients(serverAddresses);
@@ -58,7 +64,6 @@ public class OclMapperClient {
 		// TODO add null and error checking
 		
 		UserInterface ui = new ClientConsoleInterface();
-		WorkloadMapper wlMap = new SimpleMapper();
 		ResultDisplay resDisp = new SimpleConsoleDisplay();
 
 		Hashtable<ServerConnection, ExecutionItem> executionMap = new Hashtable<>();

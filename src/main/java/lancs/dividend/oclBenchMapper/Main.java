@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import lancs.dividend.oclBenchMapper.mapping.MapperFactory.MapperType;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
@@ -45,6 +46,9 @@ public class Main {
 		    .help("Space separated list of server addresses available for "
 		    		+ "benchmark execution. Format 'address:port'.")
 	        .setDefault(defaultAddressList);
+	    clientParser.addArgument("-m","--mapperType")
+	    	.type(MapperType.class).help("Workload to server mapper used by the client.")
+	    	.setDefault(MapperType.FCFS);
 
 	    
 	    Subparser serverParser = subparsers.addParser("server")
@@ -69,7 +73,7 @@ public class Main {
 		switch(role) {
 			case CLIENT:
 				try {
-					new OclMapperClient(ns.get("addressList")).runClient();
+					new OclMapperClient(ns.get("addressList"), ns.get("mapperType")).runClient();
 				} catch (IOException e) {
 					throw new UncheckedIOException("ERROR: Connecting to server failed: ", e);
 				}

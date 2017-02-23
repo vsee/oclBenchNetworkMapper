@@ -8,12 +8,12 @@ import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage.CmdType;
 
 /**
- * The simple mapper assigns the entire workload to the
+ * The first come first served mapper assigns the entire workload to the
  * first available server.
  * 
  * @author vseeker
  */
-public class SimpleMapper implements WorkloadMapper {
+public class FcfsMapper implements WorkloadMapper {
 
 	@Override
 	public Hashtable<ServerConnection, ExecutionItem> mapWorkload(
