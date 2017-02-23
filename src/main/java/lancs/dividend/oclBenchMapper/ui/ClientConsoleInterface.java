@@ -4,9 +4,9 @@ import java.util.Scanner;
 import java.util.StringJoiner;
 
 import lancs.dividend.oclBenchMapper.RodiniaRunner.RodiniaBin;
-import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage;
-import lancs.dividend.oclBenchMapper.message.cmd.ExitCmdMessage;
-import lancs.dividend.oclBenchMapper.message.cmd.RunBenchCmdMessage;
+import lancs.dividend.oclBenchMapper.userCmd.ExitCmd;
+import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
+import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 
 public class ClientConsoleInterface implements UserInterface {
 
@@ -30,7 +30,7 @@ public class ClientConsoleInterface implements UserInterface {
 	}
 	
 	@Override
-	public CommandMessage parseCommand() {
+	public UserCommand receiveCommand() {
 
 		while(true) {
 			System.out.print(BENCHMARK_TOP_MENU);
@@ -38,11 +38,11 @@ public class ClientConsoleInterface implements UserInterface {
 			
 			RodiniaBin rbin = null;
 			if(line.trim().equals(EXIT_CMD)) {
-				return new ExitCmdMessage();
+				return new ExitCmd();
 			}
 			else if((rbin = isBenchmarkBin(line.trim())) != null) {
 				System.out.println("Benchmark: " + rbin + " selected. Running on server ...");
-				return new RunBenchCmdMessage(rbin, "");
+				return new RunBenchCmd(rbin, "");
 			} else {
 				System.err.println("ERROR: Invalid input.");
 			}

@@ -10,13 +10,13 @@ import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
 import lancs.dividend.oclBenchMapper.mapping.MapperFactory;
 import lancs.dividend.oclBenchMapper.mapping.MapperFactory.MapperType;
 import lancs.dividend.oclBenchMapper.mapping.WorkloadMapper;
-import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage;
-import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage.CmdType;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.resultDisplay.ResultDisplay;
 import lancs.dividend.oclBenchMapper.resultDisplay.SimpleConsoleDisplay;
 import lancs.dividend.oclBenchMapper.ui.ClientConsoleInterface;
 import lancs.dividend.oclBenchMapper.ui.UserInterface;
+import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
+import lancs.dividend.oclBenchMapper.userCmd.UserCommand.CmdType;
 
 public class OclMapperClient {
 	
@@ -60,19 +60,17 @@ public class OclMapperClient {
 	}
 
 	private void handleMessages() {
-		// TODO differentiate between user command and command message
-		// TODO add null and error checking
-		
 		UserInterface ui = new ClientConsoleInterface();
 		ResultDisplay resDisp = new SimpleConsoleDisplay();
 
+		UserCommand cmd = null;
 		Hashtable<ServerConnection, ExecutionItem> executionMap = new Hashtable<>();
 		boolean waitingForResponse = false;
 
 		while(true) {
         	if(!waitingForResponse) {
         		
-        		CommandMessage cmd = ui.parseCommand();
+        		cmd = ui.receiveCommand();
         		executionMap = wlMap.mapWorkload(servers, cmd);
         		
         		if(!sendExecutionCommands(executionMap) || cmd.getType() == CmdType.EXIT) 
@@ -84,7 +82,7 @@ public class OclMapperClient {
         		
         		if(!receiveExecutionResults(executionMap)) break;
                 
-        		resDisp.display(executionMap);
+        		resDisp.display(executionMap, cmd);
         		
             	waitingForResponse = false;
         	}

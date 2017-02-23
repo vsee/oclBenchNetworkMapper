@@ -1,6 +1,6 @@
 package lancs.dividend.oclBenchMapper.mapping;
 
-import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage;
+import lancs.dividend.oclBenchMapper.message.CommandMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 
 /**

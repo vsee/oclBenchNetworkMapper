@@ -5,8 +5,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 
-import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage;
-import lancs.dividend.oclBenchMapper.message.cmd.ExitCmdMessage;
+import lancs.dividend.oclBenchMapper.message.CommandMessage;
+import lancs.dividend.oclBenchMapper.userCmd.ExitCmd;
 
 public class ClientConnection extends ConnectionHandler {
 
@@ -50,7 +50,7 @@ public class ClientConnection extends ConnectionHandler {
 			e.printStackTrace();
 		}
 		
-		return new ExitCmdMessage();
+		return new CommandMessage(new ExitCmd());
 	}
 
 	public void shutDown() throws IOException {

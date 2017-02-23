@@ -8,6 +8,7 @@ import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.TextResponseMessage;
+import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 
 /**
  * The simple console display lists for each participating server
@@ -19,9 +20,14 @@ import lancs.dividend.oclBenchMapper.message.response.TextResponseMessage;
 public class SimpleConsoleDisplay implements ResultDisplay {
 
 	@Override
-	public void display(Hashtable<ServerConnection, ExecutionItem> executionMap) {
+	public void display(Hashtable<ServerConnection, ExecutionItem> executionMap, UserCommand cmd) {
 		if(executionMap == null || executionMap.size() == 0)
 			throw new RuntimeException("Given execution map must not be null or empty.");
+		if(cmd == null)
+			throw new RuntimeException("Given user command must not be null.");
+		
+		System.out.println("###############################################");
+		System.out.println("Original User Command:\n\t" + cmd);
 		
 		for (ServerConnection s : executionMap.keySet()) {
 			ExecutionItem item = executionMap.get(s);
@@ -52,6 +58,8 @@ public class SimpleConsoleDisplay implements ResultDisplay {
 				}
 			}
 		}
+		
+		System.out.println("###############################################");
 	}
 
 }
