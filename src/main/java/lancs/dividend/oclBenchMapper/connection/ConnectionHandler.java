@@ -9,17 +9,11 @@ import lancs.dividend.oclBenchMapper.message.Message;
 
 public abstract class ConnectionHandler {
 
-	protected final int port;
-	
 	protected Socket connectionSocket;
 	protected ObjectOutputStream oos;
 	protected ObjectInputStream ois;
 	
 	protected boolean connectionEstablished;
-	
-	public ConnectionHandler(int port) {
-		this.port = port;
-	}
 	
 	public boolean isConnected() {
 		return connectionEstablished;

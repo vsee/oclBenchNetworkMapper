@@ -10,11 +10,9 @@ import lancs.dividend.oclBenchMapper.message.cmd.ExitCmdMessage;
 
 public class ClientConnection extends ConnectionHandler {
 
-	private ServerSocket listener;
+	private final ServerSocket listener;
 	
 	public ClientConnection(int port) throws IOException {
-		super(port);
-	
         listener = new ServerSocket(port);
 	}
 	

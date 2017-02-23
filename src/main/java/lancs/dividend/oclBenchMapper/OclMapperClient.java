@@ -2,9 +2,12 @@ package lancs.dividend.oclBenchMapper;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 
 import lancs.dividend.oclBenchMapper.connection.ServerConnection;
+import lancs.dividend.oclBenchMapper.mapping.SimpleMapper;
+import lancs.dividend.oclBenchMapper.mapping.WorkloadMapper;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage.CmdType;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
@@ -28,19 +31,10 @@ public class OclMapperClient {
 	
 	private void connectToClients(List<String> serverAddresses) throws IOException {
 		for(String addr : serverAddresses) {
-			String[] addrParts = addr.split(":");
-			if(addrParts.length != 2)  throw new IllegalArgumentException("Given address invalid: " + addr);
-			
+
 			System.out.print("Connecting client with " + addr + " ...");
-			
-			int port;
-			try {
-				port = Integer.parseInt(addrParts[1]);
-			} catch (NumberFormatException e) {
-				throw new IllegalArgumentException("Given address port invalid: " + addr);
-			}
-			
-			ServerConnection s = new ServerConnection(port, addrParts[0]);
+
+			ServerConnection s = new ServerConnection(addr);
 			if(s.isConnected()) {
 				servers.add(s);
 				System.out.println(" connected!");
@@ -65,8 +59,9 @@ public class OclMapperClient {
 		
 		// TODO differentiate between user command and command message
 		
-		boolean waitingForResponse = false;
 		UserInterface ui = new ClientConsoleInterface();
+		WorkloadMapper wlMap = new SimpleMapper();
+		boolean waitingForResponse = false;
 
 		while(true) {
         	if(waitingForResponse) {
@@ -83,24 +78,41 @@ public class OclMapperClient {
             	waitingForResponse = false;
         	} else {
         		CommandMessage cmd = ui.parseCommand();
-
-        		try {
-					servers.get(0).sendMessage(cmd);
-				} catch (IOException e) {
-					System.err.println("ERROR: sending command failed: " + e);
-					e.printStackTrace();
-					break;
-				}
-                
-        		if(cmd.getType() == CmdType.EXIT) break;
-                
-                waitingForResponse = true;
+        		Hashtable<ServerConnection, CommandMessage> mapRes = wlMap.mapWorkload(servers, cmd);
+        		
+        		waitingForResponse = executeMapResult(mapRes);
+        		if(!waitingForResponse || 
+        		   cmd.getType() == CmdType.EXIT) break;
         	}
 		}
 	
 		ui.exit();
 		for(ServerConnection s : servers) s.closeConnection();
 		servers.clear();
+	}
+
+	/** 
+	 * Takes a mapping of workload execution commands to servers and
+	 * starts workload execution by sending the corresponding messages 
+	 * to their paired servers. It gives up as soon as a single message
+	 * could not be send successfully.
+	 * 
+	 * @param mapRes mapping of CommandMessages to ServerConnections
+	 * @return true if all messages were send out successfully
+	 */
+	private boolean executeMapResult(Hashtable<ServerConnection, CommandMessage> mapRes) {
+
+		for (ServerConnection s : mapRes.keySet()) {
+			try {
+				s.sendMessage(mapRes.get(s));
+			} catch (IOException e) {
+				System.err.println("ERROR: sending command to server " + s +" failed: " + e);
+				e.printStackTrace();
+				return false;
+			}
+		}
+		
+		return true;
 	}
 
 	private void processResponse(ResponseMessage response) {
