@@ -6,14 +6,14 @@ import java.util.Hashtable;
 import java.util.List;
 
 import lancs.dividend.oclBenchMapper.connection.ServerConnection;
+import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
 import lancs.dividend.oclBenchMapper.mapping.SimpleMapper;
 import lancs.dividend.oclBenchMapper.mapping.WorkloadMapper;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage;
 import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage.CmdType;
-import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
-import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
-import lancs.dividend.oclBenchMapper.message.response.TextResponseMessage;
+import lancs.dividend.oclBenchMapper.resultDisplay.ResultDisplay;
+import lancs.dividend.oclBenchMapper.resultDisplay.SimpleConsoleDisplay;
 import lancs.dividend.oclBenchMapper.ui.ClientConsoleInterface;
 import lancs.dividend.oclBenchMapper.ui.UserInterface;
 
@@ -54,35 +54,34 @@ public class OclMapperClient {
 	}
 
 	private void handleMessages() {
-		// XXX sending and receiving messages currently only 
-		// implemented for the first client - server connection in the list
-		
 		// TODO differentiate between user command and command message
+		// TODO add null and error checking
 		
 		UserInterface ui = new ClientConsoleInterface();
 		WorkloadMapper wlMap = new SimpleMapper();
+		ResultDisplay resDisp = new SimpleConsoleDisplay();
+
+		Hashtable<ServerConnection, ExecutionItem> executionMap = new Hashtable<>();
 		boolean waitingForResponse = false;
 
 		while(true) {
-        	if(waitingForResponse) {
-        		ResponseMessage response;
-                try {
-                	response = servers.get(0).waitForCmdResponse();
-                } catch (IOException e) {
-                	System.err.println(e.getMessage());
-                	e.printStackTrace();
-                	break;
-                }
-                
-            	processResponse(response);
-            	waitingForResponse = false;
-        	} else {
-        		CommandMessage cmd = ui.parseCommand();
-        		Hashtable<ServerConnection, CommandMessage> mapRes = wlMap.mapWorkload(servers, cmd);
+        	if(!waitingForResponse) {
         		
-        		waitingForResponse = executeMapResult(mapRes);
-        		if(!waitingForResponse || 
-        		   cmd.getType() == CmdType.EXIT) break;
+        		CommandMessage cmd = ui.parseCommand();
+        		executionMap = wlMap.mapWorkload(servers, cmd);
+        		
+        		if(!sendExecutionCommands(executionMap) || cmd.getType() == CmdType.EXIT) 
+        			break;
+        		
+        		waitingForResponse = true;
+        		
+        	} else {
+        		
+        		if(!receiveExecutionResults(executionMap)) break;
+                
+        		resDisp.display(executionMap);
+        		
+            	waitingForResponse = false;
         	}
 		}
 	
@@ -91,20 +90,50 @@ public class OclMapperClient {
 		servers.clear();
 	}
 
+	
+	/**
+	 * Waits for a response of all execution servers considered
+	 * in the workload mapping and returns them. 
+	 *  
+	 * @param executionMap The mapping of benchmark workload to server currently being executed. 
+	 * 
+	 * @return A mapping of server to execution response or null if an error happened.
+	 */
+	private boolean receiveExecutionResults(Hashtable<ServerConnection, ExecutionItem> executionMap) {
+		
+		assert executionMap != null && executionMap.size() > 0 : "Invalid command to server mapping.";
+		
+		for (ServerConnection s : executionMap.keySet()) {
+	        try {
+	        	ResponseMessage response = s.waitForCmdResponse();
+	        	ExecutionItem item = executionMap.get(s);
+	        	item.setResponse(response);
+	        } catch (IOException e) {
+	        	System.err.println(e.getMessage());
+	        	e.printStackTrace();
+	        	return false;
+	        }
+		}
+		
+		return true;
+	}
+
 	/** 
 	 * Takes a mapping of workload execution commands to servers and
 	 * starts workload execution by sending the corresponding messages 
 	 * to their paired servers. It gives up as soon as a single message
 	 * could not be send successfully.
 	 * 
-	 * @param mapRes mapping of CommandMessages to ServerConnections
+	 * @param executionMap mapping of CommandMessages to ServerConnections
 	 * @return true if all messages were send out successfully
 	 */
-	private boolean executeMapResult(Hashtable<ServerConnection, CommandMessage> mapRes) {
+	private boolean sendExecutionCommands(Hashtable<ServerConnection, ExecutionItem> executionMap) {
 
-		for (ServerConnection s : mapRes.keySet()) {
+		assert executionMap != null && executionMap.size() > 0 : "Invalid command to server mapping.";
+		
+		for (ServerConnection s : executionMap.keySet()) {
 			try {
-				s.sendMessage(mapRes.get(s));
+				s.sendMessage(executionMap.get(s).getCommand());
 			} catch (IOException e) {
 				System.err.println("ERROR: sending command to server " + s +" failed: " + e);
 				e.printStackTrace();
@@ -114,24 +143,4 @@ public class OclMapperClient {
 		
 		return true;
 	}
-
-	private void processResponse(ResponseMessage response) {
-
-		switch (response.getType()) {
-		case TEXT:
-			System.out.println(((TextResponseMessage) response).getText());
-			break;
-		case BENCHSTATS:
-			BenchStatsResponseMessage br = (BenchStatsResponseMessage) response;
-			System.out.println(br.getEnergy() + " - " + br.getRuntime() + "ms");
-			break;
-		case ERROR:
-			System.err.println("ERROR: " + ((ErrorResponseMessage) response).getText());
-			break;
-		default:
-			System.err.println("Unknown response type: " + response.getType());
-			break;
-		}
-	}
-
 }

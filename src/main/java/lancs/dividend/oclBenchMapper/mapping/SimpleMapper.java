@@ -13,20 +13,20 @@ import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage.CmdType;
  * 
  * @author vseeker
  */
-public class SimpleMapper extends WorkloadMapper {
+public class SimpleMapper implements WorkloadMapper {
 
 	@Override
-	public Hashtable<ServerConnection, CommandMessage> mapWorkload(
+	public Hashtable<ServerConnection, ExecutionItem> mapWorkload(
 			List<ServerConnection> servers, CommandMessage cmd) {
 		
-		Hashtable<ServerConnection, CommandMessage> mapping = new Hashtable<>();
+		Hashtable<ServerConnection, ExecutionItem> mapping = new Hashtable<>();
 		
 		boolean assigned = false;
 		for(ServerConnection s : servers) {
 			// assign only once to first server in list
 			// except for exit methods, they are send to all servers
 			if(!assigned || cmd.getType() == CmdType.EXIT) {
-				mapping.put(s, cmd);
+				mapping.put(s, new ExecutionItem(cmd));
 				assigned = true;
 			}
 		}
