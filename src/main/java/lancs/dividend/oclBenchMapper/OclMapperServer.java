@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import lancs.dividend.oclBenchMapper.connection.ClientConnection;
-import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage;
-import lancs.dividend.oclBenchMapper.message.cmd.CommandMessage.CmdType;
-import lancs.dividend.oclBenchMapper.message.cmd.RunBenchCmdMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
+import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
+import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
+import lancs.dividend.oclBenchMapper.userCmd.UserCommand.CmdType;
 
 /**
  * 
@@ -56,15 +56,15 @@ public class OclMapperServer {
 		
 		while (!closeConnection) {
 			
-            CommandMessage cmd = null;
+            UserCommand cmd = null;
             ResponseMessage response = null;
-			cmd = client.waitForCmd();
+			cmd = client.waitForCmd().getCommand();
 			
             if (cmd.getType() == CmdType.EXIT) {
                 closeConnection = true;
                 System.out.println("Closing connection with client.");
             } else if(cmd.getType() == CmdType.RUNBENCH) {
-                response = executeCmd((RunBenchCmdMessage) cmd);
+                response = executeCmd((RunBenchCmd) cmd);
             } else {
             	System.err.println("ERROR: Unknown command type: " + cmd.getType().name());
 				response = new ErrorResponseMessage("Unknown command type: " + cmd.getType().name());
@@ -85,13 +85,12 @@ public class OclMapperServer {
 	}
 
 	
-	private ResponseMessage executeCmd(CommandMessage cmd) {
+	private ResponseMessage executeCmd(RunBenchCmd cmd) {
 		switch (cmd.getType()) {
 			case RUNBENCH:
-				RunBenchCmdMessage rbMsg = (RunBenchCmdMessage) cmd;
-				System.out.println("Executing: " + rbMsg.getBinaryName() + " " + rbMsg.getArgs());
+				System.out.println("Executing: " + cmd.getBinaryName() + " " + cmd.getArgs());
 				
-				ResponseMessage result = rodinia.run(rbMsg.getBinaryName(), rbMsg.getArgs());
+				ResponseMessage result = rodinia.run(cmd.getBinaryName(), cmd.getArgs());
 							
 				System.out.println("Execution finished. Returning results.");
 				return result;
