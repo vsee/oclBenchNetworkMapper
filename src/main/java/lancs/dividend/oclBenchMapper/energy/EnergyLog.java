@@ -16,22 +16,35 @@ public class EnergyLog implements Serializable {
 	private static final char SEPARATOR = ';';
 	private static final String EXPECTED_HEADER = "Status;Event;Command;Issue;Start;Stop;Workload;Energy;Name";
 
-	private static int HEADER_SKIP = 2;
+	private static final int HEADER_SKIP = 2;
+	
+	private final List<List<String>> logRecords;
 	
 	public EnergyLog(Path logFile) {
 		if (logFile == null)
 			throw new IllegalArgumentException("Given log file path must not be null.");
 		
-		parseLogFile(logFile);
+		logRecords = parseLogFile(logFile);
 	}
+	
+	public List<List<String>> getLogRecords() { return logRecords; }
 
-	private void parseLogFile(Path logFile) {
+	private List<List<String>> parseLogFile(Path logFile) {
 		if (!logFile.toFile().exists() || 
 			!logFile.toFile().isFile() || 
 			!logFile.toFile().canRead())
 			throw new IllegalArgumentException("Error reading given log file: " + logFile);
 		
 		checkHeader(logFile);
+		
+		List<List<String>> recs = null;
+		try {
+			recs = CSVResourceTools.readRecords(logFile, HEADER_SKIP, SEPARATOR);
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+		
+		return recs;
 	}
 
 	private void checkHeader(Path logFile) {
