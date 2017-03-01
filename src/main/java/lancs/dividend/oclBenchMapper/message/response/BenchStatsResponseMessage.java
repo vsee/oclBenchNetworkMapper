@@ -20,7 +20,7 @@ public class BenchStatsResponseMessage extends ResponseMessage {
 	
 	public String getStdOut() { return executionStdOut; }
 	
-	public boolean hastEnergyLog() { return elog != null; }
+	public boolean hasEnergyLog() { return elog != null; }
 	
 	public void setEnergyLog(EnergyLog energyLog) {
 		if(energyLog == null) 

@@ -49,9 +49,9 @@ public class SimpleConsoleDisplay implements ResultDisplay {
 				case BENCHSTATS:
 					BenchStatsResponseMessage br = (BenchStatsResponseMessage) response;
 					System.out.println("### Execution standard output:\n" + br.getStdOut());
-					System.out.println("### Has Energy Log: " + br.hastEnergyLog());
+					System.out.println("### Has Energy Log: " + br.hasEnergyLog());
 					
-					if(br.hastEnergyLog()) {
+					if(br.hasEnergyLog()) {
 						System.out.println("### Energy Log:");
 						List<List<String>> elogRecords = br.getEnergyLog().getLogRecords();
 						System.out.println(elogRecords.size() + " log entries found.");
