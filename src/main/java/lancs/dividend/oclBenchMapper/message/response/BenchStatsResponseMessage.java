@@ -1,7 +1,5 @@
 package lancs.dividend.oclBenchMapper.message.response;
 
-import java.util.Optional;
-
 import lancs.dividend.oclBenchMapper.energy.EnergyLog;
 
 public class BenchStatsResponseMessage extends ResponseMessage {
@@ -9,7 +7,7 @@ public class BenchStatsResponseMessage extends ResponseMessage {
 	private static final long serialVersionUID = 5588662656879162203L;
 	
 	private final String executionStdOut;
-	private Optional<EnergyLog> elog = Optional.empty();
+	private EnergyLog elog;
 	
 	public BenchStatsResponseMessage(String stdOut) {
 		super(ResponseType.BENCHSTATS);
@@ -22,14 +20,16 @@ public class BenchStatsResponseMessage extends ResponseMessage {
 	
 	public String getStdOut() { return executionStdOut; }
 	
+	public boolean hastEnergyLog() { return elog != null; }
+	
 	public void setEnergyLog(EnergyLog energyLog) {
 		if(energyLog == null) 
 			throw new IllegalArgumentException("Given energy log must not be null");
 		
-		elog = Optional.of(energyLog);
+		elog = energyLog;
 	}
 	
-	public Optional<EnergyLog> getEnergyLog() {
+	public EnergyLog getEnergyLog() {
 		return elog;
 	}
 	
