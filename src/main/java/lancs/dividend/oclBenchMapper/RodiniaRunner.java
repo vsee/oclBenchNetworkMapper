@@ -24,12 +24,15 @@ public class RodiniaRunner {
 				StringBuilder cmdBld = new StringBuilder();
 				
 				// enter benchmark directory
-				Path kmeansDir = rodiniaHome.resolve("opencl/kmeans");
+				Path kmeansDir = rodiniaHome.resolve("opencl/kmeans_ocleni");
 				cmdBld.append("cd ").append(kmeansDir).append(";");
+				
+				// energy profiling
+				cmdBld.append("OCLENI_MONITOR=110 ");
 				
 				// execute command
 				// TODO include args
-				cmdBld.append("./run");
+				cmdBld.append("./kmeans -o -i ../../data/kmeans/kdd_cup");
 				
 				String result = ShellCmdExecutor.executeCmd(cmdBld.toString(), true);
 				System.out.println(result);
