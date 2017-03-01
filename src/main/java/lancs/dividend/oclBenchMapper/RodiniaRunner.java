@@ -2,6 +2,7 @@ package lancs.dividend.oclBenchMapper;
 
 import java.nio.file.Path;
 
+import lancs.dividend.oclBenchMapper.energy.OCLEnergyMonitor;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
@@ -12,9 +13,15 @@ public class RodiniaRunner {
 	public enum RodiniaBin { KMEANS, LUD }
 	
 	private final Path rodiniaHome;
+	private final String monitoringPrefix;
 	
-	public RodiniaRunner(Path rodiniaHome) {
+	public RodiniaRunner(Path rodiniaHome, boolean monitorEnergy) {
 		this.rodiniaHome = rodiniaHome;
+		
+		if(monitorEnergy)
+			monitoringPrefix = OCLEnergyMonitor.getInstance().getExecutionPrefix();
+		else
+			monitoringPrefix = "";
 	}
 
 	public ResponseMessage run(RodiniaBin binary, String args) {
@@ -24,11 +31,11 @@ public class RodiniaRunner {
 				StringBuilder cmdBld = new StringBuilder();
 				
 				// enter benchmark directory
-				Path kmeansDir = rodiniaHome.resolve("opencl/kmeans_ocleni");
+				Path kmeansDir = rodiniaHome.resolve("opencl/kmeans");
 				cmdBld.append("cd ").append(kmeansDir).append(";");
 				
-				// energy profiling
-				cmdBld.append("OCLENI_MONITOR=110 ");
+				// energy profiling if activated
+				cmdBld.append(monitoringPrefix);
 				
 				// execute command
 				// TODO include args
