@@ -11,9 +11,9 @@ public class CmdExecTest {
 	public void testBlockingCmd() {
 		
 		String res = ShellCmdExecutor.executeCmd(
-				"ls src/main/java/lancs/dividend/oclBenchMapper/utils/ShellCmdExecutor.java", true);
+				"ls src/test/resources/cmdListTest", true);
 		
-		Assert.assertEquals(res.trim(), "src/main/java/lancs/dividend/oclBenchMapper/utils/ShellCmdExecutor.java");
+		Assert.assertEquals(res.trim(), "src/test/resources/cmdListTest");
 		
 		res = ShellCmdExecutor.executeCmd(
 				"ls blabla.blub", true);

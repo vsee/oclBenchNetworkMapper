@@ -1,28 +1,40 @@
 package lancs.dividend.oclBenchMapper.message.response;
 
-import java.util.StringJoiner;
+import lancs.dividend.oclBenchMapper.energy.EnergyLog;
 
 public class BenchStatsResponseMessage extends ResponseMessage {
 
 	private static final long serialVersionUID = 5588662656879162203L;
 	
-	private final double energy;
-	private final double runtimeMS;
+	private final String executionStdOut;
+	private EnergyLog elog;
 	
-	public BenchStatsResponseMessage(double energyRes, double runtimeResMS) {
+	public BenchStatsResponseMessage(String stdOut) {
 		super(ResponseType.BENCHSTATS);
-		energy = energyRes;
-		runtimeMS = runtimeResMS;
+		
+		if(stdOut == null) 
+			throw new IllegalArgumentException("Given standart output of benchmark execution must not be null.");
+		
+		executionStdOut = stdOut;
 	}
 	
-	public double getEnergy() { return energy; }
+	public String getStdOut() { return executionStdOut; }
 	
-	public double getRuntime() { return runtimeMS; }
+	public boolean hasEnergyLog() { return elog != null; }
+	
+	public void setEnergyLog(EnergyLog energyLog) {
+		if(energyLog == null) 
+			throw new IllegalArgumentException("Given energy log must not be null");
+		
+		elog = energyLog;
+	}
+	
+	public EnergyLog getEnergyLog() {
+		return elog;
+	}
 	
 	@Override
 	public String toString() {
-		return new StringJoiner(CMD_SEP).add(type.name())
-				.add(Double.toString(energy))
-				.add(Double.toString(runtimeMS)).toString();
+		return executionStdOut;
 	}
 }

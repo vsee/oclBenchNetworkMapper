@@ -90,8 +90,8 @@ public class OclMapperServer {
 			case RUNBENCH:
 				System.out.println("Executing: " + cmd.getBinaryName() + " " + cmd.getArgs());
 				
-				ResponseMessage result = rodinia.run(cmd.getBinaryName(), cmd.getArgs());
-							
+				ResponseMessage result = rodinia.run(cmd.getBinaryName(), cmd.getArgs(), true);
+				
 				System.out.println("Execution finished. Returning results.");
 				return result;
 			default:
