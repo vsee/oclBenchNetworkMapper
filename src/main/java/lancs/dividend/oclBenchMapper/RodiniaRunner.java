@@ -69,6 +69,11 @@ public class RodiniaRunner {
 		return response;
 	}
 
+	
+	private static final String KMEANS_SMALL_DSET = "../../data/kmeans/100";
+	private static final String KMEANS_MEDIUM_DSET = "../../data/kmeans/204800.txt";
+	private static final String KMEANS_LARGE_DSET = "../../data/kmeans/819200.txt";
+	
 	private ResponseMessage executeKmeans(String execPrefix, DataSetSize dsetSize) {
 		StringBuilder cmdBld = new StringBuilder();
 		
@@ -79,9 +84,16 @@ public class RodiniaRunner {
 		// energy profiling if activated
 		cmdBld.append(execPrefix);
 		
+		String dataset;
+		switch(dsetSize) {
+			case SMALL: dataset = KMEANS_SMALL_DSET; break;
+			case MEDIUM: dataset = KMEANS_MEDIUM_DSET; break;
+			case LARGE: dataset = KMEANS_LARGE_DSET; break;
+			default: throw new IllegalArgumentException("Invalid dataset size for kmeans benchmark: " + dsetSize);
+		}
+		
 		// execute command
-		// TODO include dataset size
-		cmdBld.append("./kmeans -o -i ../../data/kmeans/kdd_cup");
+		cmdBld.append("./kmeans -o -i ").append(dataset);
 		
 		String stdout = ShellCmdExecutor.executeCmd(cmdBld.toString(), true);
 		System.out.println(stdout);
