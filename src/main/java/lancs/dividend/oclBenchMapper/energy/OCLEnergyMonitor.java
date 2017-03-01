@@ -46,26 +46,20 @@ public class OCLEnergyMonitor {
 		return elog;
 	}
 	
-	public String getExecutionPrefix() {
-		if(elogDir.isPresent()) {
-			return LOG_DIR_CONFIG + elogDir.get() + " " + LOG_MONITOR_CONFIG + " ";
-		} else {
-			return LOG_MONITOR_CONFIG + " ";
-		}
-	}
-	
 	public void resetMonitor() {
 		elogDir = Optional.empty();
 		elog = Optional.empty();
 		isMonitoring = false;
 	}
 	
-	public void startMonitoring() throws IOException {
+	public String startMonitoring() throws IOException {
 		if(isMonitoring) throw new RuntimeException("Monitoring already running.");
 		
 		elogDir = Optional.of(Files.createTempDirectory(LOG_DIR_PREFIX));
 		elog = Optional.empty();
 		isMonitoring = true;
+		
+		return LOG_DIR_CONFIG + elogDir.get() + " " + LOG_MONITOR_CONFIG + " ";
 	}
 	
 	public void endMonitoring() throws IOException {

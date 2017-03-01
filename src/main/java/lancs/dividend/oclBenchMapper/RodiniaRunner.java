@@ -28,9 +28,8 @@ public class RodiniaRunner {
 		
 		String execPrefix = "";
 		if(monitorEnergy) {
-			execPrefix = OCLEnergyMonitor.getInstance().getExecutionPrefix();
 			try {
-				OCLEnergyMonitor.getInstance().startMonitoring();
+				execPrefix = OCLEnergyMonitor.getInstance().startMonitoring();
 			} catch (IOException e) {
 				System.err.println("ERROR: Starting energy monitor failed: " + e);
 				e.printStackTrace();
