@@ -47,7 +47,7 @@ public class SimpleConsoleDisplay implements ResultDisplay {
 					break;
 				case BENCHSTATS:
 					BenchStatsResponseMessage br = (BenchStatsResponseMessage) response;
-					System.out.println("\tEnergy: " + br.getEnergy() + " - Runtime: " + br.getRuntime() + "ms");
+					System.out.println("\tExecution standard output:\n" + br.getStdOut());
 					break;
 				case ERROR:
 					System.err.println("\tERROR: " + ((ErrorResponseMessage) response).getText());

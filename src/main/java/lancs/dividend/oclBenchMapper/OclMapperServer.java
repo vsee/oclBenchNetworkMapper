@@ -1,11 +1,9 @@
 package lancs.dividend.oclBenchMapper;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Path;
 
 import lancs.dividend.oclBenchMapper.connection.ClientConnection;
-import lancs.dividend.oclBenchMapper.energy.OCLEnergyMonitor;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
@@ -92,18 +90,7 @@ public class OclMapperServer {
 			case RUNBENCH:
 				System.out.println("Executing: " + cmd.getBinaryName() + " " + cmd.getArgs());
 				
-				ResponseMessage result = null;
-				try {
-					OCLEnergyMonitor.getInstance().startMonitoring();
-				
-					result = rodinia.run(cmd.getBinaryName(), cmd.getArgs(), true);
-				
-					OCLEnergyMonitor.getInstance().endMonitoring();
-				} catch (IOException e) {
-					throw new UncheckedIOException(e);
-				}
-				
-				// TODO retrieve energy monitoring results
+				ResponseMessage result = rodinia.run(cmd.getBinaryName(), cmd.getArgs(), true);
 				
 				System.out.println("Execution finished. Returning results.");
 				return result;

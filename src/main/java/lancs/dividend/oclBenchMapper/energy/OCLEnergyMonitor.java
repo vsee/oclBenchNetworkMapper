@@ -54,6 +54,11 @@ public class OCLEnergyMonitor {
 		}
 	}
 	
+	public void resetMonitor() {
+		elogDir = Optional.empty();
+		elog = Optional.empty();
+		isMonitoring = false;
+	}
 	
 	public void startMonitoring() throws IOException {
 		if(isMonitoring) throw new RuntimeException("Monitoring already running.");
