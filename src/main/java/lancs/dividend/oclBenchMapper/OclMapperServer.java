@@ -29,7 +29,7 @@ public class OclMapperServer {
 	private final ClientConnection client;
 	
 	public OclMapperServer(int port, Path rodiniaHome) throws IOException {
-		rodinia = new RodiniaRunner(rodiniaHome, true);
+		rodinia = new RodiniaRunner(rodiniaHome);
 		client = new ClientConnection(port);
 		System.out.println("Starting server at port " + port);
 	}
@@ -96,7 +96,7 @@ public class OclMapperServer {
 				try {
 					OCLEnergyMonitor.getInstance().startMonitoring();
 				
-					result = rodinia.run(cmd.getBinaryName(), cmd.getArgs());
+					result = rodinia.run(cmd.getBinaryName(), cmd.getArgs(), true);
 				
 					OCLEnergyMonitor.getInstance().endMonitoring();
 				} catch (IOException e) {

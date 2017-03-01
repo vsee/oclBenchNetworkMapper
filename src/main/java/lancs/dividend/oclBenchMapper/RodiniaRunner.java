@@ -13,18 +13,17 @@ public class RodiniaRunner {
 	public enum RodiniaBin { KMEANS, LUD }
 	
 	private final Path rodiniaHome;
-	private final String monitoringPrefix;
 	
-	public RodiniaRunner(Path rodiniaHome, boolean monitorEnergy) {
+	public RodiniaRunner(Path rodiniaHome) {
 		this.rodiniaHome = rodiniaHome;
+	}
+
+	public ResponseMessage run(RodiniaBin binary, String args, boolean monitorEnergy) {
+		
+		String monitoringPrefix = "";
 		
 		if(monitorEnergy)
 			monitoringPrefix = OCLEnergyMonitor.getInstance().getExecutionPrefix();
-		else
-			monitoringPrefix = "";
-	}
-
-	public ResponseMessage run(RodiniaBin binary, String args) {
 		
 		switch(binary) {
 			case KMEANS:

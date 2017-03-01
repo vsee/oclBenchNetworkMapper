@@ -2,8 +2,8 @@ package lancs.dividend.oclBenchMapper.energy;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Optional;
 
 /**
@@ -19,9 +19,10 @@ import java.util.Optional;
  */
 public class OCLEnergyMonitor {
 
-	private static final String LOG_OUTPUT_DIR = "/tmp";
 	private static final String LOG_OUTPUT_FILE = "ocleniMONITOR.csv";
-	private static final String LOG_DIR_CONFIG = "OCLENI_LOG_PATH=" + LOG_OUTPUT_DIR;
+	private static final String LOG_DIR_PREFIX = "oclMonitor_";
+
+	private static final String LOG_DIR_CONFIG = "OCLENI_LOG_PATH=";
 	private static final String LOG_MONITOR_CONFIG = "OCLENI_MONITOR=110";
 
 	private static OCLEnergyMonitor _instance;
@@ -33,10 +34,9 @@ public class OCLEnergyMonitor {
 		return _instance;
 	}
 	
-	private final Path logFilePath = Paths.get(LOG_OUTPUT_DIR, LOG_OUTPUT_FILE);
-
 	private boolean isMonitoring;
 	private Optional<EnergyLog> elog = Optional.empty();
+	private Optional<Path> elogDir = Optional.empty();
 	
 	public boolean isMonitoring() {
 		return isMonitoring;
@@ -47,19 +47,18 @@ public class OCLEnergyMonitor {
 	}
 	
 	public String getExecutionPrefix() {
-		return LOG_DIR_CONFIG + " " + LOG_MONITOR_CONFIG + " ";
+		if(elogDir.isPresent()) {
+			return LOG_DIR_CONFIG + elogDir.get() + " " + LOG_MONITOR_CONFIG + " ";
+		} else {
+			return LOG_MONITOR_CONFIG + " ";
+		}
 	}
 	
 	
 	public void startMonitoring() throws IOException {
 		if(isMonitoring) throw new RuntimeException("Monitoring already running.");
 		
-		File logFile = logFilePath.toFile();
-		if(logFile.exists() && logFile.isFile()) {
-			if(!logFile.delete()) 
-				throw new IOException("Unable to remove existing energy log file: " + logFilePath);
-		}
-		
+		elogDir = Optional.of(Files.createTempDirectory(LOG_DIR_PREFIX));
 		elog = Optional.empty();
 		isMonitoring = true;
 	}
@@ -67,12 +66,15 @@ public class OCLEnergyMonitor {
 	public void endMonitoring() throws IOException {
 		if(!isMonitoring) throw new RuntimeException("Monitoring not running.");
 		
-		File logFile = logFilePath.toFile();
-		if(logFile.exists() && logFile.isFile()) {
-			if(!logFile.canRead())
-				throw new IOException("Unable to read energy log file: " + logFilePath);
+		if(elogDir.isPresent()) {
+			File logFile = elogDir.get().resolve(LOG_OUTPUT_FILE).toFile();
+			if(logFile.exists() && logFile.isFile()) {
+				if(!logFile.canRead())
+					throw new IOException("Unable to read energy log file: " + logFile.getAbsolutePath());
+				
+				elog = Optional.of(new EnergyLog(logFile.toPath()));
+			}
 			
-			elog = Optional.of(new EnergyLog(logFilePath));
 		}
 		
 		isMonitoring = false;
