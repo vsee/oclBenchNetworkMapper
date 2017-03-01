@@ -15,6 +15,7 @@ import lancs.dividend.oclBenchMapper.utils.ShellCmdExecutor;
 public class RodiniaRunner {
 
 	public enum RodiniaBin { KMEANS, LUD }
+	public enum DataSetSize { SMALL, MEDIUM, LARGE }
 	
 	private final Path rodiniaHome;
 	
@@ -22,7 +23,7 @@ public class RodiniaRunner {
 		this.rodiniaHome = rodiniaHome;
 	}
 
-	public ResponseMessage run(RodiniaBin binary, String args, boolean monitorEnergy) {
+	public ResponseMessage run(RodiniaBin binary, DataSetSize dsetSize, boolean monitorEnergy) {
 		
 		ResponseMessage response = null;
 		
@@ -40,7 +41,7 @@ public class RodiniaRunner {
 		
 		switch(binary) {
 			case KMEANS:
-				response = executeKmeans(execPrefix);
+				response = executeKmeans(execPrefix, dsetSize);
 				break;
 			default:
 				response = new ErrorResponseMessage("Rodinia benchmark binary not handled by server: " + binary.name());
@@ -68,7 +69,12 @@ public class RodiniaRunner {
 		return response;
 	}
 
-	private ResponseMessage executeKmeans(String execPrefix) {
+	
+	private static final String KMEANS_SMALL_DSET = "../../data/kmeans/100";
+	private static final String KMEANS_MEDIUM_DSET = "../../data/kmeans/204800.txt";
+	private static final String KMEANS_LARGE_DSET = "../../data/kmeans/819200.txt";
+	
+	private ResponseMessage executeKmeans(String execPrefix, DataSetSize dsetSize) {
 		StringBuilder cmdBld = new StringBuilder();
 		
 		// enter benchmark directory
@@ -78,9 +84,16 @@ public class RodiniaRunner {
 		// energy profiling if activated
 		cmdBld.append(execPrefix);
 		
+		String dataset;
+		switch(dsetSize) {
+			case SMALL: dataset = KMEANS_SMALL_DSET; break;
+			case MEDIUM: dataset = KMEANS_MEDIUM_DSET; break;
+			case LARGE: dataset = KMEANS_LARGE_DSET; break;
+			default: throw new IllegalArgumentException("Invalid dataset size for kmeans benchmark: " + dsetSize);
+		}
+		
 		// execute command
-		// TODO include args
-		cmdBld.append("./kmeans -o -i ../../data/kmeans/kdd_cup");
+		cmdBld.append("./kmeans -o -i ").append(dataset);
 		
 		String stdout = ShellCmdExecutor.executeCmd(cmdBld.toString(), true);
 		System.out.println(stdout);
