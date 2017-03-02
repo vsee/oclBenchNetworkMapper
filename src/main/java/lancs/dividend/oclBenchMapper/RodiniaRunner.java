@@ -98,6 +98,9 @@ public class RodiniaRunner {
 		String stdout = ShellCmdExecutor.executeCmd(cmdBld.toString(), true);
 		System.out.println(stdout);
 		
+		if(stdout.contains("ERROR"))
+			return new ErrorResponseMessage("Benchmark execution failed.\n" + stdout);
+		
 		return new BenchStatsResponseMessage(stdout);
 	}
 
