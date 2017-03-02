@@ -61,6 +61,8 @@ public class Main {
 	    serverParser.addArgument("-r","--rodiniaHome")
 	    	.type(Arguments.fileType().verifyCanRead().verifyIsDirectory())
 			.help("Home directory of rodinia benchmark suite.").setDefault(DEFAULT_RODINIA_HOME);
+	    serverParser.addArgument("--dummy").action(Arguments.storeTrue())
+			.help("Run the server as dummy executing no workloads and returning dummy results.");
 	    
 	    return parser.parseArgsOrFail(args);
 	}
@@ -82,7 +84,7 @@ public class Main {
 				try {
 					int port = ns.getInt("port");
 					Path rhome = Paths.get(ns.getString("rodiniaHome"));
-					new OclMapperServer(port, rhome).runServer();
+					new OclMapperServer(port, rhome, ns.getBoolean("dummy")).runServer();
 				} catch (IOException e) {
 					throw new UncheckedIOException("ERROR: Starting server failed: ", e);
 				}
