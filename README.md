@@ -1,6 +1,6 @@
 # oclBenchNetworkMapper
 
-This tool provides client and server side to distribute the execution of an OpenCL benchmark to execution devices available in the network. Mapping considers available machines and corresponding execution devices (CPU or GPU) on those machines.
+This tool provides client and server side to distribute the execution of an OpenCL benchmark to execution devices available in the network. Mapping considers available machines and corresponding execution devices (CPU or GPU) on those machines. This tool is mainly developed as a demo tool for the [CHIST-ERA Projects Seminar 2017 in Brussels](http://www.chistera.eu/projects-seminar-2017).
 
 ### Client Side
 - The client provides an interface to select an OpenCL benchmark and a corresponding dataset.
@@ -24,8 +24,7 @@ a standard input set. A *Lud* kernel is also shown but not properly handled on s
 The mapper to be used can be selected on client side with the ```-m``` or ```-mapperType``` argument.
 
 ### TODO
-- Execution statistics are not evaluated yet. Only 0.0 is returned for both energy and runtime.
-- A dataset can not yet be selected for the executed benchmark. Only the default one works.
+- energy and performance are measured on server side and send as raw log to the client but not evaluated yet
 - The execution device on a server, i.e. GPU or CPU, cannot be selected yet.
 
 ---
@@ -65,8 +64,7 @@ $ java -jar ./build/libs/oclBenchMapper-x.x.x.jar server -h
 
 ## Build Dependencies
 * java 8
-
-(gradle automatically downloads the rest)
+* AMD power profiling API implemented for OpenCL
 
 ## Building the Project
 This project uses gradle as build tool. A gradle wrapper is provided so gradle itself does not need to be installed on the build machine.
