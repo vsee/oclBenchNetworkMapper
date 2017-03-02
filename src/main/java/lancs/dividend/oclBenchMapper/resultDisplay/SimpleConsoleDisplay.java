@@ -1,7 +1,6 @@
 package lancs.dividend.oclBenchMapper.resultDisplay;
 
 import java.util.Hashtable;
-import java.util.List;
 
 import lancs.dividend.oclBenchMapper.connection.ServerConnection;
 import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
@@ -53,11 +52,9 @@ public class SimpleConsoleDisplay implements ResultDisplay {
 					
 					if(br.hasEnergyLog()) {
 						System.out.println("### Energy Log:");
-						List<List<String>> elogRecords = br.getEnergyLog().getLogRecords();
-						System.out.println(elogRecords.size() + " log entries found.");
-						for (List<String> rec : elogRecords) {
-							System.out.println(rec);
-						}
+						System.out.println(br.getEnergyLog().getLogRecords().size() + " log entries found.");
+						System.out.println("### Energy: " + br.getEnergyLog().getEnergyJ() + " J");
+						System.out.println("### Runtime: " + br.getEnergyLog().getRuntimeMS() + " ms");
 					}
 					
 					break;

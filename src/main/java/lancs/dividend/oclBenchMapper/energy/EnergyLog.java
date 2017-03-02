@@ -15,19 +15,30 @@ public class EnergyLog implements Serializable {
 
 	private static final char SEPARATOR = ';';
 	private static final String EXPECTED_HEADER = "Status;Event;Command;Issue;Start;Stop;Workload;Energy;Name";
+	private static final int HEADER_ISSUE_IDX = 3;
+	private static final int HEADER_STOP_IDX = 5;
+	private static final int HEADER_ENERGY_IDX = 7;
 
 	private static final int HEADER_SKIP = 2;
 	
 	private final List<List<String>> logRecords;
+	
+	private double energyJ;
+	private double runtimeMS;
 	
 	public EnergyLog(Path logFile) {
 		if (logFile == null)
 			throw new IllegalArgumentException("Given log file path must not be null.");
 		
 		logRecords = parseLogFile(logFile);
+		
+		calculateStatistics(logRecords);
 	}
-	
+
 	public List<List<String>> getLogRecords() { return logRecords; }
+	
+	public double getEnergyJ() { return energyJ; }
+	public double getRuntimeMS() { return runtimeMS; }
 
 	private List<List<String>> parseLogFile(Path logFile) {
 		if (!logFile.toFile().exists() || 
@@ -61,4 +72,16 @@ public class EnergyLog implements Serializable {
 			throw new RuntimeException("Unexpected header format in log file: " + join);
 	}
 	
+	
+	private void calculateStatistics(List<List<String>> records) {
+
+		runtimeMS = 0;
+		energyJ = 0;
+		
+		for (List<String> rec : records) {
+			energyJ += Double.parseDouble(rec.get(HEADER_ENERGY_IDX));
+			runtimeMS += (Double.parseDouble(rec.get(HEADER_STOP_IDX)) - 
+					Double.parseDouble(rec.get(HEADER_ISSUE_IDX))) / 1000000;
+		}
+	}
 }
