@@ -11,10 +11,9 @@ import lancs.dividend.oclBenchMapper.mapping.MapperFactory;
 import lancs.dividend.oclBenchMapper.mapping.MapperFactory.MapperType;
 import lancs.dividend.oclBenchMapper.mapping.WorkloadMapper;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
-import lancs.dividend.oclBenchMapper.resultDisplay.ResultDisplay;
-import lancs.dividend.oclBenchMapper.resultDisplay.SimpleConsoleDisplay;
-import lancs.dividend.oclBenchMapper.ui.ClientConsoleInterface;
 import lancs.dividend.oclBenchMapper.ui.UserInterface;
+import lancs.dividend.oclBenchMapper.ui.UserInterfaceFactory;
+import lancs.dividend.oclBenchMapper.ui.UserInterfaceFactory.UserInterfaceType;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand.CmdType;
 
@@ -22,14 +21,17 @@ public class OclMapperClient {
 	
 	private final List<ServerConnection> servers;
 	private final WorkloadMapper wlMap;
+	private final UserInterface ui;
+
 	
-	public OclMapperClient(List<String> serverAddresses, MapperType mapper) throws IOException {
+	public OclMapperClient(List<String> serverAddresses, MapperType mapper, UserInterfaceType uiType) throws IOException {
 		if(serverAddresses == null || serverAddresses.size() == 0)
 			throw new IllegalArgumentException("Given server address list must not be empty.");
 		if(mapper == null)
 			throw new IllegalArgumentException("Given mapper type must not be null.");
 		
 		wlMap = MapperFactory.createWorkloadMapper(mapper);
+		ui = UserInterfaceFactory.createUserInterface(uiType);
 		
 		servers = new ArrayList<>(serverAddresses.size());
 		connectToClients(serverAddresses);
@@ -60,8 +62,6 @@ public class OclMapperClient {
 	}
 
 	private void handleMessages() {
-		UserInterface ui = new ClientConsoleInterface();
-		ResultDisplay resDisp = new SimpleConsoleDisplay();
 
 		UserCommand cmd = null;
 		Hashtable<ServerConnection, ExecutionItem> executionMap = new Hashtable<>();
@@ -82,7 +82,7 @@ public class OclMapperClient {
         		
         		if(!receiveExecutionResults(executionMap)) break;
                 
-        		resDisp.display(executionMap, cmd);
+        		ui.display(executionMap, cmd);
         		
             	waitingForResponse = false;
         	}

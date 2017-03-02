@@ -1,14 +1,29 @@
 package lancs.dividend.oclBenchMapper.ui;
 
+import java.util.Hashtable;
 import java.util.Scanner;
 import java.util.StringJoiner;
 
 import lancs.dividend.oclBenchMapper.RodiniaRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.RodiniaRunner.RodiniaBin;
+import lancs.dividend.oclBenchMapper.connection.ServerConnection;
+import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
+import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
+import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
+import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
+import lancs.dividend.oclBenchMapper.message.response.TextResponseMessage;
 import lancs.dividend.oclBenchMapper.userCmd.ExitCmd;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 
+/**
+ * A console based user interface allows the user to control
+ * client and server interactions using console input. Results
+ * are displayed as messages in the console as well.
+ * 
+ * @author vseeker
+ *
+ */
 public class ClientConsoleInterface implements UserInterface {
 
 	private final String EXIT_CMD = "exit";
@@ -105,5 +120,56 @@ public class ClientConsoleInterface implements UserInterface {
 		cmdIn.close();
 	}
 
+	@Override
+	public void display(Hashtable<ServerConnection, ExecutionItem> executionMap, UserCommand cmd) {
+		if(executionMap == null || executionMap.size() == 0)
+			throw new RuntimeException("Given execution map must not be null or empty.");
+		if(cmd == null)
+			throw new RuntimeException("Given user command must not be null.");
+		
+		System.out.println("###############################################");
+		System.out.println("Original User Command:\n\t" + cmd);
+		
+		for (ServerConnection s : executionMap.keySet()) {
+			ExecutionItem item = executionMap.get(s);
+
+			System.out.println("\nExecution result of server " + s);
+			System.out.println("Command:\n\t" + item.getCommand());
+			System.out.println("Response:");
+			
+			if(!item.resultsAvailable())
+				System.out.println("ERROR: No results received!");
+			else {
+				ResponseMessage response = item.getResponse();
+				
+				switch (response.getType()) {
+				case TEXT:
+					System.out.println("\t" + ((TextResponseMessage) response).getText());
+					break;
+				case BENCHSTATS:
+					BenchStatsResponseMessage br = (BenchStatsResponseMessage) response;
+					System.out.println("### Execution standard output:\n" + br.getStdOut());
+					System.out.println("### Has Energy Log: " + br.hasEnergyLog());
+					
+					if(br.hasEnergyLog()) {
+						System.out.println("### Energy Log:");
+						System.out.println(br.getEnergyLog().getLogRecords().size() + " log entries found.");
+						System.out.println("### Energy: " + br.getEnergyLog().getEnergyJ() + " J");
+						System.out.println("### Runtime: " + br.getEnergyLog().getRuntimeMS() + " ms");
+					}
+					
+					break;
+				case ERROR:
+					System.err.println("\tERROR: " + ((ErrorResponseMessage) response).getText());
+					break;
+				default:
+					System.err.println("\tUnknown response type: " + response.getType());
+					break;
+				}
+			}
+		}
+		
+		System.out.println("###############################################");
+	}
 
 }
