@@ -11,12 +11,12 @@ import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand.CmdType;
 
-public class ClientUserCommandHandler {
+public class ClientConnectionHandler {
 	
 	private final List<ServerConnection> servers;
 	private final WorkloadMapper wlMap;
 	
-	public ClientUserCommandHandler(List<ServerConnection> servers, WorkloadMapper wlMap) {
+	public ClientConnectionHandler(List<ServerConnection> servers, WorkloadMapper wlMap) {
 		if(servers == null || servers.isEmpty())
 			throw new IllegalArgumentException("Given server connections must not be null or empty.");
 		if(wlMap == null)
@@ -101,6 +101,12 @@ public class ClientUserCommandHandler {
 		}
 		
 		return true;
+	}
+
+	public void closeConnections() {
+		System.out.println("Closing server connections ...");
+		for(ServerConnection s : servers) s.closeConnection();
+		servers.clear();
 	}
 	
 }

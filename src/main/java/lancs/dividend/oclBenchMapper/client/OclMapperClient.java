@@ -53,12 +53,6 @@ public class OclMapperClient {
 			return;
 		}
 
-		ui.start(new ClientUserCommandHandler(servers, wlMap));
-		// running UI ...
-		
-		// clean up upon return
-		ui.exit();
-		for(ServerConnection s : servers) s.closeConnection();
-		servers.clear();
+		ui.run(new ClientConnectionHandler(servers, wlMap));
 	}
 }

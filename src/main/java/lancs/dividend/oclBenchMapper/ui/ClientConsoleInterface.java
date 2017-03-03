@@ -4,7 +4,7 @@ import java.util.Hashtable;
 import java.util.Scanner;
 import java.util.StringJoiner;
 
-import lancs.dividend.oclBenchMapper.client.ClientUserCommandHandler;
+import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
 import lancs.dividend.oclBenchMapper.connection.ServerConnection;
 import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
@@ -58,9 +58,9 @@ public class ClientConsoleInterface implements UserInterface {
 	}
 	
 	@Override
-	public void start(ClientUserCommandHandler cmdHandler) {
+	public void run(ClientConnectionHandler cmdHandler) {
 		if(cmdHandler == null)
-			throw new IllegalArgumentException("Given command hanlder must not be null.");
+			throw new IllegalArgumentException("Given command handler must not be null.");
 		
 		while(true) {
 			UserCommand cmd = receiveCommand();
@@ -70,6 +70,9 @@ public class ClientConsoleInterface implements UserInterface {
 			
 			updateDisplay(executionMap, cmd);
 		}
+		
+		cmdIn.close();
+		cmdHandler.closeConnections();
 	}
 	
 	@Override
@@ -131,11 +134,6 @@ public class ClientConsoleInterface implements UserInterface {
 		}
 	}
 	
-	@Override
-	public void exit() {
-		cmdIn.close();
-	}
-
 	@Override
 	public void updateDisplay(Hashtable<ServerConnection, ExecutionItem> executionMap, UserCommand cmd) {
 		if(executionMap == null || executionMap.size() == 0)
