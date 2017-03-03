@@ -4,14 +4,15 @@ import java.util.Hashtable;
 import java.util.Scanner;
 import java.util.StringJoiner;
 
-import lancs.dividend.oclBenchMapper.RodiniaRunner.DataSetSize;
-import lancs.dividend.oclBenchMapper.RodiniaRunner.RodiniaBin;
+import lancs.dividend.oclBenchMapper.client.ClientUserCommandHandler;
 import lancs.dividend.oclBenchMapper.connection.ServerConnection;
 import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.TextResponseMessage;
+import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
+import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
 import lancs.dividend.oclBenchMapper.userCmd.ExitCmd;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
@@ -54,6 +55,21 @@ public class ClientConsoleInterface implements UserInterface {
 		BENCHMARK_DSET_SIZE_MENU = 
 		"\n1. Enter dataset size from selection: " + DSET_SIZE_LIST + "\n" +
 		"2. Enter '" + MENU_UP + "' to return to benchmark selection.\n>> ";
+	}
+	
+	@Override
+	public void start(ClientUserCommandHandler cmdHandler) {
+		if(cmdHandler == null)
+			throw new IllegalArgumentException("Given command hanlder must not be null.");
+		
+		while(true) {
+			UserCommand cmd = receiveCommand();
+			Hashtable<ServerConnection, ExecutionItem> executionMap = new Hashtable<>();
+
+			if(!cmdHandler.handleUserCommand(cmd, executionMap)) break;
+			
+			updateDisplay(executionMap, cmd);
+		}
 	}
 	
 	@Override
@@ -121,7 +137,7 @@ public class ClientConsoleInterface implements UserInterface {
 	}
 
 	@Override
-	public void display(Hashtable<ServerConnection, ExecutionItem> executionMap, UserCommand cmd) {
+	public void updateDisplay(Hashtable<ServerConnection, ExecutionItem> executionMap, UserCommand cmd) {
 		if(executionMap == null || executionMap.size() == 0)
 			throw new RuntimeException("Given execution map must not be null or empty.");
 		if(cmd == null)

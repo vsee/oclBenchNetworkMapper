@@ -2,8 +2,8 @@ package lancs.dividend.oclBenchMapper.userCmd;
 
 import java.util.StringJoiner;
 
-import lancs.dividend.oclBenchMapper.RodiniaRunner.DataSetSize;
-import lancs.dividend.oclBenchMapper.RodiniaRunner.RodiniaBin;
+import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
+import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
 
 public class RunBenchCmd extends UserCommand {
 

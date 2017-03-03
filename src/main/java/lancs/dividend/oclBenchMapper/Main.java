@@ -7,7 +7,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import lancs.dividend.oclBenchMapper.client.OclMapperClient;
 import lancs.dividend.oclBenchMapper.mapping.MapperFactory.MapperType;
+import lancs.dividend.oclBenchMapper.server.OclMapperServer;
 import lancs.dividend.oclBenchMapper.ui.UserInterfaceFactory.UserInterfaceType;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
@@ -18,9 +20,6 @@ import net.sourceforge.argparse4j.inf.Subparsers;
 
 public class Main {
 
-	// TODO constructor null checks for messages
-	// TODO clean up log and exception messages
-	
 	private enum ExecutionRole { CLIENT, SERVER };
 	
 	private static final int DEFAULT_PORT = 9090;
