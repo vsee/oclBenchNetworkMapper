@@ -16,20 +16,20 @@ import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 public class DuplicateMapper implements WorkloadMapper {
 
 	@Override
-	public Hashtable<ServerConnection, ExecutionItem> mapWorkload(
-			List<ServerConnection> servers, UserCommand cmd) {
+	public void mapWorkload(List<ServerConnection> servers, UserCommand cmd,
+			Hashtable<ServerConnection, ExecutionItem> executionMap) {
 		
-		if(servers == null || servers.size() == 0)
+		if(servers == null || servers.isEmpty())
 			throw new IllegalArgumentException("Given server connections must not be null or empty.");
 		if(cmd == null)
 			throw new IllegalArgumentException("Given command must not be null.");
+		if(executionMap == null)
+			throw new IllegalArgumentException("Given execution map must not be null.");
 		
-		Hashtable<ServerConnection, ExecutionItem> mapping = new Hashtable<>();
+		executionMap.clear();
 		
 		for(ServerConnection s : servers) 
-			mapping.put(s, new ExecutionItem(new CommandMessage(cmd)));
-
-		return mapping;
+			executionMap.put(s, new ExecutionItem(new CommandMessage(cmd)));
 	}
 
 

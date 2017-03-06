@@ -1,4 +1,4 @@
-package lancs.dividend.oclBenchMapper;
+package lancs.dividend.oclBenchMapper.server;
 
 import java.io.IOException;
 import java.nio.file.Path;

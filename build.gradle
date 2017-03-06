@@ -27,6 +27,7 @@ repositories {
 dependencies {
 	testCompile 'org.testng:testng:6.9.13'
 	compile 'net.sourceforge.argparse4j:argparse4j:0.7.0'
+	compile 'org.knowm.xchart:xchart:3.2.2'
 }
 
 run {

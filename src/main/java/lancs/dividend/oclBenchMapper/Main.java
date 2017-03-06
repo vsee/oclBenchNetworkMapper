@@ -7,7 +7,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import lancs.dividend.oclBenchMapper.client.OclMapperClient;
 import lancs.dividend.oclBenchMapper.mapping.MapperFactory.MapperType;
+import lancs.dividend.oclBenchMapper.server.OclMapperServer;
+import lancs.dividend.oclBenchMapper.ui.UserInterfaceFactory.UserInterfaceType;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
@@ -17,9 +20,6 @@ import net.sourceforge.argparse4j.inf.Subparsers;
 
 public class Main {
 
-	// TODO constructor null checks for messages
-	// TODO clean up log and exception messages
-	
 	private enum ExecutionRole { CLIENT, SERVER };
 	
 	private static final int DEFAULT_PORT = 9090;
@@ -49,6 +49,8 @@ public class Main {
 	    clientParser.addArgument("-m","--mapperType")
 	    	.type(MapperType.class).help("Workload to server mapper used by the client.")
 	    	.setDefault(MapperType.FCFS);
+	    clientParser.addArgument("--gui").action(Arguments.storeTrue())
+			.help("Run the client with a graphical user interface.");
 
 	    
 	    Subparser serverParser = subparsers.addParser("server")
@@ -75,7 +77,8 @@ public class Main {
 		switch(role) {
 			case CLIENT:
 				try {
-					new OclMapperClient(ns.get("addressList"), ns.get("mapperType")).runClient();
+					new OclMapperClient(ns.get("addressList"), ns.get("mapperType"),
+							ns.getBoolean("gui") ? UserInterfaceType.GUI : UserInterfaceType.CONSOLE).runClient();
 				} catch (IOException e) {
 					throw new UncheckedIOException("ERROR: Connecting to server failed: ", e);
 				}
