@@ -15,7 +15,7 @@ import lancs.dividend.oclBenchMapper.utils.ShellCmdExecutor;
 
 public class RodiniaRunner {
 
-	public enum RodiniaBin { KMEANS, LUD }
+	public enum RodiniaBin { KMEANS }
 	public enum DataSetSize { SMALL, MEDIUM, LARGE }
 	
 	private final Path rodiniaHome;

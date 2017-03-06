@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 public class CSVResourceTools {
 
-	private static final char DEFAULT_SEPARATOR = ',';
+	public static final char DEFAULT_SEPARATOR = ',';
 
 	public static List<String> readHeader(Path source) throws IOException {
 		return readHeader(source, 0);

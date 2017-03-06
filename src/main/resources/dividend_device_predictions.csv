@@ -1,0 +1,4 @@
+RodiniaBin,DataSetSize,ExecutionDevice
+KMEANS,SMALL,CPU
+KMEANS,MEDIUM,GPU
+KMEANS,LARGE,GPU
