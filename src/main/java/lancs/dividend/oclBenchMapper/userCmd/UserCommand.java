@@ -12,9 +12,9 @@ public abstract class UserCommand implements Serializable {
 		/** Run the specified benchmark on server side and return results */
 		RUNBENCH
 	}
-	
+
 	protected CmdType type;
-	
+
 	public UserCommand(CmdType type) {
 		this.type = type;
 	}

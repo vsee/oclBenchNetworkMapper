@@ -9,17 +9,30 @@ public class RunBenchCmd extends UserCommand {
 
 	private static final long serialVersionUID = -8705036194082222085L;
 	
+	/** Specifies the execution device for a given benchmark */
+	public enum ExecutionDevice { CPU, GPU	}
+
+	private static final ExecutionDevice DEFAULT_EXEC_DEVICE = ExecutionDevice.CPU;
+	
 	private final RodiniaBin bin;
 	private final DataSetSize dsetSize;
+	private ExecutionDevice device;
 	
 	public RunBenchCmd(RodiniaBin benchBinary, DataSetSize datasetSize) {
 		super(CmdType.RUNBENCH);
 		bin = benchBinary;
 		dsetSize = datasetSize;
+		device = DEFAULT_EXEC_DEVICE;
 	}
 	
 	public RodiniaBin getBinaryName() { return bin; }
 	public DataSetSize getDataSetSize() { return dsetSize; }
+	public ExecutionDevice getExecutionDevice() { return device; }
+	
+	public void setExecutionDevice(ExecutionDevice d) {
+		if(d == null) throw new IllegalArgumentException("Given execution device must not be null.");
+		device = d;
+	}
 	
 	@Override
 	public String toString() {
@@ -27,6 +40,8 @@ public class RunBenchCmd extends UserCommand {
 			.add(type.name())
 			.add(bin.name())
 			.add(dsetSize.name())
+			.add(device.name())
 			.toString();
 	}
+
 }

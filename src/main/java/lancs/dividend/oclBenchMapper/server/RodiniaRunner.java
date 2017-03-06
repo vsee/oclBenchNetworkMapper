@@ -10,6 +10,7 @@ import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage.ResponseType;
+import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
 import lancs.dividend.oclBenchMapper.utils.ShellCmdExecutor;
 
 public class RodiniaRunner {
@@ -23,7 +24,7 @@ public class RodiniaRunner {
 		this.rodiniaHome = rodiniaHome;
 	}
 
-	public ResponseMessage run(RodiniaBin binary, DataSetSize dsetSize, boolean monitorEnergy) {
+	public ResponseMessage run(RodiniaBin binary, DataSetSize dsetSize, ExecutionDevice device, boolean monitorEnergy) {
 		
 		ResponseMessage response = null;
 		
@@ -41,7 +42,7 @@ public class RodiniaRunner {
 		
 		switch(binary) {
 			case KMEANS:
-				response = executeKmeans(execPrefix, dsetSize);
+				response = executeKmeans(execPrefix, dsetSize, device);
 				break;
 			default:
 				response = new ErrorResponseMessage("Rodinia benchmark binary not handled by server: " + binary.name());
@@ -74,11 +75,19 @@ public class RodiniaRunner {
 	private static final String KMEANS_MEDIUM_DSET = "../../data/kmeans/204800.txt";
 	private static final String KMEANS_LARGE_DSET = "../../data/kmeans/819200.txt";
 	
-	private ResponseMessage executeKmeans(String execPrefix, DataSetSize dsetSize) {
+	private static final String KMEANS_HOME_CPU = "opencl/kmeans_cpu";
+	private static final String KMEANS_HOME_GPU = "opencl/kmeans_gpu";
+	
+	private ResponseMessage executeKmeans(String execPrefix, DataSetSize dsetSize, ExecutionDevice device) {
 		StringBuilder cmdBld = new StringBuilder();
 		
 		// enter benchmark directory
-		Path kmeansDir = rodiniaHome.resolve("opencl/kmeans");
+		Path kmeansDir;
+		switch(device) {
+			case CPU: kmeansDir = rodiniaHome.resolve(KMEANS_HOME_CPU); break;
+			case GPU: kmeansDir = rodiniaHome.resolve(KMEANS_HOME_GPU); break;
+			default: return new ErrorResponseMessage("Unknown execution device: " + device);
+		}
 		cmdBld.append("cd ").append(kmeansDir).append(";");
 		
 		// energy profiling if activated

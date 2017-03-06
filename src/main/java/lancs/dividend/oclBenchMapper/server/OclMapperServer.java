@@ -101,12 +101,13 @@ public class OclMapperServer {
 	private ResponseMessage executeCmd(RunBenchCmd cmd) {
 		switch (cmd.getType()) {
 			case RUNBENCH:
-				System.out.println("Executing: " + cmd.getBinaryName() + " " + cmd.getDataSetSize());
+				System.out.println("Executing: " + cmd.getBinaryName() + " " + 
+						cmd.getDataSetSize() + " on " + cmd.getExecutionDevice());
 				
 				ResponseMessage result;
 				
 				if(!isDummyServer) {
-					result = rodinia.run(cmd.getBinaryName(), cmd.getDataSetSize(), true);
+					result = rodinia.run(cmd.getBinaryName(), cmd.getDataSetSize(), cmd.getExecutionDevice(), true);
 				}
 				else {
 					result = new BenchStatsResponseMessage("DUMMY EXECUTION");
