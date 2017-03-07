@@ -10,6 +10,7 @@ import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Random;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -17,6 +18,7 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingWorker;
 import javax.swing.border.TitledBorder;
 
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
@@ -43,8 +45,156 @@ public class ClientGui implements UserInterface {
 	// TODO clean up initialise
 	// TODO add graceful shutdown upon window close
 	
+	private enum ExecutionMode { MANUAL, AUTOMATIC }
+	
+	private class GraphUpdateStats {
+		public double energyJ;
+		public double runtimeMS;
+		
+		public GraphUpdateStats(double e, double r) {
+			energyJ = e;
+			runtimeMS = r;
+		}
+	}
+	
+	private class BenchmarkExecutionWorker extends SwingWorker<Integer,GraphUpdateStats> {
+		
+		@Override
+		protected Integer doInBackground() throws Exception {
+			// check run mode (automatic, manual)
+			// manual: get current config and execute once, then update status and return
+			// automatic: start a loop and generate random commands, as long as not cancelled, if cancelled wait for last to quit then end
+			
+			switch (activeMode) {
+				case MANUAL:
+		    		handleUserCmdGuiEffects(receiveCommand(false)); 
+					break;
+				case AUTOMATIC:
+					while(!isCancelled()) {
+			    		handleUserCmdGuiEffects(receiveCommand(true)); 
+					}
+					break;
+				default:
+					throw new RuntimeException("Unknown execution mode: " + activeMode);
+			}
+			
+			
+			return null;
+		}
+		
+		private UserCommand receiveCommand(boolean randomDataSize) {
+			Random rnd = new Random();
+			
+			RodiniaBin rbin = (RodiniaBin) bechcbox.getSelectedItem();
+			DataSetSize dsetSize;
+			if(!randomDataSize) dsetSize = (DataSetSize) datacbox.getSelectedItem();
+			else dsetSize = DataSetSize.values()[rnd.nextInt(DataSetSize.values().length)];
+				
+			return new RunBenchCmd(rbin, dsetSize);
+		}
+		
+		private void handleUserCmdGuiEffects(UserCommand cmd) {
+			assert cmdHandler != null : "Command handler must not be null at this point.";
+			Hashtable<ServerConnection, ExecutionItem> executionMap = new Hashtable<>();
+
+			if(!cmdHandler.handleUserCommand(cmd, executionMap)) {
+				if(cmd.getType() == CmdType.EXIT) {
+					JOptionPane.showMessageDialog(null, "Shutting down client.", 
+							"Exit", JOptionPane.INFORMATION_MESSAGE);
+				} else {
+					JOptionPane.showMessageDialog(null, "Server communication failed. Shutting Down client.", 
+							"Communication Error", JOptionPane.ERROR_MESSAGE);
+				}
+				frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+			}
+			
+			// TODO do something graphical about null returns
+			GraphUpdateStats gupdate = processServerResponse(executionMap, cmd);
+			if(gupdate != null) publish(gupdate);
+		}
+		
+		public GraphUpdateStats processServerResponse(Hashtable<ServerConnection, ExecutionItem> executionMap, UserCommand cmd) {
+			if(executionMap == null || executionMap.size() == 0)
+				throw new RuntimeException("Given execution map must not be null or empty.");
+			if(cmd == null)
+				throw new RuntimeException("Given user command must not be null.");
+			
+			boolean validResponse = true;
+			double totalEnergyJ = 0;
+			double totalRuntimeMS = 0;
+			for (ServerConnection s : executionMap.keySet()) {
+				ExecutionItem item = executionMap.get(s);
+
+				System.out.println("\nExecution result of server " + s);
+				System.out.println("Command:\n\t" + item.getCommand());
+				System.out.println("Response:");
+				
+				if(!item.resultsAvailable()) {
+					System.out.println("ERROR: No results received!");
+					validResponse = false;
+				} else {
+					ResponseMessage response = item.getResponse();
+					
+					switch (response.getType()) {
+					case TEXT:
+						System.out.println("\t" + ((TextResponseMessage) response).getText());
+						validResponse = false;
+						break;
+					case BENCHSTATS:
+						BenchStatsResponseMessage br = (BenchStatsResponseMessage) response;
+						System.out.println("### Execution standard output:\n" + br.getStdOut());
+						System.out.println("### Has Energy Log: " + br.hasEnergyLog());
+						
+						if(br.hasEnergyLog()) {
+							System.out.println("### Energy Log:");
+							System.out.println(br.getEnergyLog().getLogRecords().size() + " log entries found.");
+							System.out.println("### Energy: " + br.getEnergyLog().getEnergyJ() + " J");
+							System.out.println("### Runtime: " + br.getEnergyLog().getRuntimeMS() + " ms");
+						}
+						
+						totalEnergyJ += br.getEnergyLog().getEnergyJ();
+						totalRuntimeMS += br.getEnergyLog().getRuntimeMS();
+						break;
+					case ERROR:
+						System.err.println("\tERROR: " + ((ErrorResponseMessage) response).getText());
+						validResponse = false;
+						break;
+					default:
+						System.err.println("\tUnknown response type: " + response.getType());
+						validResponse = false;
+						break;
+					}
+				}
+			}
+
+			if(validResponse) return new GraphUpdateStats(totalEnergyJ, totalRuntimeMS);
+			else return null;
+		}
+		
+		@Override
+		protected void process(List<GraphUpdateStats> chunks) {
+			for (GraphUpdateStats update : chunks) {
+				iterationData.add(iteration++);
+				energyData.add(update.energyJ);
+				performanceData.add(update.runtimeMS);
+
+				energyChart.updateXYSeries("mapper", iterationData, energyData, null);
+				performanceChart.updateXYSeries("mapper", iterationData, performanceData, null);
+				eChartPanel.revalidate();
+				eChartPanel.repaint();
+				pChartPanel.revalidate();
+				pChartPanel.repaint();
+			}
+		}
+	}
+	
+	protected static final String AUTOMATIC_BTN_STOP_TEXT = "Stop Automatic";
+	protected static final String AUTOMATIC_BTN_START_TEXT = "Start Automatic";
+	
+	private ExecutionMode activeMode;
+	
 	private JFrame frame;
-	private JComboBox<RodiniaBin> workloadcbox;
+	private JComboBox<RodiniaBin> bechcbox;
 	private JComboBox<DataSetSize> datacbox;
 	private XChartPanel<XYChart> eChartPanel;
 	private XChartPanel<XYChart> pChartPanel;
@@ -54,6 +204,8 @@ public class ClientGui implements UserInterface {
 	
 	private ClientConnectionHandler cmdHandler;
 	
+	
+	
 	private double iteration = 0;
 	private final List<Double> energyData = new ArrayList<>();
 	private final List<Double> performanceData = new ArrayList<>();
@@ -62,6 +214,8 @@ public class ClientGui implements UserInterface {
 	public ClientGui() {
 		initialiseGraphs();
 		initialiseGui();
+		
+		activeMode = ExecutionMode.MANUAL;
 	}
 	
 	private void initialiseGraphs() {
@@ -84,6 +238,8 @@ public class ClientGui implements UserInterface {
 		energyChart.addSeries("mapper", iterationData, energyData);
 		performanceChart.addSeries("mapper", iterationData, performanceData);
 	}
+	
+	private BenchmarkExecutionWorker bexecWorker;
 
 	private void initialiseGui() {
 		frame = new JFrame();
@@ -113,9 +269,9 @@ public class ClientGui implements UserInterface {
 		gbc_controlpanel.gridy = 0;
 		frame.getContentPane().add(controlPanel, gbc_controlpanel);
 		
-		workloadcbox = new JComboBox<>();
-		workloadcbox.setModel(new DefaultComboBoxModel<>(RodiniaBin.values()));
-		controlPanel.add(workloadcbox);
+		bechcbox = new JComboBox<>();
+		bechcbox.setModel(new DefaultComboBoxModel<>(RodiniaBin.values()));
+		controlPanel.add(bechcbox);
 		
 		datacbox = new JComboBox<>();
 		datacbox.setModel(new DefaultComboBoxModel<>(DataSetSize.values()));
@@ -124,26 +280,41 @@ public class ClientGui implements UserInterface {
 		JButton btnRun = new JButton("run");
 		btnRun.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-	        	assert cmdHandler != null : "Command handler must not be null at this point.";
-				
-				UserCommand cmd = receiveCommand();
-				Hashtable<ServerConnection, ExecutionItem> executionMap = new Hashtable<>();
-
-				if(!cmdHandler.handleUserCommand(cmd, executionMap)) {
-					if(cmd.getType() == CmdType.EXIT) {
-						JOptionPane.showMessageDialog(null, "Shutting down client.", 
-								"Exit", JOptionPane.INFORMATION_MESSAGE);
-					} else {
-						JOptionPane.showMessageDialog(null, "Server communication failed. Shutting Down client.", 
-								"Communication Error", JOptionPane.ERROR_MESSAGE);
-					}
-					frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
-				}
-				
-				updateDisplay(executionMap, cmd);
+	    		assert activeMode == ExecutionMode.MANUAL : "Expected to be in manual execution mode when run button is used.";
+	    		if(bexecWorker == null || bexecWorker.isDone()) {
+		    		bexecWorker = new BenchmarkExecutionWorker();
+		    		bexecWorker.execute();	
+	    		}
 			}
 		});
 		controlPanel.add(btnRun);
+		
+		JButton btnAutomatic = new JButton(AUTOMATIC_BTN_START_TEXT);
+		btnAutomatic.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+				switch (activeMode) {
+					case MANUAL:
+						activeMode = ExecutionMode.AUTOMATIC;
+						btnRun.setEnabled(false);
+						datacbox.setEnabled(false);
+						btnAutomatic.setText(AUTOMATIC_BTN_STOP_TEXT);
+						break;
+					case AUTOMATIC:
+						activeMode = ExecutionMode.MANUAL;
+						btnRun.setEnabled(true);
+						datacbox.setEnabled(true);
+						btnAutomatic.setText(AUTOMATIC_BTN_START_TEXT);
+						break;
+					default:
+						throw new RuntimeException("Unknown execution mode: " + activeMode);
+				}
+				
+				
+			}
+		});
+		controlPanel.add(btnAutomatic);
+		
 
 		JPanel wlPanel = new JPanel();
 		wlPanel.setBorder(new TitledBorder(null, "Execution Statistics", TitledBorder.LEADING, TitledBorder.TOP, null, null));
@@ -192,84 +363,4 @@ public class ClientGui implements UserInterface {
 			}
 		});
 	}
-	
-	@Override
-	public UserCommand receiveCommand() {
-		RodiniaBin rbin = (RodiniaBin) workloadcbox.getSelectedItem();
-		DataSetSize dsetSize = (DataSetSize) datacbox.getSelectedItem();
-		return new RunBenchCmd(rbin, dsetSize);
-	}
-	
-	@Override
-	public void updateDisplay(
-			Hashtable<ServerConnection, ExecutionItem> executionMap, UserCommand cmd) {
-		if(executionMap == null || executionMap.size() == 0)
-			throw new RuntimeException("Given execution map must not be null or empty.");
-		if(cmd == null)
-			throw new RuntimeException("Given user command must not be null.");
-		
-		boolean validResponse = true;
-		double totalEnergyJ = 0;
-		double totalRuntimeMS = 0;
-		for (ServerConnection s : executionMap.keySet()) {
-			ExecutionItem item = executionMap.get(s);
-
-			System.out.println("\nExecution result of server " + s);
-			System.out.println("Command:\n\t" + item.getCommand());
-			System.out.println("Response:");
-			
-			if(!item.resultsAvailable()) {
-				System.out.println("ERROR: No results received!");
-				validResponse = false;
-			} else {
-				ResponseMessage response = item.getResponse();
-				
-				switch (response.getType()) {
-				case TEXT:
-					System.out.println("\t" + ((TextResponseMessage) response).getText());
-					validResponse = false;
-					break;
-				case BENCHSTATS:
-					BenchStatsResponseMessage br = (BenchStatsResponseMessage) response;
-					System.out.println("### Execution standard output:\n" + br.getStdOut());
-					System.out.println("### Has Energy Log: " + br.hasEnergyLog());
-					
-					if(br.hasEnergyLog()) {
-						System.out.println("### Energy Log:");
-						System.out.println(br.getEnergyLog().getLogRecords().size() + " log entries found.");
-						System.out.println("### Energy: " + br.getEnergyLog().getEnergyJ() + " J");
-						System.out.println("### Runtime: " + br.getEnergyLog().getRuntimeMS() + " ms");
-					}
-					
-					totalEnergyJ += br.getEnergyLog().getEnergyJ();
-					totalRuntimeMS += br.getEnergyLog().getRuntimeMS();
-					break;
-				case ERROR:
-					System.err.println("\tERROR: " + ((ErrorResponseMessage) response).getText());
-					validResponse = false;
-					break;
-				default:
-					System.err.println("\tUnknown response type: " + response.getType());
-					validResponse = false;
-					break;
-				}
-			}
-		}
-		
-		if(validResponse) updateGraphs(totalEnergyJ, totalRuntimeMS);
-	}
-	
-	private void updateGraphs(double energyJ, double runtimeMS) {
-		iterationData.add(iteration++);
-		energyData.add(energyJ);
-		performanceData.add(runtimeMS);
-		
-		energyChart.updateXYSeries("mapper", iterationData, energyData, null);
-		performanceChart.updateXYSeries("mapper", iterationData, performanceData, null);
-		eChartPanel.revalidate();
-		eChartPanel.repaint();
-		pChartPanel.revalidate();
-		pChartPanel.repaint();
-	}
-
 }

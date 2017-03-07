@@ -75,7 +75,6 @@ public class ClientConsoleInterface implements UserInterface {
 		cmdHandler.closeConnections();
 	}
 	
-	@Override
 	public UserCommand receiveCommand() {
 
 		while(true) {
@@ -134,7 +133,6 @@ public class ClientConsoleInterface implements UserInterface {
 		}
 	}
 	
-	@Override
 	public void updateDisplay(Hashtable<ServerConnection, ExecutionItem> executionMap, UserCommand cmd) {
 		if(executionMap == null || executionMap.size() == 0)
 			throw new RuntimeException("Given execution map must not be null or empty.");
