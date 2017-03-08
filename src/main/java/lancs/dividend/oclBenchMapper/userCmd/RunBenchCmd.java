@@ -19,12 +19,16 @@ public class RunBenchCmd extends UserCommand {
 	private ExecutionDevice device;
 	
 	public RunBenchCmd(RodiniaBin benchBinary, DataSetSize datasetSize) {
+		this(benchBinary, datasetSize, DEFAULT_EXEC_DEVICE);
+	}
+	
+	public RunBenchCmd(RodiniaBin benchBinary, DataSetSize datasetSize, ExecutionDevice execDev) {
 		super(CmdType.RUNBENCH);
 		bin = benchBinary;
 		dsetSize = datasetSize;
-		device = DEFAULT_EXEC_DEVICE;
+		device = execDev;
 	}
-	
+
 	public RodiniaBin getBinaryName() { return bin; }
 	public DataSetSize getDataSetSize() { return dsetSize; }
 	public ExecutionDevice getExecutionDevice() { return device; }

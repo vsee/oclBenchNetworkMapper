@@ -34,7 +34,7 @@ import lancs.dividend.oclBenchMapper.utils.CSVResourceTools;
  */
 public class PredictiveMapper implements WorkloadMapper {
 
-	private static final String EXPECTED_HEADER = "RodiniaBin" + CSVResourceTools.DEFAULT_SEPARATOR
+	public static final String EXPECTED_HEADER = "RodiniaBin" + CSVResourceTools.DEFAULT_SEPARATOR
 		+ "DataSetSize" + CSVResourceTools.DEFAULT_SEPARATOR + "ExecutionDevice";
 	private static final int HEADER_BIN_IDX = 0;
 	private static final int HEADER_DATA_IDX = 1;
