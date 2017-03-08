@@ -10,7 +10,6 @@ import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
-import lancs.dividend.oclBenchMapper.message.response.TextResponseMessage;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
 import lancs.dividend.oclBenchMapper.userCmd.ExitCmd;
@@ -68,7 +67,7 @@ public class ClientConsoleUi implements UserInterface {
 
 			if(!cmdHandler.handleUserCommand(cmd, executionMap)) break;
 			
-			updateDisplay(executionMap, cmd);
+			processServerResponse(executionMap, cmd);
 		}
 		
 		cmdIn.close();
@@ -133,7 +132,7 @@ public class ClientConsoleUi implements UserInterface {
 		}
 	}
 	
-	public void updateDisplay(Hashtable<ServerConnection, ExecutionItem> executionMap, UserCommand cmd) {
+	public void processServerResponse(Hashtable<ServerConnection, ExecutionItem> executionMap, UserCommand cmd) {
 		if(executionMap == null || executionMap.size() == 0)
 			throw new RuntimeException("Given execution map must not be null or empty.");
 		if(cmd == null)
@@ -155,28 +154,25 @@ public class ClientConsoleUi implements UserInterface {
 				ResponseMessage response = item.getResponse();
 				
 				switch (response.getType()) {
-				case TEXT:
-					System.out.println("\t" + ((TextResponseMessage) response).getText());
-					break;
-				case BENCHSTATS:
-					BenchStatsResponseMessage br = (BenchStatsResponseMessage) response;
-					System.out.println("### Execution standard output:\n" + br.getStdOut());
-					System.out.println("### Has Energy Log: " + br.hasEnergyLog());
-					
-					if(br.hasEnergyLog()) {
-						System.out.println("### Energy Log:");
-						System.out.println(br.getEnergyLog().getLogRecords().size() + " log entries found.");
-						System.out.println("### Energy: " + br.getEnergyLog().getEnergyJ() + " J");
-						System.out.println("### Runtime: " + br.getEnergyLog().getRuntimeMS() + " ms");
-					}
-					
-					break;
-				case ERROR:
-					System.err.println("\tERROR: " + ((ErrorResponseMessage) response).getText());
-					break;
-				default:
-					System.err.println("\tUnknown response type: " + response.getType());
-					break;
+					case BENCHSTATS:
+						BenchStatsResponseMessage br = (BenchStatsResponseMessage) response;
+						System.out.println("### Execution standard output:\n" + br.getStdOut());
+						System.out.println("### Has Energy Log: " + br.hasEnergyLog());
+						
+						if(br.hasEnergyLog()) {
+							System.out.println("### Energy Log:");
+							System.out.println(br.getEnergyLog().getLogRecords().size() + " log entries found.");
+							System.out.println("### Energy: " + br.getEnergyLog().getEnergyJ() + " J");
+							System.out.println("### Runtime: " + br.getEnergyLog().getRuntimeMS() + " ms");
+						}
+						
+						break;
+					case ERROR:
+						System.err.println("\tERROR: " + ((ErrorResponseMessage) response).getText());
+						break;
+					default:
+						System.err.println("\tUnknown response type: " + response.getType());
+						break;
 				}
 			}
 		}
