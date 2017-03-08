@@ -25,7 +25,7 @@ import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
  * @author vseeker
  *
  */
-public class ClientConsoleInterface implements UserInterface {
+public class ClientConsoleUi implements UserInterface {
 
 	private final String EXIT_CMD = "exit";
 	private final String BENCHMARK_LIST;
@@ -37,7 +37,7 @@ public class ClientConsoleInterface implements UserInterface {
 	
 	private final Scanner cmdIn;
 
-	public ClientConsoleInterface() {
+	public ClientConsoleUi() {
         cmdIn = new Scanner(System.in);
 
 		// Generate menu strings

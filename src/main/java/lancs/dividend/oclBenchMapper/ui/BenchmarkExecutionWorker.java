@@ -74,7 +74,7 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, GraphUpdateSt
 	private UserCommand receiveCommand(boolean randomDataSize) {
 		Random rnd = new Random();
 		
-		RodiniaBin rbin = (RodiniaBin) gui.bechcbox.getSelectedItem();
+		RodiniaBin rbin = (RodiniaBin) gui.benchcbox.getSelectedItem();
 		DataSetSize dsetSize;
 		if(!randomDataSize) dsetSize = (DataSetSize) gui.datacbox.getSelectedItem();
 		else dsetSize = DataSetSize.values()[rnd.nextInt(DataSetSize.values().length)];
