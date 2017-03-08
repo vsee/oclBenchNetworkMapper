@@ -18,6 +18,13 @@ public class RodiniaRunner {
 	public enum RodiniaBin { KMEANS }
 	public enum DataSetSize { SMALL, MEDIUM, LARGE }
 	
+	private static final String KMEANS_SMALL_DSET = "../../data/kmeans/100";
+	private static final String KMEANS_MEDIUM_DSET = "../../data/kmeans/204800.txt";
+	private static final String KMEANS_LARGE_DSET = "../../data/kmeans/819200.txt";
+	
+	private static final String KMEANS_HOME_CPU = "opencl/kmeans_cpu";
+	private static final String KMEANS_HOME_GPU = "opencl/kmeans_gpu";
+	
 	private final Path rodiniaHome;
 	
 	public RodiniaRunner(Path rodiniaHome) {
@@ -69,14 +76,6 @@ public class RodiniaRunner {
 		
 		return response;
 	}
-
-	
-	private static final String KMEANS_SMALL_DSET = "../../data/kmeans/100";
-	private static final String KMEANS_MEDIUM_DSET = "../../data/kmeans/204800.txt";
-	private static final String KMEANS_LARGE_DSET = "../../data/kmeans/819200.txt";
-	
-	private static final String KMEANS_HOME_CPU = "opencl/kmeans_cpu";
-	private static final String KMEANS_HOME_GPU = "opencl/kmeans_gpu";
 	
 	private ResponseMessage executeKmeans(String execPrefix, DataSetSize dsetSize, ExecutionDevice device) {
 		StringBuilder cmdBld = new StringBuilder();

@@ -34,7 +34,7 @@ import lancs.dividend.oclBenchMapper.utils.CSVResourceTools;
  */
 public class PredictiveMapper implements WorkloadMapper {
 
-	private static final String EXPECTED_HEADER = "RodiniaBin" + CSVResourceTools.DEFAULT_SEPARATOR
+	public static final String EXPECTED_HEADER = "RodiniaBin" + CSVResourceTools.DEFAULT_SEPARATOR
 		+ "DataSetSize" + CSVResourceTools.DEFAULT_SEPARATOR + "ExecutionDevice";
 	private static final int HEADER_BIN_IDX = 0;
 	private static final int HEADER_DATA_IDX = 1;
@@ -43,13 +43,14 @@ public class PredictiveMapper implements WorkloadMapper {
 	
 	private final Hashtable<RodiniaBin, Hashtable<DataSetSize, ExecutionDevice>> preDeviceMapping;
 	
-	public PredictiveMapper(Path mappingPrecomputation) {
-		preDeviceMapping = parsePrecomputedMapping(mappingPrecomputation);
+	public PredictiveMapper(PredictiveMapperConfig config) {
+		preDeviceMapping = parsePrecomputedMapping(config.mappingPrecompute);
 	}
 	
 	private Hashtable<RodiniaBin, Hashtable<DataSetSize, ExecutionDevice>> parsePrecomputedMapping(
-			Path mappingPrecomputation) {
-		if (!mappingPrecomputation.toFile().exists() || 
+			Path mappingPrecomputation) {		
+		if (mappingPrecomputation == null ||
+			!mappingPrecomputation.toFile().exists() || 
 			!mappingPrecomputation.toFile().isFile() || 
 			!mappingPrecomputation.toFile().canRead())
 				throw new IllegalArgumentException("Error file with precomputed mappings not found: " + mappingPrecomputation);

@@ -14,27 +14,25 @@ import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
-import lancs.dividend.oclBenchMapper.message.response.TextResponseMessage;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
-import lancs.dividend.oclBenchMapper.ui.BenchmarkExecutionWorker.GraphUpdateStats;
+import lancs.dividend.oclBenchMapper.ui.BenchmarkExecutionWorker.GraphUpdate;
 import lancs.dividend.oclBenchMapper.ui.GuiModel.ExecutionMode;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand.CmdType;
 
-public class BenchmarkExecutionWorker extends SwingWorker<Integer, GraphUpdateStats> {
-	
-	public class GraphUpdateStats {
+public class BenchmarkExecutionWorker extends SwingWorker<Integer, GraphUpdate> {
+
+	public class GraphUpdate {
 		public double energyJ;
 		public double runtimeMS;
 		
-		public GraphUpdateStats(double e, double r) {
+		public GraphUpdate(double e, double r) {
 			energyJ = e;
 			runtimeMS = r;
 		}
 	}
-	
 	
 	private AtomicBoolean endAutoMode;
 	private GuiModel gui;
@@ -74,7 +72,7 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, GraphUpdateSt
 	private UserCommand receiveCommand(boolean randomDataSize) {
 		Random rnd = new Random();
 		
-		RodiniaBin rbin = (RodiniaBin) gui.bechcbox.getSelectedItem();
+		RodiniaBin rbin = (RodiniaBin) gui.benchcbox.getSelectedItem();
 		DataSetSize dsetSize;
 		if(!randomDataSize) dsetSize = (DataSetSize) gui.datacbox.getSelectedItem();
 		else dsetSize = DataSetSize.values()[rnd.nextInt(DataSetSize.values().length)];
@@ -98,11 +96,11 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, GraphUpdateSt
 		}
 		
 		// TODO do something graphical about null returns
-		GraphUpdateStats gupdate = processServerResponse(executionMap, cmd);
+		GraphUpdate gupdate = processServerResponse(executionMap, cmd);
 		if(gupdate != null) publish(gupdate);
 	}
 	
-	public GraphUpdateStats processServerResponse(Hashtable<ServerConnection, ExecutionItem> executionMap, UserCommand cmd) {
+	public GraphUpdate processServerResponse(Hashtable<ServerConnection, ExecutionItem> executionMap, UserCommand cmd) {
 		if(executionMap == null || executionMap.size() == 0)
 			throw new RuntimeException("Given execution map must not be null or empty.");
 		if(cmd == null)
@@ -125,44 +123,40 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, GraphUpdateSt
 				ResponseMessage response = item.getResponse();
 				
 				switch (response.getType()) {
-				case TEXT:
-					System.out.println("\t" + ((TextResponseMessage) response).getText());
-					validResponse = false;
-					break;
-				case BENCHSTATS:
-					BenchStatsResponseMessage br = (BenchStatsResponseMessage) response;
-					System.out.println("### Execution standard output:\n" + br.getStdOut());
-					System.out.println("### Has Energy Log: " + br.hasEnergyLog());
-					
-					if(br.hasEnergyLog()) {
-						System.out.println("### Energy Log:");
-						System.out.println(br.getEnergyLog().getLogRecords().size() + " log entries found.");
-						System.out.println("### Energy: " + br.getEnergyLog().getEnergyJ() + " J");
-						System.out.println("### Runtime: " + br.getEnergyLog().getRuntimeMS() + " ms");
-					}
-					
-					totalEnergyJ += br.getEnergyLog().getEnergyJ();
-					totalRuntimeMS += br.getEnergyLog().getRuntimeMS();
-					break;
-				case ERROR:
-					System.err.println("\tERROR: " + ((ErrorResponseMessage) response).getText());
-					validResponse = false;
-					break;
-				default:
-					System.err.println("\tUnknown response type: " + response.getType());
-					validResponse = false;
-					break;
+					case BENCHSTATS:
+						BenchStatsResponseMessage br = (BenchStatsResponseMessage) response;
+						System.out.println("### Execution standard output:\n" + br.getStdOut());
+						System.out.println("### Has Energy Log: " + br.hasEnergyLog());
+						
+						if(br.hasEnergyLog()) {
+							System.out.println("### Energy Log:");
+							System.out.println(br.getEnergyLog().getLogRecords().size() + " log entries found.");
+							System.out.println("### Energy: " + br.getEnergyLog().getEnergyJ() + " J");
+							System.out.println("### Runtime: " + br.getEnergyLog().getRuntimeMS() + " ms");
+						}
+						
+						totalEnergyJ += br.getEnergyLog().getEnergyJ();
+						totalRuntimeMS += br.getEnergyLog().getRuntimeMS();
+						break;
+					case ERROR:
+						System.err.println("\tERROR: " + ((ErrorResponseMessage) response).getText());
+						validResponse = false;
+						break;
+					default:
+						System.err.println("\tUnknown response type: " + response.getType());
+						validResponse = false;
+						break;
 				}
 			}
 		}
 
-		if(validResponse) return new GraphUpdateStats(totalEnergyJ, totalRuntimeMS);
+		if(validResponse) return new GraphUpdate(totalEnergyJ, totalRuntimeMS);
 		else return null;
 	}
 	
 	@Override
-	protected void process(List<GraphUpdateStats> chunks) {
-		for (GraphUpdateStats update : chunks) {
+	protected void process(List<GraphUpdate> chunks) {
+		for (GraphUpdate update : chunks) {
 			gui.iterationData.add(gui.iteration++);
 			gui.energyData.add(update.energyJ);
 			gui.performanceData.add(update.runtimeMS);

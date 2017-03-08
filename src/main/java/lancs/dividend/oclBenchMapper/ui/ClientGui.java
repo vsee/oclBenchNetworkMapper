@@ -28,7 +28,6 @@ import org.knowm.xchart.style.Styler.LegendPosition;
 
 public class ClientGui implements UserInterface {
 
-	// TODO clean up initialise
 	// TODO add graceful shutdown upon window close
 	
 	private GuiModel gui;
@@ -92,9 +91,9 @@ public class ClientGui implements UserInterface {
 		gbc_controlpanel.gridy = 0;
 		gui.frame.getContentPane().add(controlPanel, gbc_controlpanel);
 		
-		gui.bechcbox = new JComboBox<>();
-		gui.bechcbox.setModel(new DefaultComboBoxModel<>(RodiniaBin.values()));
-		controlPanel.add(gui.bechcbox);
+		gui.benchcbox = new JComboBox<>();
+		gui.benchcbox.setModel(new DefaultComboBoxModel<>(RodiniaBin.values()));
+		controlPanel.add(gui.benchcbox);
 		
 		gui.datacbox = new JComboBox<>();
 		gui.datacbox.setModel(new DefaultComboBoxModel<>(DataSetSize.values()));

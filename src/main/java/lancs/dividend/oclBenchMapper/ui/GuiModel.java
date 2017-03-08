@@ -28,7 +28,7 @@ public class GuiModel {
 	protected ExecutionMode activeMode;
 	
 	protected JFrame frame;
-	protected JComboBox<RodiniaBin> bechcbox;
+	protected JComboBox<RodiniaBin> benchcbox;
 	protected JComboBox<DataSetSize> datacbox;
 	protected XChartPanel<XYChart> eChartPanel;
 	protected XChartPanel<XYChart> pChartPanel;

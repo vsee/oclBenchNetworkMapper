@@ -5,8 +5,6 @@ import lancs.dividend.oclBenchMapper.message.Message;
 public abstract class ResponseMessage extends Message {
 
 	public enum ResponseType { 
-		/** Response containing plain text */
-		TEXT,
 		/** Response containing benchmark results */
 		BENCHSTATS,
 		/** Server reports an error */

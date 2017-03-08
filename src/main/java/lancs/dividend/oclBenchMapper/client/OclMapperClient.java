@@ -5,12 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lancs.dividend.oclBenchMapper.connection.ServerConnection;
-import lancs.dividend.oclBenchMapper.mapping.MapperFactory;
-import lancs.dividend.oclBenchMapper.mapping.MapperFactory.MapperType;
 import lancs.dividend.oclBenchMapper.mapping.WorkloadMapper;
 import lancs.dividend.oclBenchMapper.ui.UserInterface;
-import lancs.dividend.oclBenchMapper.ui.UserInterfaceFactory;
-import lancs.dividend.oclBenchMapper.ui.UserInterfaceFactory.UserInterfaceType;
 
 public class OclMapperClient {
 	
@@ -19,14 +15,16 @@ public class OclMapperClient {
 	private final UserInterface ui;
 
 	
-	public OclMapperClient(List<String> serverAddresses, MapperType mapper, UserInterfaceType uiType) throws IOException {
+	public OclMapperClient(List<String> serverAddresses, WorkloadMapper mapper, UserInterface ui) throws IOException {
 		if(serverAddresses == null || serverAddresses.size() == 0)
 			throw new IllegalArgumentException("Given server address list must not be empty.");
 		if(mapper == null)
-			throw new IllegalArgumentException("Given mapper type must not be null.");
+			throw new IllegalArgumentException("Given mapper must not be null.");
+		if(ui == null)
+			throw new IllegalArgumentException("Given ui must not be null.");
 		
-		wlMap = MapperFactory.createWorkloadMapper(mapper);
-		ui = UserInterfaceFactory.createUserInterface(uiType);
+		wlMap = mapper;
+		this.ui = ui;
 		
 		servers = new ArrayList<>(serverAddresses.size());
 		connectToClients(serverAddresses);
