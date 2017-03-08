@@ -1,5 +1,10 @@
 package lancs.dividend.oclBenchMapper.ui;
 
+import lancs.dividend.oclBenchMapper.ui.console.ClientConsoleUi;
+import lancs.dividend.oclBenchMapper.ui.console.ClientNiConsoleUi;
+import lancs.dividend.oclBenchMapper.ui.console.NiConsoleConfig;
+import lancs.dividend.oclBenchMapper.ui.gui.ClientGui;
+
 public final class UserInterfaceFactory {
 	
 	public enum UserInterfaceType { CONSOLE, GUI, NICONSOLE }

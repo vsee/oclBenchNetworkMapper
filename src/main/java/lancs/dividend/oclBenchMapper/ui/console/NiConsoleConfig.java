@@ -1,4 +1,4 @@
-package lancs.dividend.oclBenchMapper.ui;
+package lancs.dividend.oclBenchMapper.ui.console;
 
 import java.nio.file.Path;
 

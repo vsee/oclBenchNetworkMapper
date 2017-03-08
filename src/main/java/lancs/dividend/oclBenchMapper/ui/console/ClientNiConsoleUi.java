@@ -1,4 +1,4 @@
-package lancs.dividend.oclBenchMapper.ui;
+package lancs.dividend.oclBenchMapper.ui.console;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -18,6 +18,7 @@ import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
+import lancs.dividend.oclBenchMapper.ui.UserInterface;
 import lancs.dividend.oclBenchMapper.userCmd.ExitCmd;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;

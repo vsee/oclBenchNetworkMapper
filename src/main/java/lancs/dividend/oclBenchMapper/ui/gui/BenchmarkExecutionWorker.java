@@ -1,4 +1,4 @@
-package lancs.dividend.oclBenchMapper.ui;
+package lancs.dividend.oclBenchMapper.ui.gui;
 
 import java.awt.event.WindowEvent;
 import java.util.Hashtable;
@@ -16,8 +16,8 @@ import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
-import lancs.dividend.oclBenchMapper.ui.BenchmarkExecutionWorker.GraphUpdate;
-import lancs.dividend.oclBenchMapper.ui.GuiModel.ExecutionMode;
+import lancs.dividend.oclBenchMapper.ui.gui.BenchmarkExecutionWorker.GraphUpdate;
+import lancs.dividend.oclBenchMapper.ui.gui.GuiModel.ExecutionMode;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand.CmdType;
@@ -157,12 +157,15 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, GraphUpdate> 
 	@Override
 	protected void process(List<GraphUpdate> chunks) {
 		for (GraphUpdate update : chunks) {
+			
 			gui.iterationData.add(gui.iteration++);
-			gui.energyData.add(update.energyJ);
-			gui.performanceData.add(update.runtimeMS);
+			if(gui.iterationData.size() > GuiModel.MAX_ITERATION_DISPLAY)
+				gui.iterationData.remove(0);
+			
+			gui.mapperSeries.addData(update.energyJ, update.runtimeMS);
 
-			gui.energyChart.updateXYSeries("mapper", gui.iterationData, gui.energyData, null);
-			gui.performanceChart.updateXYSeries("mapper", gui.iterationData, gui.performanceData, null);
+			gui.energyChart.updateXYSeries("mapper", gui.iterationData, gui.mapperSeries.energyData, null);
+			gui.performanceChart.updateXYSeries("mapper", gui.iterationData, gui.mapperSeries.performanceData, null);
 			gui.eChartPanel.revalidate();
 			gui.eChartPanel.repaint();
 			gui.pChartPanel.revalidate();

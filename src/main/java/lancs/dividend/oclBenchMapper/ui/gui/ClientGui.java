@@ -1,4 +1,4 @@
-package lancs.dividend.oclBenchMapper.ui;
+package lancs.dividend.oclBenchMapper.ui.gui;
 
 import java.awt.EventQueue;
 import java.awt.GridBagConstraints;
@@ -18,7 +18,8 @@ import javax.swing.border.TitledBorder;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
-import lancs.dividend.oclBenchMapper.ui.GuiModel.ExecutionMode;
+import lancs.dividend.oclBenchMapper.ui.UserInterface;
+import lancs.dividend.oclBenchMapper.ui.gui.GuiModel.ExecutionMode;
 
 import org.knowm.xchart.XChartPanel;
 import org.knowm.xchart.XYChart;
@@ -47,20 +48,17 @@ public class ClientGui implements UserInterface {
 				.xAxisTitle("Iteration").yAxisTitle("Energy in Joules").build();
 		gui.energyChart.getStyler().setLegendPosition(LegendPosition.InsideNE);
 		gui.energyChart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
-		gui.energyChart.getStyler().setXAxisMin(0.0);
 		
 		gui.performanceChart = new XYChartBuilder().width(600).height(400).title("Performance")
 				.xAxisTitle("Iteration").yAxisTitle("Execution Time in ms").build();
 		gui.performanceChart.getStyler().setLegendPosition(LegendPosition.InsideNE);
 		gui.performanceChart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
-		gui.performanceChart.getStyler().setXAxisMin(0.0);
 		
-		gui.energyData.add(0.0);
-		gui.performanceData.add(0.0);
+		gui.mapperSeries.addData(0.0, 0.0);
 		gui.iterationData.add(gui.iteration++);
 		
-		gui.energyChart.addSeries("mapper", gui.iterationData, gui.energyData);
-		gui.performanceChart.addSeries("mapper", gui.iterationData, gui.performanceData);
+		gui.energyChart.addSeries("mapper", gui.iterationData, gui.mapperSeries.energyData);
+		gui.performanceChart.addSeries("mapper", gui.iterationData, gui.mapperSeries.performanceData);
 	}
 
 	private void initialiseGui() {

@@ -1,6 +1,7 @@
-package lancs.dividend.oclBenchMapper.ui;
+package lancs.dividend.oclBenchMapper.ui.gui;
 
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -10,6 +11,7 @@ import javax.swing.JFrame;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
+import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
 
 import org.knowm.xchart.XChartPanel;
 import org.knowm.xchart.XYChart;
@@ -24,6 +26,8 @@ public class GuiModel {
 	
 	protected static final String RUN_BTN_RUN_TEXT = "Run";
 	protected static final String RUN_BTN_RUNNING_TEXT = "Running";
+
+	protected static final int MAX_ITERATION_DISPLAY = 10;
 	
 	protected ExecutionMode activeMode;
 	
@@ -42,8 +46,8 @@ public class GuiModel {
 	protected ClientConnectionHandler cmdHandler;
 	
 	protected double iteration = 0;
-	protected final List<Double> energyData = new ArrayList<>();
-	protected final List<Double> performanceData = new ArrayList<>();
 	protected final List<Double> iterationData = new ArrayList<>();
 	
+	protected GraphSeriesData mapperSeries = new GraphSeriesData();
+	protected Hashtable<String, Hashtable<ExecutionDevice, GraphSeriesData>> alternativeSeries = new Hashtable<>();
 }
