@@ -16,24 +16,14 @@ import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
-import lancs.dividend.oclBenchMapper.ui.gui.BenchmarkExecutionWorker.GraphUpdate;
 import lancs.dividend.oclBenchMapper.ui.gui.GuiModel.ExecutionMode;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
+import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand.CmdType;
 
-public class BenchmarkExecutionWorker extends SwingWorker<Integer, GraphUpdate> {
+public class BenchmarkExecutionWorker extends SwingWorker<Integer, Hashtable<String, GraphUpdate>> {
 
-	public class GraphUpdate {
-		public double energyJ;
-		public double runtimeMS;
-		
-		public GraphUpdate(double e, double r) {
-			energyJ = e;
-			runtimeMS = r;
-		}
-	}
-	
 	private AtomicBoolean endAutoMode;
 	private GuiModel gui;
 	
@@ -96,22 +86,24 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, GraphUpdate> 
 		}
 		
 		// TODO do something graphical about null returns
-		GraphUpdate gupdate = processServerResponse(executionMap, cmd);
-		if(gupdate != null) publish(gupdate);
+		 Hashtable<String, GraphUpdate> gupdates = processServerResponse(executionMap, cmd);
+		if(gupdates != null) publish(gupdates);
 	}
 	
-	public GraphUpdate processServerResponse(Hashtable<ServerConnection, ExecutionItem> executionMap, UserCommand cmd) {
+	public Hashtable<String, GraphUpdate> processServerResponse(
+			Hashtable<ServerConnection, ExecutionItem> executionMap, UserCommand cmd) {
 		if(executionMap == null || executionMap.size() == 0)
 			throw new RuntimeException("Given execution map must not be null or empty.");
 		if(cmd == null)
 			throw new RuntimeException("Given user command must not be null.");
 		
 		boolean validResponse = true;
-		double totalEnergyJ = 0;
-		double totalRuntimeMS = 0;
+		Hashtable<String, GraphUpdate> seriesUpdates = new Hashtable<>();
+		for(String name : gui.series.keySet()) seriesUpdates.put(name, new GraphUpdate(0, 0));
+		
 		for (ServerConnection s : executionMap.keySet()) {
 			ExecutionItem item = executionMap.get(s);
-
+			
 			System.out.println("\nExecution result of server " + s);
 			System.out.println("Command:\n\t" + item.getCommand());
 			System.out.println("Response:");
@@ -124,6 +116,7 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, GraphUpdate> 
 				
 				switch (response.getType()) {
 					case BENCHSTATS:
+						RunBenchCmd bcmd = (RunBenchCmd) cmd;
 						BenchStatsResponseMessage br = (BenchStatsResponseMessage) response;
 						System.out.println("### Execution standard output:\n" + br.getStdOut());
 						System.out.println("### Has Energy Log: " + br.hasEnergyLog());
@@ -135,8 +128,26 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, GraphUpdate> 
 							System.out.println("### Runtime: " + br.getEnergyLog().getRuntimeMS() + " ms");
 						}
 						
-						totalEnergyJ += br.getEnergyLog().getEnergyJ();
-						totalRuntimeMS += br.getEnergyLog().getRuntimeMS();
+						// save energy and runtime results for each graph series
+						// consider measured results for the mapper series
+						// and precomputations for the alternative ones
+						for(String name : seriesUpdates.keySet()) {
+							GraphUpdate update = seriesUpdates.get(name);
+							
+							if(name.equals(GuiModel.GRAPH_SERIES_NAME_MAPPER)) {
+								update.energyJ += br.getEnergyLog().getEnergyJ();
+								update.runtimeMS += br.getEnergyLog().getRuntimeMS();
+							} else {
+								// get fixed mapping
+								ExecutionDevice device = gui.series.get(name).fixedMapping.get(s.getAddress());
+								if(device != null) {
+									update.energyJ += gui.serverExecStats.get(bcmd.getBinaryName())
+											.get(bcmd.getDataSetSize()).get(device).energyJ;
+									update.runtimeMS += gui.serverExecStats.get(bcmd.getBinaryName())
+											.get(bcmd.getDataSetSize()).get(device).runtimeMS;
+								}
+							}
+						}
 						break;
 					case ERROR:
 						System.err.println("\tERROR: " + ((ErrorResponseMessage) response).getText());
@@ -150,22 +161,28 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, GraphUpdate> 
 			}
 		}
 
-		if(validResponse) return new GraphUpdate(totalEnergyJ, totalRuntimeMS);
+		if(validResponse) return seriesUpdates;
 		else return null;
 	}
 	
 	@Override
-	protected void process(List<GraphUpdate> chunks) {
-		for (GraphUpdate update : chunks) {
+	protected void process(List<Hashtable<String, GraphUpdate>> chunks) {
+		for (Hashtable<String, GraphUpdate> updates : chunks) {
 			
 			gui.iterationData.add(gui.iteration++);
 			if(gui.iterationData.size() > GuiModel.MAX_ITERATION_DISPLAY)
 				gui.iterationData.remove(0);
 			
-			gui.mapperSeries.addData(update.energyJ, update.runtimeMS);
+			// update all series registered in the charts with presented data
+			for (String	seriesName : updates.keySet()) {
+				GraphSeriesData sdata = gui.series.get(seriesName);
+				GraphUpdate supdate = updates.get(seriesName);
+				sdata.addData(supdate.energyJ, supdate.runtimeMS);
+				
+				gui.energyChart.updateXYSeries(seriesName, gui.iterationData, sdata.energyData, null);
+				gui.performanceChart.updateXYSeries(seriesName, gui.iterationData, sdata.performanceData, null);
+			}
 
-			gui.energyChart.updateXYSeries("mapper", gui.iterationData, gui.mapperSeries.energyData, null);
-			gui.performanceChart.updateXYSeries("mapper", gui.iterationData, gui.mapperSeries.performanceData, null);
 			gui.eChartPanel.revalidate();
 			gui.eChartPanel.repaint();
 			gui.pChartPanel.revalidate();

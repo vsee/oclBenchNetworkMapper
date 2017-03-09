@@ -37,6 +37,10 @@ public class ServerConnection extends ConnectionHandler {
 		return serverAddress;
 	}
 	
+	public String getAddress() {
+		return serverAddress;
+	}
+	
 	public ResponseMessage waitForCmdResponse() throws IOException {
 		if(!isConnected()) 
 			throw new RuntimeException("Established connection needed before messages can be received.");
@@ -51,4 +55,5 @@ public class ServerConnection extends ConnectionHandler {
 			throw new IOException("ERROR: Reading server response failed.", e);
 		}
 	}
+
 }

@@ -1,6 +1,5 @@
 package lancs.dividend.oclBenchMapper.ui.gui;
 
-import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
@@ -17,7 +16,7 @@ import org.knowm.xchart.XChartPanel;
 import org.knowm.xchart.XYChart;
 
 public class GuiModel {
-
+	
 	public enum ExecutionMode { MANUAL, AUTOMATIC }
 	
 	protected static final String AUTOMATIC_BTN_STOP_TEXT = "Stop Automatic";
@@ -27,6 +26,7 @@ public class GuiModel {
 	protected static final String RUN_BTN_RUN_TEXT = "Run";
 	protected static final String RUN_BTN_RUNNING_TEXT = "Running";
 
+	protected static final String GRAPH_SERIES_NAME_MAPPER = "mapper";
 	protected static final int MAX_ITERATION_DISPLAY = 10;
 	
 	protected ExecutionMode activeMode;
@@ -44,10 +44,11 @@ public class GuiModel {
 	protected JButton btnAutomatic;
 	
 	protected ClientConnectionHandler cmdHandler;
+	protected String[] serverAdresses;
+
+	protected Hashtable<RodiniaBin, Hashtable<DataSetSize, Hashtable<ExecutionDevice, GraphUpdate>>> serverExecStats;
 	
-	protected double iteration = 0;
-	protected final List<Double> iterationData = new ArrayList<>();
-	
-	protected GraphSeriesData mapperSeries = new GraphSeriesData();
-	protected Hashtable<String, Hashtable<ExecutionDevice, GraphSeriesData>> alternativeSeries = new Hashtable<>();
+	protected double iteration;
+	protected List<Double> iterationData;
+	protected Hashtable<String, GraphSeriesData> series;
 }

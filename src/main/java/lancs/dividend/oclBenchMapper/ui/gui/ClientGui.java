@@ -7,6 +7,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.List;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -19,7 +25,10 @@ import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
 import lancs.dividend.oclBenchMapper.ui.UserInterface;
+import lancs.dividend.oclBenchMapper.ui.console.ClientNiConsoleUi;
 import lancs.dividend.oclBenchMapper.ui.gui.GuiModel.ExecutionMode;
+import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
+import lancs.dividend.oclBenchMapper.utils.CSVResourceTools;
 
 import org.knowm.xchart.XChartPanel;
 import org.knowm.xchart.XYChart;
@@ -29,21 +38,76 @@ import org.knowm.xchart.style.Styler.LegendPosition;
 
 public class ClientGui implements UserInterface {
 
+	// TODO clean up file parsing
 	// TODO add graceful shutdown upon window close
+	
+	private static final int HEADER_STATS_BIN_IDX = 0;
+	private static final int HEADER_STATS_DATA_IDX = 1;
+	private static final int HEADER_STATS_DEVICE_IDX = 2;
+	private static final int HEADER_STATS_ENERGY_IDX = 3;
+	private static final int HEADER_STATS_RUNTIME_IDX = 4;
 	
 	private GuiModel gui;
 	private BenchmarkExecutionWorker bexecWorker;
 	
-	public ClientGui() {
+	public ClientGui(ClientGuiConfig config) {
 		gui = new GuiModel();
 		
-		initialiseGraphs();
+		gui.serverExecStats = parseExecutionStats(config.executionStatFile);
+		
+		initialiseCharts();
 		initialiseGui();
 		
 		gui.activeMode = ExecutionMode.MANUAL;
 	}
 	
-	private void initialiseGraphs() {
+	private Hashtable<RodiniaBin, Hashtable<DataSetSize, Hashtable<ExecutionDevice, GraphUpdate>>> parseExecutionStats(
+			Path executionStatFile) {
+		
+		Hashtable<RodiniaBin, Hashtable<DataSetSize, Hashtable<ExecutionDevice, GraphUpdate>>> res = new Hashtable<>();
+		checkHeader(executionStatFile);
+		
+		List<List<String>> recs = null;
+		try {
+			recs = CSVResourceTools.readRecords(executionStatFile);
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+		
+		for (List<String> record : recs) {
+			RodiniaBin rbin = RodiniaBin.valueOf(record.get(HEADER_STATS_BIN_IDX));
+			DataSetSize data = DataSetSize.valueOf(record.get(HEADER_STATS_DATA_IDX));
+			ExecutionDevice dev = ExecutionDevice.valueOf(record.get(HEADER_STATS_DEVICE_IDX));
+			double avg_energyJ = Double.valueOf(record.get(HEADER_STATS_ENERGY_IDX));
+			double avg_runtimeMS = Double.valueOf(record.get(HEADER_STATS_RUNTIME_IDX));
+			
+			if(!res.containsKey(rbin))
+				res.put(rbin, new Hashtable<>());
+			if(!res.get(rbin).containsKey(data))
+				res.get(rbin).put(data, new Hashtable<>());
+			
+			res.get(rbin).get(data).put(dev, new GraphUpdate(avg_energyJ, avg_runtimeMS));
+		}
+		
+		System.out.println("Successfully parsed " + recs.size() + " execution statistics from " + executionStatFile);
+		return res;
+	}
+	
+	private void checkHeader(Path executionStatFile) {
+		List<String> header = null;
+		try {
+			header = CSVResourceTools.readHeader(executionStatFile);
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+		
+		for(int i = 0; i < header.size(); i++) {
+			if(!header.get(i).equals(ClientNiConsoleUi.STATS_HEADER[i]))
+				throw new RuntimeException("Unexpected header format in precomputation file: " + header);
+		}
+	}
+
+	private void initialiseCharts() {
 		gui.energyChart = new XYChartBuilder().width(600).height(400).title("Energy Consumption")
 				.xAxisTitle("Iteration").yAxisTitle("Energy in Joules").build();
 		gui.energyChart.getStyler().setLegendPosition(LegendPosition.InsideNE);
@@ -53,12 +117,6 @@ public class ClientGui implements UserInterface {
 				.xAxisTitle("Iteration").yAxisTitle("Execution Time in ms").build();
 		gui.performanceChart.getStyler().setLegendPosition(LegendPosition.InsideNE);
 		gui.performanceChart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
-		
-		gui.mapperSeries.addData(0.0, 0.0);
-		gui.iterationData.add(gui.iteration++);
-		
-		gui.energyChart.addSeries("mapper", gui.iterationData, gui.mapperSeries.energyData);
-		gui.performanceChart.addSeries("mapper", gui.iterationData, gui.mapperSeries.performanceData);
 	}
 
 	private void initialiseGui() {
@@ -180,6 +238,7 @@ public class ClientGui implements UserInterface {
 			throw new IllegalArgumentException("Given command handler must not be null.");
 		
 		gui.cmdHandler = cmdHandler;
+		initialiseChartSeries();
 		
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
@@ -190,5 +249,47 @@ public class ClientGui implements UserInterface {
 				}
 			}
 		});
+	}
+	
+	private void initialiseChartSeries() {
+		gui.iterationData = new ArrayList<>();
+		gui.iterationData.add(gui.iteration++);
+
+		gui.series = new Hashtable<>();
+		addSeries(gui.series, GuiModel.GRAPH_SERIES_NAME_MAPPER, false);
+		
+		gui.serverAdresses = gui.cmdHandler.getServerAdresses();
+		permutateAlterSeries(gui.serverAdresses.length, "");
+	}
+	
+	private void addSeries(Hashtable<String, GraphSeriesData> seriesList, String name, boolean addFixedMappings) {
+		GraphSeriesData series = new GraphSeriesData(name);
+		seriesList.put(name, series);
+		series.addData(0.0, 0.0);
+		gui.energyChart.addSeries(name, gui.iterationData, series.energyData);
+		gui.performanceChart.addSeries(name, gui.iterationData, series.performanceData);
+		
+		if(addFixedMappings) {
+			String[] mappings = name.split("_");
+			assert mappings.length == gui.serverAdresses.length : "Fixed mapping length and server addresses don't match.";
+			
+			for (int i = 0; i < mappings.length; i++) {
+				series.addFixedMapping(gui.serverAdresses[i], 
+						ExecutionDevice.valueOf(mappings[i].substring(0, mappings[i].length() - 1)));
+			}
+		}
+	}
+
+	private void permutateAlterSeries(int draws, String suffix) {
+		if(draws == 0) {
+			addSeries(gui.series, suffix, true);
+		}
+		else {
+			for(ExecutionDevice dev : ExecutionDevice.values()) {
+				final String SEP = suffix.isEmpty() ? "" : "_";
+				String serverPermutation = dev.name() + draws + SEP + suffix;
+				permutateAlterSeries(draws - 1, serverPermutation);
+			}
+		}
 	}
 }
