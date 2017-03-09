@@ -35,7 +35,7 @@ public class EnergyLog implements Serializable {
 		energyJ = 0;
 		
 		for (List<String> rec : records) {
-			energyJ += Double.parseDouble(rec.get(OclBenchMapperCsvHandler.HEADER_ELOG_ISSUE_IDX));
+			energyJ += Double.parseDouble(rec.get(OclBenchMapperCsvHandler.HEADER_ELOG_ENERGY_IDX));
 			runtimeMS += (Double.parseDouble(rec.get(OclBenchMapperCsvHandler.HEADER_ELOG_STOP_IDX)) - 
 					Double.parseDouble(rec.get(OclBenchMapperCsvHandler.HEADER_ELOG_ISSUE_IDX))) / 1000000;
 		}

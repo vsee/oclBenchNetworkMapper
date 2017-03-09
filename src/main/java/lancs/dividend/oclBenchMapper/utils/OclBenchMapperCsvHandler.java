@@ -18,8 +18,8 @@ import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 public final class OclBenchMapperCsvHandler {
 
 	private static final String PRECOMP_MAPPING_HEADER = "RodiniaBin,DataSetSize,ExecutionDevice";
-	private static final String USER_COMMAND_HEADER = PRECOMP_MAPPING_HEADER + ",iterations";
-	private static final String EXEC_STATS_HEADER = PRECOMP_MAPPING_HEADER + ",avg_energyJ,avg_runtimeMS";
+	private static final String USER_COMMAND_HEADER = PRECOMP_MAPPING_HEADER + ",Iterations";
+	private static final String EXEC_STATS_HEADER = PRECOMP_MAPPING_HEADER + ",AvgEnergyJ,AvgRuntimeMS";
 	
 	private static final String ENERGY_LOG_HEADER = "Status;Event;Command;Issue;Start;Stop;Workload;Energy;Name";
 	private static final int ENERGY_LOG_HEADER_SKIP = 2;
