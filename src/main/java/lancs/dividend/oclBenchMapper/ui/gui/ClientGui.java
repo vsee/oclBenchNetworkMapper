@@ -51,13 +51,13 @@ public class ClientGui implements UserInterface {
 
 	private void initialiseCharts() {
 		gui.energyChart = new XYChartBuilder().width(600).height(400).title("Energy Consumption")
-				.xAxisTitle("Iteration").yAxisTitle("Energy in Joules").build();
-		gui.energyChart.getStyler().setLegendPosition(LegendPosition.InsideNE);
+				.xAxisTitle("Iteration").yAxisTitle("Energy Normalised To Best Mapping").build();
+		gui.energyChart.getStyler().setLegendPosition(LegendPosition.InsideNW);
 		gui.energyChart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
 		
 		gui.performanceChart = new XYChartBuilder().width(600).height(400).title("Performance")
-				.xAxisTitle("Iteration").yAxisTitle("Execution Time in ms").build();
-		gui.performanceChart.getStyler().setLegendPosition(LegendPosition.InsideNE);
+				.xAxisTitle("Iteration").yAxisTitle("Execution Time Normalised To Best Mapping").build();
+		gui.performanceChart.getStyler().setLegendPosition(LegendPosition.InsideNW);
 		gui.performanceChart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
 	}
 

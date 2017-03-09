@@ -16,6 +16,7 @@ import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
+import lancs.dividend.oclBenchMapper.ui.console.BenchExecutionResults;
 import lancs.dividend.oclBenchMapper.ui.gui.GuiModel.ExecutionMode;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
@@ -99,7 +100,6 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, Hashtable<Str
 		
 		boolean validResponse = true;
 		Hashtable<String, GraphUpdate> seriesUpdates = new Hashtable<>();
-		for(String name : gui.series.keySet()) seriesUpdates.put(name, new GraphUpdate(0, 0));
 		
 		for (ServerConnection s : executionMap.keySet()) {
 			ExecutionItem item = executionMap.get(s);
@@ -131,20 +131,29 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, Hashtable<Str
 						// save energy and runtime results for each graph series
 						// consider measured results for the mapper series
 						// and precomputations for the alternative ones
-						for(String name : seriesUpdates.keySet()) {
+						for(String name : gui.series.keySet()) {
+							if(!seriesUpdates.containsKey(name)) {
+								Hashtable<ExecutionDevice, BenchExecutionResults> res = 
+										gui.serverExecStats.get(bcmd.getBinaryName()).get(bcmd.getDataSetSize());
+								GraphUpdate up = new GraphUpdate(bcmd.getBinaryName(), 
+										bcmd.getDataSetSize(), bcmd.getExecutionDevice(),
+										Math.min(res.get(ExecutionDevice.CPU).energyJ, res.get(ExecutionDevice.GPU).energyJ),
+										Math.min(res.get(ExecutionDevice.CPU).runtimeMS, res.get(ExecutionDevice.GPU).runtimeMS));
+								seriesUpdates.put(name, up);
+							}
 							GraphUpdate update = seriesUpdates.get(name);
 							
 							if(name.equals(GuiModel.GRAPH_SERIES_NAME_MAPPER)) {
-								update.energyJ += br.getEnergyLog().getEnergyJ();
-								update.runtimeMS += br.getEnergyLog().getRuntimeMS();
+								update.addStatUpdate(br.getEnergyLog().getEnergyJ(), 
+										br.getEnergyLog().getRuntimeMS());
 							} else {
 								// get fixed mapping
 								ExecutionDevice device = gui.series.get(name).fixedMapping.get(s.getAddress());
 								if(device != null) {
-									update.energyJ += gui.serverExecStats.get(bcmd.getBinaryName())
-											.get(bcmd.getDataSetSize()).get(device).energyJ;
-									update.runtimeMS += gui.serverExecStats.get(bcmd.getBinaryName())
-											.get(bcmd.getDataSetSize()).get(device).runtimeMS;
+									BenchExecutionResults execRes = gui.serverExecStats.get(bcmd.getBinaryName())
+											.get(bcmd.getDataSetSize()).get(device);
+									
+									update.addStatUpdate(execRes.energyJ, execRes.runtimeMS);
 								}
 							}
 						}
@@ -177,7 +186,7 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, Hashtable<Str
 			for (String	seriesName : updates.keySet()) {
 				GraphSeriesData sdata = gui.series.get(seriesName);
 				GraphUpdate supdate = updates.get(seriesName);
-				sdata.addData(supdate.energyJ, supdate.runtimeMS);
+				sdata.addData(supdate.getNormalisedEnergy(), supdate.getNormalisedRuntime());
 				
 				gui.energyChart.updateXYSeries(seriesName, gui.iterationData, sdata.energyData, null);
 				gui.performanceChart.updateXYSeries(seriesName, gui.iterationData, sdata.performanceData, null);

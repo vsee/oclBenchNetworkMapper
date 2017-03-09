@@ -10,6 +10,7 @@ import javax.swing.JFrame;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
+import lancs.dividend.oclBenchMapper.ui.console.BenchExecutionResults;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
 
 import org.knowm.xchart.XChartPanel;
@@ -46,7 +47,7 @@ public class GuiModel {
 	protected ClientConnectionHandler cmdHandler;
 	protected String[] serverAdresses;
 
-	protected Hashtable<RodiniaBin, Hashtable<DataSetSize, Hashtable<ExecutionDevice, GraphUpdate>>> serverExecStats;
+	protected Hashtable<RodiniaBin, Hashtable<DataSetSize, Hashtable<ExecutionDevice, BenchExecutionResults>>> serverExecStats;
 	
 	protected double iteration;
 	protected List<Double> iterationData;

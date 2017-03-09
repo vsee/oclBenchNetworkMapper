@@ -10,7 +10,7 @@ import java.util.StringJoiner;
 
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
-import lancs.dividend.oclBenchMapper.ui.gui.GraphUpdate;
+import lancs.dividend.oclBenchMapper.ui.console.BenchExecutionResults;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
@@ -121,12 +121,12 @@ public final class OclBenchMapperCsvHandler {
 	}
 	
 	
-	public static Hashtable<RodiniaBin, Hashtable<DataSetSize, Hashtable<ExecutionDevice, GraphUpdate>>> parseExecutionStats(
+	public static Hashtable<RodiniaBin, Hashtable<DataSetSize, Hashtable<ExecutionDevice, BenchExecutionResults>>> parseExecutionStats(
 			Path csvFile) {
 
 		List<List<String>> recs = parseRecords(csvFile, OclBenchMapperCsvHandler.EXEC_STATS_HEADER);
 
-		Hashtable<RodiniaBin, Hashtable<DataSetSize, Hashtable<ExecutionDevice, GraphUpdate>>> res = new Hashtable<>();
+		Hashtable<RodiniaBin, Hashtable<DataSetSize, Hashtable<ExecutionDevice, BenchExecutionResults>>> res = new Hashtable<>();
 		
 		for (List<String> record : recs) {
 			RodiniaBin rbin = RodiniaBin.valueOf(record.get(HEADER_BIN_IDX));
@@ -140,7 +140,7 @@ public final class OclBenchMapperCsvHandler {
 			if(!res.get(rbin).containsKey(data))
 				res.get(rbin).put(data, new Hashtable<>());
 			
-			res.get(rbin).get(data).put(dev, new GraphUpdate(avg_energyJ, avg_runtimeMS));
+			res.get(rbin).get(data).put(dev, new BenchExecutionResults(avg_energyJ, avg_runtimeMS));
 		}
 		
 		return res;

@@ -23,18 +23,6 @@ import lancs.dividend.oclBenchMapper.utils.OclBenchMapperCsvHandler;
 
 public class ClientNiConsoleUi implements UserInterface {
 
-	private class BenchExecutionResults {
-		public final double energyJ;
-		public final double runtimeMS;
-		public final double tradeoff; // the smaller the better
-		
-		public BenchExecutionResults(double e, double r) {
-			energyJ = e;
-			runtimeMS = r;
-			tradeoff = energyJ * runtimeMS;
-		}
-	}
-
 	private static final String EXECUTION_STATS_CSV = "executionStats.csv";
 	private static final String OPTIMAL_MAPPING_CSV = "optimalMapping.csv";
 	
