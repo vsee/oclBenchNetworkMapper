@@ -1,18 +1,14 @@
 package lancs.dividend.oclBenchMapper.ui.console;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.StringJoiner;
 
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
 import lancs.dividend.oclBenchMapper.connection.ServerConnection;
 import lancs.dividend.oclBenchMapper.energy.EnergyLog;
 import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
-import lancs.dividend.oclBenchMapper.mapping.PredictiveMapper;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
@@ -23,7 +19,7 @@ import lancs.dividend.oclBenchMapper.userCmd.ExitCmd;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
-import lancs.dividend.oclBenchMapper.utils.CSVResourceTools;
+import lancs.dividend.oclBenchMapper.utils.OclBenchMapperCsvHandler;
 
 public class ClientNiConsoleUi implements UserInterface {
 
@@ -41,13 +37,6 @@ public class ClientNiConsoleUi implements UserInterface {
 
 	private static final String EXECUTION_STATS_CSV = "executionStats.csv";
 	private static final String OPTIMAL_MAPPING_CSV = "optimalMapping.csv";
-
-	public static final String[] STATS_HEADER = new String[] {"bin","data","device","avg_energyJ","avg_runtimeMS"};
-	private static final String EXPECTED_CMD_HEADER = "bin,data,device,iterations";
-	private static final int HEADER_CMD_BIN_IDX = 0;
-	private static final int HEADER_CMD_DATA_IDX = 1;
-	private static final int HEADER_CMD_DEVICE_IDX = 2;
-	private static final int HEADER_CMD_ITER_IDX = 3;
 	
 	private final List<UserCommand> execCmds;
 	private final List<BenchExecutionResults> results;
@@ -60,7 +49,7 @@ public class ClientNiConsoleUi implements UserInterface {
 	public ClientNiConsoleUi(NiConsoleConfig conf) {
 		if(conf == null) throw new IllegalArgumentException("Given configuration must not be null.");
 		
-		execCmds = parseCmds(conf.cmdInputFile);
+		execCmds = OclBenchMapperCsvHandler.parseUserCommands(conf.cmdInputFile);
 		execCmds.add(new ExitCmd());
 		
 		bestMappingStats = new Hashtable<>();
@@ -68,46 +57,6 @@ public class ClientNiConsoleUi implements UserInterface {
 		statOutputDir = conf.statOutputDir;
 		
 		results = new ArrayList<>();
-	}
-
-	private List<UserCommand> parseCmds(Path cmdInputFile) {
-		List<UserCommand> res = new ArrayList<>();
-		checkHeader(cmdInputFile);
-		
-		List<List<String>> recs = null;
-		try {
-			recs = CSVResourceTools.readRecords(cmdInputFile);
-		} catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
-		
-		for (List<String> record : recs) {
-			RodiniaBin rbin = RodiniaBin.valueOf(record.get(HEADER_CMD_BIN_IDX));
-			DataSetSize data = DataSetSize.valueOf(record.get(HEADER_CMD_DATA_IDX));
-			ExecutionDevice dev = ExecutionDevice.valueOf(record.get(HEADER_CMD_DEVICE_IDX));
-			int iterations = Integer.valueOf(record.get(HEADER_CMD_ITER_IDX));
-			
-			for(int i = 0; i < iterations; i++) {
-				res.add(new RunBenchCmd(rbin, data, dev));
-			}
-		}
-		
-		System.out.println("Successfully parsed " + res.size() + " execution commands from " + cmdInputFile);
-		return res;
-	}
-
-	private void checkHeader(Path cmdInputFile) {
-		List<String> header = null;
-		try {
-			header = CSVResourceTools.readHeader(cmdInputFile);
-		} catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
-		
-		StringJoiner join = new StringJoiner(Character.toString(CSVResourceTools.DEFAULT_SEPARATOR));
-		for (String column : header) join.add(column);
-		if(!join.toString().equals(EXPECTED_CMD_HEADER))
-			throw new RuntimeException("Unexpected header format in precomputation file: " + join);
 	}
 
 	@Override
@@ -171,16 +120,8 @@ public class ClientNiConsoleUi implements UserInterface {
 			}
 		}
 		
-		Path mappingOutput = statOutputDir.resolve(OPTIMAL_MAPPING_CSV);
-		CSVResourceTools.writeCSVFile(mappingOutput, 
-				PredictiveMapper.EXPECTED_HEADER.split(Character.toString(CSVResourceTools.DEFAULT_SEPARATOR)), 
-				mappingRecords);
-		
-		Path statOutput = statOutputDir.resolve(EXECUTION_STATS_CSV);
-		CSVResourceTools.writeCSVFile(statOutput, STATS_HEADER, statsRecords);
-
-		System.out.println("Optimal mapping written to: " + mappingOutput);
-		System.out.println("Execution statistics written to: " + statOutput);
+		OclBenchMapperCsvHandler.writePrecomputedMapping(statOutputDir.resolve(OPTIMAL_MAPPING_CSV), mappingRecords);
+		OclBenchMapperCsvHandler.writeExecutionStats(statOutputDir.resolve(EXECUTION_STATS_CSV), statsRecords);
 	}
 
 	private void processServerResponse(

@@ -7,12 +7,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.List;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -25,10 +21,9 @@ import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
 import lancs.dividend.oclBenchMapper.ui.UserInterface;
-import lancs.dividend.oclBenchMapper.ui.console.ClientNiConsoleUi;
 import lancs.dividend.oclBenchMapper.ui.gui.GuiModel.ExecutionMode;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
-import lancs.dividend.oclBenchMapper.utils.CSVResourceTools;
+import lancs.dividend.oclBenchMapper.utils.OclBenchMapperCsvHandler;
 
 import org.knowm.xchart.XChartPanel;
 import org.knowm.xchart.XYChart;
@@ -38,14 +33,7 @@ import org.knowm.xchart.style.Styler.LegendPosition;
 
 public class ClientGui implements UserInterface {
 
-	// TODO clean up file parsing
 	// TODO add graceful shutdown upon window close
-	
-	private static final int HEADER_STATS_BIN_IDX = 0;
-	private static final int HEADER_STATS_DATA_IDX = 1;
-	private static final int HEADER_STATS_DEVICE_IDX = 2;
-	private static final int HEADER_STATS_ENERGY_IDX = 3;
-	private static final int HEADER_STATS_RUNTIME_IDX = 4;
 	
 	private GuiModel gui;
 	private BenchmarkExecutionWorker bexecWorker;
@@ -53,58 +41,12 @@ public class ClientGui implements UserInterface {
 	public ClientGui(ClientGuiConfig config) {
 		gui = new GuiModel();
 		
-		gui.serverExecStats = parseExecutionStats(config.executionStatFile);
+		gui.serverExecStats = OclBenchMapperCsvHandler.parseExecutionStats(config.executionStatFile);
 		
 		initialiseCharts();
 		initialiseGui();
 		
 		gui.activeMode = ExecutionMode.MANUAL;
-	}
-	
-	private Hashtable<RodiniaBin, Hashtable<DataSetSize, Hashtable<ExecutionDevice, GraphUpdate>>> parseExecutionStats(
-			Path executionStatFile) {
-		
-		Hashtable<RodiniaBin, Hashtable<DataSetSize, Hashtable<ExecutionDevice, GraphUpdate>>> res = new Hashtable<>();
-		checkHeader(executionStatFile);
-		
-		List<List<String>> recs = null;
-		try {
-			recs = CSVResourceTools.readRecords(executionStatFile);
-		} catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
-		
-		for (List<String> record : recs) {
-			RodiniaBin rbin = RodiniaBin.valueOf(record.get(HEADER_STATS_BIN_IDX));
-			DataSetSize data = DataSetSize.valueOf(record.get(HEADER_STATS_DATA_IDX));
-			ExecutionDevice dev = ExecutionDevice.valueOf(record.get(HEADER_STATS_DEVICE_IDX));
-			double avg_energyJ = Double.valueOf(record.get(HEADER_STATS_ENERGY_IDX));
-			double avg_runtimeMS = Double.valueOf(record.get(HEADER_STATS_RUNTIME_IDX));
-			
-			if(!res.containsKey(rbin))
-				res.put(rbin, new Hashtable<>());
-			if(!res.get(rbin).containsKey(data))
-				res.get(rbin).put(data, new Hashtable<>());
-			
-			res.get(rbin).get(data).put(dev, new GraphUpdate(avg_energyJ, avg_runtimeMS));
-		}
-		
-		System.out.println("Successfully parsed " + recs.size() + " execution statistics from " + executionStatFile);
-		return res;
-	}
-	
-	private void checkHeader(Path executionStatFile) {
-		List<String> header = null;
-		try {
-			header = CSVResourceTools.readHeader(executionStatFile);
-		} catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
-		
-		for(int i = 0; i < header.size(); i++) {
-			if(!header.get(i).equals(ClientNiConsoleUi.STATS_HEADER[i]))
-				throw new RuntimeException("Unexpected header format in precomputation file: " + header);
-		}
 	}
 
 	private void initialiseCharts() {
