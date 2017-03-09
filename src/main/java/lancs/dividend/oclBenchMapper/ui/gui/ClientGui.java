@@ -1,4 +1,4 @@
-package lancs.dividend.oclBenchMapper.ui;
+package lancs.dividend.oclBenchMapper.ui.gui;
 
 import java.awt.EventQueue;
 import java.awt.GridBagConstraints;
@@ -7,6 +7,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
+import java.util.Hashtable;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -18,7 +20,10 @@ import javax.swing.border.TitledBorder;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
-import lancs.dividend.oclBenchMapper.ui.GuiModel.ExecutionMode;
+import lancs.dividend.oclBenchMapper.ui.UserInterface;
+import lancs.dividend.oclBenchMapper.ui.gui.GuiModel.ExecutionMode;
+import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
+import lancs.dividend.oclBenchMapper.utils.OclBenchMapperCsvHandler;
 
 import org.knowm.xchart.XChartPanel;
 import org.knowm.xchart.XYChart;
@@ -33,34 +38,27 @@ public class ClientGui implements UserInterface {
 	private GuiModel gui;
 	private BenchmarkExecutionWorker bexecWorker;
 	
-	public ClientGui() {
+	public ClientGui(ClientGuiConfig config) {
 		gui = new GuiModel();
 		
-		initialiseGraphs();
+		gui.serverExecStats = OclBenchMapperCsvHandler.parseExecutionStats(config.executionStatFile);
+		
+		initialiseCharts();
 		initialiseGui();
 		
 		gui.activeMode = ExecutionMode.MANUAL;
 	}
-	
-	private void initialiseGraphs() {
+
+	private void initialiseCharts() {
 		gui.energyChart = new XYChartBuilder().width(600).height(400).title("Energy Consumption")
 				.xAxisTitle("Iteration").yAxisTitle("Energy in Joules").build();
 		gui.energyChart.getStyler().setLegendPosition(LegendPosition.InsideNE);
 		gui.energyChart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
-		gui.energyChart.getStyler().setXAxisMin(0.0);
 		
 		gui.performanceChart = new XYChartBuilder().width(600).height(400).title("Performance")
 				.xAxisTitle("Iteration").yAxisTitle("Execution Time in ms").build();
 		gui.performanceChart.getStyler().setLegendPosition(LegendPosition.InsideNE);
 		gui.performanceChart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
-		gui.performanceChart.getStyler().setXAxisMin(0.0);
-		
-		gui.energyData.add(0.0);
-		gui.performanceData.add(0.0);
-		gui.iterationData.add(gui.iteration++);
-		
-		gui.energyChart.addSeries("mapper", gui.iterationData, gui.energyData);
-		gui.performanceChart.addSeries("mapper", gui.iterationData, gui.performanceData);
 	}
 
 	private void initialiseGui() {
@@ -182,6 +180,7 @@ public class ClientGui implements UserInterface {
 			throw new IllegalArgumentException("Given command handler must not be null.");
 		
 		gui.cmdHandler = cmdHandler;
+		initialiseChartSeries();
 		
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
@@ -192,5 +191,47 @@ public class ClientGui implements UserInterface {
 				}
 			}
 		});
+	}
+	
+	private void initialiseChartSeries() {
+		gui.iterationData = new ArrayList<>();
+		gui.iterationData.add(gui.iteration++);
+
+		gui.series = new Hashtable<>();
+		addSeries(gui.series, GuiModel.GRAPH_SERIES_NAME_MAPPER, false);
+		
+		gui.serverAdresses = gui.cmdHandler.getServerAdresses();
+		permutateAlterSeries(gui.serverAdresses.length, "");
+	}
+	
+	private void addSeries(Hashtable<String, GraphSeriesData> seriesList, String name, boolean addFixedMappings) {
+		GraphSeriesData series = new GraphSeriesData(name);
+		seriesList.put(name, series);
+		series.addData(0.0, 0.0);
+		gui.energyChart.addSeries(name, gui.iterationData, series.energyData);
+		gui.performanceChart.addSeries(name, gui.iterationData, series.performanceData);
+		
+		if(addFixedMappings) {
+			String[] mappings = name.split("_");
+			assert mappings.length == gui.serverAdresses.length : "Fixed mapping length and server addresses don't match.";
+			
+			for (int i = 0; i < mappings.length; i++) {
+				series.addFixedMapping(gui.serverAdresses[i], 
+						ExecutionDevice.valueOf(mappings[i].substring(0, mappings[i].length() - 1)));
+			}
+		}
+	}
+
+	private void permutateAlterSeries(int draws, String suffix) {
+		if(draws == 0) {
+			addSeries(gui.series, suffix, true);
+		}
+		else {
+			for(ExecutionDevice dev : ExecutionDevice.values()) {
+				final String SEP = suffix.isEmpty() ? "" : "_";
+				String serverPermutation = dev.name() + draws + SEP + suffix;
+				permutateAlterSeries(draws - 1, serverPermutation);
+			}
+		}
 	}
 }

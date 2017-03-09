@@ -1,5 +1,11 @@
 package lancs.dividend.oclBenchMapper.ui;
 
+import lancs.dividend.oclBenchMapper.ui.console.ClientConsoleUi;
+import lancs.dividend.oclBenchMapper.ui.console.ClientNiConsoleUi;
+import lancs.dividend.oclBenchMapper.ui.console.NiConsoleConfig;
+import lancs.dividend.oclBenchMapper.ui.gui.ClientGui;
+import lancs.dividend.oclBenchMapper.ui.gui.ClientGuiConfig;
+
 public final class UserInterfaceFactory {
 	
 	public enum UserInterfaceType { CONSOLE, GUI, NICONSOLE }
@@ -16,7 +22,9 @@ public final class UserInterfaceFactory {
 			case CONSOLE:
 				return new ClientConsoleUi();
 			case GUI:
-				return new ClientGui();
+				if(!(conf instanceof ClientGuiConfig))
+					throw new IllegalArgumentException("Building a client gui us requires ClientGuiConfig.");
+				return new ClientGui((ClientGuiConfig) conf);
 			case NICONSOLE:
 				if(!(conf instanceof NiConsoleConfig))
 					throw new IllegalArgumentException("Building a non interactive console us requires NiConsoleConfig.");

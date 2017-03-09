@@ -25,6 +25,14 @@ public class ClientConnectionHandler {
 		this.wlMap = wlMap;
 		this.servers = servers;		
 	}
+	
+	public String[] getServerAdresses() {
+		String[] res = new String[servers.size()];
+		for(int i = 0; i < servers.size(); i++) {
+			res[i] = servers.get(i).getAddress();
+		}
+		return res;
+	}
 
 	/**
 	 * Handles workload mapping and execution for a given user command.
@@ -107,6 +115,5 @@ public class ClientConnectionHandler {
 		System.out.println("Closing server connections ...");
 		for(ServerConnection s : servers) s.closeConnection();
 		servers.clear();
-	}
-	
+	}	
 }

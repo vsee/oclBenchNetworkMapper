@@ -14,10 +14,11 @@ import lancs.dividend.oclBenchMapper.mapping.MapperFactory.MapperType;
 import lancs.dividend.oclBenchMapper.mapping.PredictiveMapperConfig;
 import lancs.dividend.oclBenchMapper.mapping.WorkloadMapper;
 import lancs.dividend.oclBenchMapper.server.OclMapperServer;
-import lancs.dividend.oclBenchMapper.ui.NiConsoleConfig;
 import lancs.dividend.oclBenchMapper.ui.UserInterface;
 import lancs.dividend.oclBenchMapper.ui.UserInterfaceFactory;
 import lancs.dividend.oclBenchMapper.ui.UserInterfaceFactory.UserInterfaceType;
+import lancs.dividend.oclBenchMapper.ui.console.NiConsoleConfig;
+import lancs.dividend.oclBenchMapper.ui.gui.ClientGuiConfig;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
@@ -34,6 +35,7 @@ public class Main {
 	private static final Path DEFAULT_RODINIA_HOME = Paths.get("../rodinia_3.1");
 	private static final Path DEFAULT_NICLIENT_OUTPUT = Paths.get("./");
 	private static final Path DEFAULT_PREDICTION_FILE = Paths.get("./src/main/resources/dividend_device_predictions.csv");
+	private static final Path DEFAULT_EXECUTION_STATS_FILE = Paths.get("./src/main/resources/dividend_device_executionStats.csv");
 	
 	private static Namespace parseArguments(String[] args) {
 		
@@ -51,11 +53,6 @@ public class Main {
 	}
 	
 	private static void addNonInteractiveClientArgs(Subparsers subparsers) {
-//	    Input file location
-//	    Output file specification
-//	    Calculate mapping file based on best possible results
-
-		
 		Subparser niClientParser = subparsers.addParser("non-interactive-client")
 	    		.help("The non-interactive client connects to a single server, "
 	    				+ "executes a given file of benchmark commands and saves the results.")
@@ -113,6 +110,10 @@ public class Main {
 	    	.type(Arguments.fileType().verifyCanRead().verifyIsFile())
 			.help("Csv file containing ahead of time execution device predictions for specific architecture.")
 			.setDefault(DEFAULT_PREDICTION_FILE);
+	    clientParser.addArgument("--avgExecutionStats")
+	    	.type(Arguments.fileType().verifyCanRead().verifyIsFile())
+			.help("Csv file containing ahead of time measurements of benchmark execution statistics.")
+			.setDefault(DEFAULT_EXECUTION_STATS_FILE);
 	}
 	
 	public static void main(String[] args) {
@@ -123,8 +124,15 @@ public class Main {
 		switch(role) {
 			case CLIENT:
 				try {
-					UserInterface ui = UserInterfaceFactory.createUserInterface(
-							ns.getBoolean("gui") ? UserInterfaceType.GUI : UserInterfaceType.CONSOLE);
+					UserInterfaceType uitype = ns.getBoolean("gui") ? UserInterfaceType.GUI : UserInterfaceType.CONSOLE;
+					UserInterface ui;
+					if(uitype == UserInterfaceType.GUI) {
+						Path execStats = Paths.get(ns.getString("avgExecutionStats"));
+						ui = UserInterfaceFactory.createUserInterface(uitype, new ClientGuiConfig(execStats));
+					} else {
+						ui = UserInterfaceFactory.createUserInterface(uitype);
+					}
+					
 					MapperType mtype = ns.get("mapperType");
 					WorkloadMapper mapper;
 					if(mtype == MapperType.PREDICTIVE) {
