@@ -1,10 +1,13 @@
 package lancs.dividend.oclBenchMapper.benchmark;
 
+import java.io.Serializable;
 import java.util.Hashtable;
 import java.util.List;
 
-public final class Benchmark implements Comparable<Benchmark> {
+public final class Benchmark implements Comparable<Benchmark>, Serializable {
 
+	private static final long serialVersionUID = -1489598705332657801L;
+	
 	private static Hashtable<String, Benchmark> benchmarks = new Hashtable<>();
 	private static Benchmark[] values;
 	

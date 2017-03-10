@@ -45,7 +45,7 @@ public class Main {
 		
 		ArgumentParser parser = ArgumentParsers.newArgumentParser("oclBenchMapper")
 			     .description("Run server or client side for mapping opencl benchmarks "
-			     		+ "to heterogeneous devices available in the network.");
+			     		+ "to heterogeneous devices available in the network.").defaultHelp(true);
 		parser.addArgument("--benchmarkConfig")
 	    	.type(Arguments.fileType().verifyCanRead().verifyIsFile())
 			.help("Configuration file for available benchmarks.").setDefault(DEFAULT_BENCH_CONFIG);
