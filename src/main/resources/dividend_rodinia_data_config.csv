@@ -2,3 +2,6 @@ Benchmark,DataSetSize,DataArgs
 KMEANS,SMALL,../../data/kmeans/100
 KMEANS,MEDIUM,../../data/kmeans/102400
 KMEANS,LARGE,../../data/kmeans/204800
+LUD,SMALL,../../../data/lud/64.dat
+LUD,MEDIUM,../../../data/lud/512.dat
+LUD,LARGE,../../../data/lud/2048.dat

@@ -1,3 +1,5 @@
 Benchmark,ExecutionDevice,BinDir,ExecCmd
 KMEANS,CPU,../rodinia_3.1/opencl/kmeans_cpu,./kmeans -o -i
 KMEANS,GPU,../rodinia_3.1/opencl/kmeans_gpu,./kmeans -o -i
+LUD,CPU,../rodinia_3.1/opencl/lud_cpu/ocl,./lud -i
+LUD,GPU,../rodinia_3.1/opencl/lud_gpu/ocl,./lud -i
