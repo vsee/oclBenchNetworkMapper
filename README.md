@@ -83,6 +83,7 @@ The client can be executed in ```non-interactive-client``` mode.
 ### Configuring Benchmarks
 
 New benchmarks can be configured to be used by the system:
+
 1. Add a name for the new benchmark to the [benchmark configuration](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/dividend_benchmark_config.csv) file. This file needs to be available to both client and server.
 2. Add necessary execution commands to the [benchmark execution configuration](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/dividend_rodinia_bench_config.csv). The ```BinDir``` column needs the location of the benchmarks directory relative to the server's working directory. The ```ExecCmd``` column needs the actual command to execute the benchmark minus the name of the data file.
 3. Add data set sizes to the [benchmark data configuration](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/dividend_rodinia_data_config.csv). The ```DataArgs``` column expects a data file location relative to the corresponding benchmark's working directory.
