@@ -59,9 +59,26 @@ $ java -jar ./build/libs/oclBenchMapper-x.x.x.jar server -h
 
 ### Client GUI
 
-The client provides a graphical user interface which can be started using the ```--gui``` flag.
+The client provides a graphical user interface which can be started using the ```--gui``` flag. (I am not a designer, keep that in mind!)
 
 ![](https://cloud.githubusercontent.com/assets/17176876/23794284/4852b6d4-0587-11e7-9ca6-c5c2ede42aea.png)
+
+The displayed GUI has control elements in the upper part and two graphs displaying energy consumption (left) and execution performance (right). 
+* Two combo boxes allow the selection of a benchmark and a corresponding workload. 
+* Pressing the ```Run``` button executes the selected benchmark with the given workload on the available servers using the specified workload mapper.
+* Execution results of all servers are combined and displayed in the two charts.
+* The ```mapper``` series shows execution results using the device mapping made by the client.
+* Additionally, a graph is displayed for each possible combination of CPU or GPU depending on available servers. This allows comparing mapper results to alternative combinations. For example, the mapper executes a workload on the GPU of server 1 and the CPU of server 2. Alternative mappings for all combinations of server 1 and 2 as well as GPU or CPU are displayed for comparisson.
+* Alternative mapping results are not actually executed but taken from a [precomputation file](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/dividend_device_executionStats.csv).
+* Each chart shows energy and performance results normalised to the best execution device (CPU or GPU) for the executed benchmark and workload combination. Normalisation uses the same precomputed execution statistics like alternative mappings.
+
+### Non Interactive Client
+
+The client can be executed in ```non-interactive-client``` mode. 
+* In this mode no user interface is provided. The client executes a set of commands provided via [input file](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/cmdInputDummy.csv).
+* The client can connect to only a single server in this mode.
+* Execution statistics are saved in [precomputation file](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/dividend_device_executionStats.csv) format.
+* Additionally an optimal execution device to benchmark mapping is generated and saved. It uses the same format as the [prediction configuration](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/dividend_device_predictions.csv) for the ``predicitve mapper```.
 
 ### Configuring Benchmarks
 
