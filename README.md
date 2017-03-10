@@ -61,8 +61,7 @@ $ java -jar ./build/libs/oclBenchMapper-x.x.x.jar server -h
 
 The client provides a graphical user interface which can be started using the ```--gui``` flag.
 
-![](https://raw.githubusercontent.com/vsee/oclBenchNetworkMapper/docs/assets/client_gui_half.png)
-
+![](https://cloud.githubusercontent.com/assets/17176876/23794284/4852b6d4-0587-11e7-9ca6-c5c2ede42aea.png)
 
 ### Configuring Benchmarks
 
