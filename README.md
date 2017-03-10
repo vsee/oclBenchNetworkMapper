@@ -20,7 +20,7 @@ In this version the available benchmarks are restricted to a [Rodinia](http://ww
 ### Available Workload Mapper
 - **First come first served mapper**: maps the selected benchmark to the default device on the first available server.
 - **Duplicate mapper**: maps the entire selected benchmark to the default device on each available server.
-- **Predictive mapper**: maps the selected benchmark to each available server using an execution device predicted as optimal in terms of energy consumption and performance. Code features of the benchmark's OpenCL kernel(s) are passed to a model which returns an optimal GPU or CPU mapping. The model is trained for a particular server architecture. In the current version this architecture is assumed to be a *dividend* machine. Also, for performance reasons predictions were made ahead of execution time and saved in a configuration [file](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/dividend_device_predictions.csv) which is used at runtime by the client.
+- **Predictive mapper**: maps the selected benchmark to each available server using an execution device predicted as optimal in terms of energy consumption and performance. Code features of the benchmark's OpenCL kernel(s) are passed to a model which returns an optimal GPU or CPU mapping. The model is trained for a particular server architecture. In the current version this architecture is assumed to be a *dividend* machine. Also, for performance reasons predictions were made ahead of execution time and saved in a [configuration file](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/dividend_device_predictions.csv) which is used at runtime by the client.
 
 The mapper to be used can be selected on client side with the ```-m``` or ```-mapperType``` argument.
 
@@ -59,7 +59,10 @@ $ java -jar ./build/libs/oclBenchMapper-x.x.x.jar server -h
 
 ### Client GUI
 
-bla blurb
+The client provides a graphical user interface which can be started using the ```--gui``` flag.
+
+![](https://raw.githubusercontent.com/vsee/oclBenchNetworkMapper/docs/assets/client_gui_half.png)
+
 
 ### Configuring Benchmarks
 
