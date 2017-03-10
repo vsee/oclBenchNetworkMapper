@@ -33,19 +33,33 @@ public final class Benchmark implements Comparable<Benchmark>, Serializable {
 		return values;
 	}
 	
-	
-	
 	private final String name;
 
-	public Benchmark(String n) {
+	private Benchmark(String n) {
 		name = n;
 	}
+	
 	
 	@Override
 	public int compareTo(Benchmark o) {
 		return name.compareTo(o.name);
 	}
 
+	@Override
+	public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+
+        if (!(o instanceof Benchmark)) {
+            return false;
+        }
+         
+        Benchmark b = (Benchmark) o;
+        
+        return name.equals(b.name);
+	}
+	
 	public String name() {
 		return name;
 	}
@@ -55,4 +69,8 @@ public final class Benchmark implements Comparable<Benchmark>, Serializable {
 		return name();
 	}
 	
+	@Override
+	public int hashCode() {
+		return name.hashCode();
+	}
 }
