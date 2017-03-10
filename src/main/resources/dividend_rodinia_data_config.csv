@@ -1,4 +1,4 @@
 BenchmarkBin,DataSetSize,DataArgs
 KMEANS,SMALL,../../data/kmeans/100
-KMEANS,MEDIUM,../../data/kmeans/204800
-KMEANS,LARGE,../../data/kmeans/409600
+KMEANS,MEDIUM,../../data/kmeans/102400
+KMEANS,LARGE,../../data/kmeans/204800
