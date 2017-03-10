@@ -3,13 +3,13 @@ package lancs.dividend.oclBenchMapper.ui.gui;
 import java.util.ArrayList;
 import java.util.List;
 
-import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
-import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
+import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.DataSetSize;
+import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.BenchmarkBin;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
 
 public class GraphUpdate {
 	
-	public final RodiniaBin bin;
+	public final BenchmarkBin bin;
 	public final DataSetSize dset;
 	public final ExecutionDevice dev;
 	
@@ -20,7 +20,7 @@ public class GraphUpdate {
 	private final List<Double> runtimeUpdates = new ArrayList<Double>();
 
 
-	public GraphUpdate(RodiniaBin bin, DataSetSize dset, ExecutionDevice dev, double energyJNorm, double runtimeMSNorm) {
+	public GraphUpdate(BenchmarkBin bin, DataSetSize dset, ExecutionDevice dev, double energyJNorm, double runtimeMSNorm) {
 		this.bin = bin;
 		this.dset = dset;
 		this.dev = dev;

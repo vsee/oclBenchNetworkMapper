@@ -32,10 +32,11 @@ public class Main {
 	
 	private static final int DEFAULT_PORT = 9090;
 	private static final String DEFAULT_SERVER_ADDRESS = "127.0.0.1";
-	private static final Path DEFAULT_RODINIA_HOME = Paths.get("../rodinia_3.1");
 	private static final Path DEFAULT_NICLIENT_OUTPUT = Paths.get("./");
 	private static final Path DEFAULT_PREDICTION_FILE = Paths.get("./src/main/resources/dividend_device_predictions.csv");
 	private static final Path DEFAULT_EXECUTION_STATS_FILE = Paths.get("./src/main/resources/dividend_device_executionStats.csv");
+	private static final Path DEFAULT_BENCH_EXEC_CONFIG = Paths.get("./src/main/resources/dividend_rodinia_bench_config.csv");
+	private static final Path DEFAULT_BENCH_ARGS_CONFIG = Paths.get("./src/main/resources/dividend_rodinia_data_config.csv");
 	
 	private static Namespace parseArguments(String[] args) {
 		
@@ -81,9 +82,13 @@ public class Main {
    			    .defaultHelp(true);
 	    serverParser.addArgument("-p","--port").type(Integer.class)
     		.help("Port used by the server to listen for clients.").setDefault(DEFAULT_PORT);
-	    serverParser.addArgument("-r","--rodiniaHome")
-	    	.type(Arguments.fileType().verifyCanRead().verifyIsDirectory())
-			.help("Home directory of rodinia benchmark suite.").setDefault(DEFAULT_RODINIA_HOME);
+	    
+	    serverParser.addArgument("--benchExecConfig")
+	    	.type(Arguments.fileType().verifyCanRead().verifyIsFile())
+			.help("Configuration file for benchmark execution arguments.").setDefault(DEFAULT_BENCH_EXEC_CONFIG);
+	    serverParser.addArgument("--benchDataConfig")
+	    	.type(Arguments.fileType().verifyCanRead().verifyIsFile())
+			.help("Configuration file for benchmark data arguments.").setDefault(DEFAULT_BENCH_ARGS_CONFIG);
 	    serverParser.addArgument("--dummy").action(Arguments.storeTrue())
 			.help("Run the server as dummy executing no workloads and returning dummy results.");
 	}
@@ -150,8 +155,9 @@ public class Main {
 			case SERVER:
 				try {
 					int port = ns.getInt("port");
-					Path rhome = Paths.get(ns.getString("rodiniaHome"));
-					new OclMapperServer(port, rhome, ns.getBoolean("dummy")).runServer();
+					Path benchExecConf = Paths.get(ns.getString("benchExecConfig"));
+					Path benchDataConf = Paths.get(ns.getString("benchDataConfig"));
+					new OclMapperServer(port, benchExecConf, benchDataConf, ns.getBoolean("dummy")).runServer();
 				} catch (IOException e) {
 					throw new UncheckedIOException("ERROR: Starting server failed: ", e);
 				}

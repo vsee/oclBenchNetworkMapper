@@ -12,8 +12,8 @@ import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
-import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
-import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
+import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.DataSetSize;
+import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.BenchmarkBin;
 import lancs.dividend.oclBenchMapper.ui.UserInterface;
 import lancs.dividend.oclBenchMapper.userCmd.ExitCmd;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
@@ -28,7 +28,7 @@ public class ClientNiConsoleUi implements UserInterface {
 	
 	private final List<UserCommand> execCmds;
 	private final List<BenchExecutionResults> results;
-	private final Hashtable<RodiniaBin, Hashtable<DataSetSize, 
+	private final Hashtable<BenchmarkBin, Hashtable<DataSetSize, 
 								Hashtable<ExecutionDevice, 
 									List<BenchExecutionResults>>>> bestMappingStats;
 	
@@ -74,7 +74,7 @@ public class ClientNiConsoleUi implements UserInterface {
 		List<String[]> mappingRecords = new ArrayList<>();
 		List<String[]> statsRecords = new ArrayList<>();
 		
-		for(RodiniaBin bin : bestMappingStats.keySet()) {
+		for(BenchmarkBin bin : bestMappingStats.keySet()) {
 			for(DataSetSize data : bestMappingStats.get(bin).keySet()) {
 				
 				ExecutionDevice bestDevice = null;

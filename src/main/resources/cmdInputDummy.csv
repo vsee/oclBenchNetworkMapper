@@ -1,4 +1,4 @@
-RodiniaBin,DataSetSize,ExecutionDevice,Iterations
+BenchmarkBin,DataSetSize,ExecutionDevice,Iterations
 KMEANS,SMALL,CPU,10
 KMEANS,SMALL,GPU,10
 KMEANS,MEDIUM,CPU,10

@@ -5,8 +5,8 @@ import java.util.List;
 
 import lancs.dividend.oclBenchMapper.connection.ServerConnection;
 import lancs.dividend.oclBenchMapper.message.CommandMessage;
-import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
-import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
+import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.DataSetSize;
+import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.BenchmarkBin;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
@@ -30,7 +30,7 @@ import lancs.dividend.oclBenchMapper.utils.OclBenchMapperCsvHandler;
  */
 public class PredictiveMapper implements WorkloadMapper {
 	
-	private final Hashtable<RodiniaBin, Hashtable<DataSetSize, ExecutionDevice>> preDeviceMapping;
+	private final Hashtable<BenchmarkBin, Hashtable<DataSetSize, ExecutionDevice>> preDeviceMapping;
 	
 	public PredictiveMapper(PredictiveMapperConfig config) {
 		preDeviceMapping = OclBenchMapperCsvHandler.parsePrecomputedMapping(config.mappingPrecompute);

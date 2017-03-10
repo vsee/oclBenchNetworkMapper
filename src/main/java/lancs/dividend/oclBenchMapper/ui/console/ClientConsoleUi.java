@@ -10,8 +10,8 @@ import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
-import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
-import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
+import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.DataSetSize;
+import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.BenchmarkBin;
 import lancs.dividend.oclBenchMapper.ui.UserInterface;
 import lancs.dividend.oclBenchMapper.userCmd.ExitCmd;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
@@ -42,7 +42,7 @@ public class ClientConsoleUi implements UserInterface {
 
 		// Generate menu strings
 		StringJoiner join = new StringJoiner(",","{","}");
-		for (RodiniaBin b : RodiniaBin.values()) join.add(b.name());
+		for (BenchmarkBin b : BenchmarkBin.values()) join.add(b.name());
 		BENCHMARK_LIST = join.toString();
 		
 		BENCHMARK_TOP_MENU = 
@@ -81,7 +81,7 @@ public class ClientConsoleUi implements UserInterface {
 			System.out.print(BENCHMARK_TOP_MENU);
 			String line = cmdIn.nextLine();
 			
-			RodiniaBin rbin = null;
+			BenchmarkBin rbin = null;
 			if(line.trim().equals(EXIT_CMD)) {
 				return new ExitCmd();
 			}
@@ -125,9 +125,9 @@ public class ClientConsoleUi implements UserInterface {
 		}
 	}
 
-	private RodiniaBin isBenchmarkBin(String rodiniaBin) {
+	private BenchmarkBin isBenchmarkBin(String bin) {
 		try {
-			return RodiniaBin.valueOf(rodiniaBin);
+			return BenchmarkBin.valueOf(bin);
 		} catch(IllegalArgumentException e) {
 			return null;
 		}

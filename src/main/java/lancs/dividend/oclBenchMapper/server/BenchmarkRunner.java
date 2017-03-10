@@ -2,6 +2,7 @@ package lancs.dividend.oclBenchMapper.server;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Hashtable;
 import java.util.Optional;
 
 import lancs.dividend.oclBenchMapper.energy.EnergyLog;
@@ -11,30 +12,26 @@ import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage.ResponseType;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
+import lancs.dividend.oclBenchMapper.utils.OclBenchMapperCsvHandler;
 import lancs.dividend.oclBenchMapper.utils.ShellCmdExecutor;
 
-public class RodiniaRunner {
+public class BenchmarkRunner {
 
-	public enum RodiniaBin { KMEANS }
+	public enum BenchmarkBin { KMEANS }
 	public enum DataSetSize { SMALL, MEDIUM, LARGE }
 	
-	private static final String KMEANS_SMALL_DSET = "../../data/kmeans/100";
-	private static final String KMEANS_MEDIUM_DSET = "../../data/kmeans/204800.txt";
-	private static final String KMEANS_LARGE_DSET = "../../data/kmeans/819200.txt";
+	private final Hashtable<BenchmarkBin, Hashtable<ExecutionDevice, BenchExecArgs>> execArgConfig;
+	private final Hashtable<BenchmarkBin, Hashtable<DataSetSize, String>> dataArgConfig;
 	
-	private static final String KMEANS_HOME_CPU = "opencl/kmeans_cpu";
-	private static final String KMEANS_HOME_GPU = "opencl/kmeans_gpu";
-	
-	private final Path rodiniaHome;
-	
-	public RodiniaRunner(Path rodiniaHome) {
-		this.rodiniaHome = rodiniaHome;
+	public BenchmarkRunner(Path execConfigCsv, Path dataConfigCsv) {
+		if(execConfigCsv == null) throw new IllegalArgumentException("Benchmark execution configuration must not be null.");
+		if(dataConfigCsv == null) throw new IllegalArgumentException("Benchmark data configuration must not be null.");
+		
+		execArgConfig = OclBenchMapperCsvHandler.parseBenchmarkExecConfig(execConfigCsv);
+		dataArgConfig = OclBenchMapperCsvHandler.parseBenchmarkDataConfig(dataConfigCsv);
 	}
 
-	public ResponseMessage run(RodiniaBin binary, DataSetSize dsetSize, ExecutionDevice device, boolean monitorEnergy) {
-		
-		ResponseMessage response = null;
-		
+	public ResponseMessage run(BenchmarkBin binary, DataSetSize dsetSize, ExecutionDevice device, boolean monitorEnergy) {
 		String execPrefix = "";
 		if(monitorEnergy) {
 			try {
@@ -47,15 +44,7 @@ public class RodiniaRunner {
 			}
 		}
 		
-		switch(binary) {
-			case KMEANS:
-				response = executeKmeans(execPrefix, dsetSize, device);
-				break;
-			default:
-				response = new ErrorResponseMessage("Rodinia benchmark binary not handled by server: " + binary.name());
-				break;
-		}
-		
+		ResponseMessage response = executeBenchmark(execPrefix, binary, dsetSize, device);
 		assert response != null : "Response message must be set at this point.";
 		
 		if(monitorEnergy) {
@@ -77,31 +66,22 @@ public class RodiniaRunner {
 		return response;
 	}
 	
-	private ResponseMessage executeKmeans(String execPrefix, DataSetSize dsetSize, ExecutionDevice device) {
+	private ResponseMessage executeBenchmark(String execPrefix, BenchmarkBin bin, DataSetSize dsetSize, ExecutionDevice device) {
 		StringBuilder cmdBld = new StringBuilder();
 		
 		// enter benchmark directory
-		Path kmeansDir;
-		switch(device) {
-			case CPU: kmeansDir = rodiniaHome.resolve(KMEANS_HOME_CPU); break;
-			case GPU: kmeansDir = rodiniaHome.resolve(KMEANS_HOME_GPU); break;
-			default: return new ErrorResponseMessage("Unknown execution device: " + device);
-		}
+		String kmeansDir = execArgConfig.get(bin).get(device).binDir;
 		cmdBld.append("cd ").append(kmeansDir).append(";");
 		
 		// energy profiling if activated
 		cmdBld.append(execPrefix);
 		
-		String dataset;
-		switch(dsetSize) {
-			case SMALL: dataset = KMEANS_SMALL_DSET; break;
-			case MEDIUM: dataset = KMEANS_MEDIUM_DSET; break;
-			case LARGE: dataset = KMEANS_LARGE_DSET; break;
-			default: throw new IllegalArgumentException("Invalid dataset size for kmeans benchmark: " + dsetSize);
-		}
+		// get correct data file
+		String dataset = dataArgConfig.get(bin).get(dsetSize);
 		
 		// execute command
-		cmdBld.append("./kmeans -o -i ").append(dataset);
+		String execCmd = execArgConfig.get(bin).get(device).execCmd;
+		cmdBld.append(execCmd).append(" ").append(dataset);
 		
 		String stdout = ShellCmdExecutor.executeCmd(cmdBld.toString(), true);
 		System.out.println(stdout);

@@ -8,8 +8,9 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.StringJoiner;
 
-import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
-import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
+import lancs.dividend.oclBenchMapper.server.BenchExecArgs;
+import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.DataSetSize;
+import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.BenchmarkBin;
 import lancs.dividend.oclBenchMapper.ui.console.BenchExecutionResults;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
@@ -17,9 +18,12 @@ import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 
 public final class OclBenchMapperCsvHandler {
 
-	private static final String PRECOMP_MAPPING_HEADER = "RodiniaBin,DataSetSize,ExecutionDevice";
+	private static final String PRECOMP_MAPPING_HEADER = "BenchmarkBin,DataSetSize,ExecutionDevice";
 	private static final String USER_COMMAND_HEADER = PRECOMP_MAPPING_HEADER + ",Iterations";
 	private static final String EXEC_STATS_HEADER = PRECOMP_MAPPING_HEADER + ",AvgEnergyJ,AvgRuntimeMS";
+	
+	private static final String BENCHMARK_DATA_CONFIG_HEADER = "BenchmarkBin,DataSetSize,DataArgs";
+	private static final String BENCHMARK_EXEC_CONFIG_HEADER = "BenchmarkBin,ExecutionDevice,BinDir,ExecCmd";
 	
 	private static final String ENERGY_LOG_HEADER = "Status;Event;Command;Issue;Start;Stop;Workload;Energy;Name";
 	private static final int ENERGY_LOG_HEADER_SKIP = 2;
@@ -34,7 +38,12 @@ public final class OclBenchMapperCsvHandler {
 	private static final int HEADER_ENERGY_IDX = 3;
 	private static final int HEADER_RUNTIME_IDX = 4;
 	
+	private static final int HEADER_ARGS_IDX = 2;
 	
+	private static final int HEADER_EXEC_CONF_DEVICE_IDX = 1;
+	private static final int HEADER_BINDIR_IDX = 2;
+	private static final int HEADER_EXECCMD_IDX = 3;
+
 	public static final int HEADER_ELOG_ISSUE_IDX = 3;
 	public static final int HEADER_ELOG_STOP_IDX = 5;
 	public static final int HEADER_ELOG_ENERGY_IDX = 7;
@@ -77,13 +86,13 @@ public final class OclBenchMapperCsvHandler {
 	
 	
 	
-	public static Hashtable<RodiniaBin, Hashtable<DataSetSize, ExecutionDevice>> parsePrecomputedMapping(Path csvFile) {
+	public static Hashtable<BenchmarkBin, Hashtable<DataSetSize, ExecutionDevice>> parsePrecomputedMapping(Path csvFile) {
 		List<List<String>> recs = parseRecords(csvFile, OclBenchMapperCsvHandler.PRECOMP_MAPPING_HEADER);
 		
-		Hashtable<RodiniaBin, Hashtable<DataSetSize, ExecutionDevice>> map =  new Hashtable<>();
+		Hashtable<BenchmarkBin, Hashtable<DataSetSize, ExecutionDevice>> map =  new Hashtable<>();
 		
 		for (List<String> record : recs) {
-			RodiniaBin rbin = RodiniaBin.valueOf(record.get(HEADER_BIN_IDX));
+			BenchmarkBin rbin = BenchmarkBin.valueOf(record.get(HEADER_BIN_IDX));
 			DataSetSize data = DataSetSize.valueOf(record.get(HEADER_DATA_IDX));
 			ExecutionDevice dev = ExecutionDevice.valueOf(record.get(HEADER_DEVICE_IDX));
 			
@@ -106,7 +115,7 @@ public final class OclBenchMapperCsvHandler {
 		
 		List<UserCommand> res = new ArrayList<>();
 		for (List<String> record : recs) {
-			RodiniaBin rbin = RodiniaBin.valueOf(record.get(HEADER_BIN_IDX));
+			BenchmarkBin rbin = BenchmarkBin.valueOf(record.get(HEADER_BIN_IDX));
 			DataSetSize data = DataSetSize.valueOf(record.get(HEADER_DATA_IDX));
 			ExecutionDevice dev = ExecutionDevice.valueOf(record.get(HEADER_DEVICE_IDX));
 			
@@ -121,15 +130,15 @@ public final class OclBenchMapperCsvHandler {
 	}
 	
 	
-	public static Hashtable<RodiniaBin, Hashtable<DataSetSize, Hashtable<ExecutionDevice, BenchExecutionResults>>> parseExecutionStats(
+	public static Hashtable<BenchmarkBin, Hashtable<DataSetSize, Hashtable<ExecutionDevice, BenchExecutionResults>>> parseExecutionStats(
 			Path csvFile) {
 
 		List<List<String>> recs = parseRecords(csvFile, OclBenchMapperCsvHandler.EXEC_STATS_HEADER);
 
-		Hashtable<RodiniaBin, Hashtable<DataSetSize, Hashtable<ExecutionDevice, BenchExecutionResults>>> res = new Hashtable<>();
+		Hashtable<BenchmarkBin, Hashtable<DataSetSize, Hashtable<ExecutionDevice, BenchExecutionResults>>> res = new Hashtable<>();
 		
 		for (List<String> record : recs) {
-			RodiniaBin rbin = RodiniaBin.valueOf(record.get(HEADER_BIN_IDX));
+			BenchmarkBin rbin = BenchmarkBin.valueOf(record.get(HEADER_BIN_IDX));
 			DataSetSize data = DataSetSize.valueOf(record.get(HEADER_DATA_IDX));
 			ExecutionDevice dev = ExecutionDevice.valueOf(record.get(HEADER_DEVICE_IDX));
 			double avg_energyJ = Double.valueOf(record.get(HEADER_ENERGY_IDX));
@@ -160,4 +169,46 @@ public final class OclBenchMapperCsvHandler {
 		
 		return parseRecords(csvFile, OclBenchMapperCsvHandler.ENERGY_LOG_HEADER, ENERGY_LOG_HEADER_SKIP, ENERGY_LOG_SEPARATOR);
 	}
+	
+	
+	public static Hashtable<BenchmarkBin, Hashtable<DataSetSize, String>> parseBenchmarkDataConfig(Path csvFile) {
+
+		List<List<String>> recs = parseRecords(csvFile, OclBenchMapperCsvHandler.BENCHMARK_DATA_CONFIG_HEADER);
+
+		Hashtable<BenchmarkBin, Hashtable<DataSetSize, String>> res = new Hashtable<>();
+		
+		for (List<String> record : recs) {
+			BenchmarkBin rbin = BenchmarkBin.valueOf(record.get(HEADER_BIN_IDX));
+			DataSetSize data = DataSetSize.valueOf(record.get(HEADER_DATA_IDX));
+			String args = record.get(HEADER_ARGS_IDX);
+			
+			if(!res.containsKey(rbin))
+				res.put(rbin, new Hashtable<>());
+			res.get(rbin).put(data, args);
+		}
+		
+		return res;
+	}
+	
+	public static Hashtable<BenchmarkBin, Hashtable<ExecutionDevice, BenchExecArgs>> parseBenchmarkExecConfig(Path csvFile) {
+
+		List<List<String>> recs = parseRecords(csvFile, OclBenchMapperCsvHandler.BENCHMARK_EXEC_CONFIG_HEADER);
+
+		Hashtable<BenchmarkBin, Hashtable<ExecutionDevice, BenchExecArgs>> res = new Hashtable<>();
+		
+		for (List<String> record : recs) {
+			BenchmarkBin rbin = BenchmarkBin.valueOf(record.get(HEADER_BIN_IDX));
+			ExecutionDevice dev = ExecutionDevice.valueOf(record.get(HEADER_EXEC_CONF_DEVICE_IDX));
+			String binDir = record.get(HEADER_BINDIR_IDX);
+			String execCmd = record.get(HEADER_EXECCMD_IDX);
+			
+			if(!res.containsKey(rbin))
+				res.put(rbin, new Hashtable<>());
+			res.get(rbin).put(dev, new BenchExecArgs(binDir, execCmd));
+		}
+		
+		return res;
+	}
+	
+	
 }

@@ -18,8 +18,8 @@ import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
 
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
-import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
-import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
+import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.DataSetSize;
+import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.BenchmarkBin;
 import lancs.dividend.oclBenchMapper.ui.UserInterface;
 import lancs.dividend.oclBenchMapper.ui.gui.GuiModel.ExecutionMode;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
@@ -90,7 +90,7 @@ public class ClientGui implements UserInterface {
 		gui.frame.getContentPane().add(controlPanel, gbc_controlpanel);
 		
 		gui.benchcbox = new JComboBox<>();
-		gui.benchcbox.setModel(new DefaultComboBoxModel<>(RodiniaBin.values()));
+		gui.benchcbox.setModel(new DefaultComboBoxModel<>(BenchmarkBin.values()));
 		controlPanel.add(gui.benchcbox);
 		
 		gui.datacbox = new JComboBox<>();

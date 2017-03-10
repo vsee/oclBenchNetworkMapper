@@ -26,19 +26,19 @@ public class OclMapperServer {
 
 	private static final Path DUMMY_ENERGY_LOG = Paths.get("src/main/resources/ocleniMONITOR_sample.csv");
 	
-	private final RodiniaRunner rodinia;
+	private final BenchmarkRunner benchRunner;
 	private final ClientConnection client;
 	
 	/** If this flag is true, the server does not execute benchmark but merely sends back
 	 * dummy energy and performance statistics. This mode is meant for test and development purposes. */
 	private final boolean isDummyServer;
 	
-	public OclMapperServer(int port, Path rodiniaHome) throws IOException {
-		this(port, rodiniaHome, false);
-	}
-	
-	public OclMapperServer(int port, Path rodiniaHome, boolean isDummy) throws IOException {
-		rodinia = new RodiniaRunner(rodiniaHome);
+	public OclMapperServer(int port, Path benchExecConf, Path benchDataConf, boolean isDummy) throws IOException {
+		if(port <= 0) throw new IllegalArgumentException("Invalid server port: " + port);
+		if(benchExecConf == null) throw new IllegalArgumentException("Benchmark execution configuration must not be null.");
+		if(benchDataConf == null) throw new IllegalArgumentException("Benchmark data configuration must not be null.");
+		
+		benchRunner = new BenchmarkRunner(benchExecConf, benchDataConf);
 		client = new ClientConnection(port);
 		isDummyServer = isDummy;
 		System.out.println("Starting server at port " + port);
@@ -107,7 +107,7 @@ public class OclMapperServer {
 				ResponseMessage result;
 				
 				if(!isDummyServer) {
-					result = rodinia.run(cmd.getBinaryName(), cmd.getDataSetSize(), cmd.getExecutionDevice(), true);
+					result = benchRunner.run(cmd.getBinaryName(), cmd.getDataSetSize(), cmd.getExecutionDevice(), true);
 				}
 				else {
 					result = new BenchStatsResponseMessage("DUMMY EXECUTION");

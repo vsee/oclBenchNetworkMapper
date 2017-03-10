@@ -2,8 +2,8 @@ package lancs.dividend.oclBenchMapper.userCmd;
 
 import java.util.StringJoiner;
 
-import lancs.dividend.oclBenchMapper.server.RodiniaRunner.DataSetSize;
-import lancs.dividend.oclBenchMapper.server.RodiniaRunner.RodiniaBin;
+import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.DataSetSize;
+import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.BenchmarkBin;
 
 public class RunBenchCmd extends UserCommand {
 
@@ -14,22 +14,22 @@ public class RunBenchCmd extends UserCommand {
 
 	private static final ExecutionDevice DEFAULT_EXEC_DEVICE = ExecutionDevice.CPU;
 	
-	private final RodiniaBin bin;
+	private final BenchmarkBin bin;
 	private final DataSetSize dsetSize;
 	private ExecutionDevice device;
 	
-	public RunBenchCmd(RodiniaBin benchBinary, DataSetSize datasetSize) {
+	public RunBenchCmd(BenchmarkBin benchBinary, DataSetSize datasetSize) {
 		this(benchBinary, datasetSize, DEFAULT_EXEC_DEVICE);
 	}
 	
-	public RunBenchCmd(RodiniaBin benchBinary, DataSetSize datasetSize, ExecutionDevice execDev) {
+	public RunBenchCmd(BenchmarkBin benchBinary, DataSetSize datasetSize, ExecutionDevice execDev) {
 		super(CmdType.RUNBENCH);
 		bin = benchBinary;
 		dsetSize = datasetSize;
 		device = execDev;
 	}
 
-	public RodiniaBin getBinaryName() { return bin; }
+	public BenchmarkBin getBinaryName() { return bin; }
 	public DataSetSize getDataSetSize() { return dsetSize; }
 	public ExecutionDevice getExecutionDevice() { return device; }
 	
