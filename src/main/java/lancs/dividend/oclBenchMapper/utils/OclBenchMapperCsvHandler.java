@@ -8,9 +8,9 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.StringJoiner;
 
-import lancs.dividend.oclBenchMapper.server.BenchExecArgs;
-import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.DataSetSize;
-import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.BenchmarkBin;
+import lancs.dividend.oclBenchMapper.benchmark.BenchExecArgs;
+import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
+import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.ui.console.BenchExecutionResults;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
@@ -18,35 +18,37 @@ import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 
 public final class OclBenchMapperCsvHandler {
 
-	private static final String PRECOMP_MAPPING_HEADER = "BenchmarkBin,DataSetSize,ExecutionDevice";
+	private static final String BENCHMARK_CONFIG_HEADER = "Benchmark";
+
+	private static final String PRECOMP_MAPPING_HEADER = BENCHMARK_CONFIG_HEADER + ",DataSetSize,ExecutionDevice";
 	private static final String USER_COMMAND_HEADER = PRECOMP_MAPPING_HEADER + ",Iterations";
 	private static final String EXEC_STATS_HEADER = PRECOMP_MAPPING_HEADER + ",AvgEnergyJ,AvgRuntimeMS";
 	
-	private static final String BENCHMARK_DATA_CONFIG_HEADER = "BenchmarkBin,DataSetSize,DataArgs";
-	private static final String BENCHMARK_EXEC_CONFIG_HEADER = "BenchmarkBin,ExecutionDevice,BinDir,ExecCmd";
+	private static final String BENCHMARK_DATA_CONFIG_HEADER = BENCHMARK_CONFIG_HEADER + ",DataSetSize,DataArgs";
+	private static final String BENCHMARK_EXEC_CONFIG_HEADER = BENCHMARK_CONFIG_HEADER + ",ExecutionDevice,BinDir,ExecCmd";
 	
 	private static final String ENERGY_LOG_HEADER = "Status;Event;Command;Issue;Start;Stop;Workload;Energy;Name";
 	private static final int ENERGY_LOG_HEADER_SKIP = 2;
 	private static final char ENERGY_LOG_SEPARATOR = ';';
 	
-	private static final int HEADER_BIN_IDX = 0;
-	private static final int HEADER_DATA_IDX = 1;
-	private static final int HEADER_DEVICE_IDX = 2;
+	private static final int FIELD_BIN_IDX = 0;
+	private static final int FIELD_DATA_IDX = 1;
+	private static final int FIELD_DEVICE_IDX = 2;
 	
-	private static final int HEADER_ITER_IDX = 3;
+	private static final int FIELD_ITER_IDX = 3;
 	
-	private static final int HEADER_ENERGY_IDX = 3;
-	private static final int HEADER_RUNTIME_IDX = 4;
+	private static final int FIELD_ENERGY_IDX = 3;
+	private static final int FIELD_RUNTIME_IDX = 4;
 	
-	private static final int HEADER_ARGS_IDX = 2;
+	private static final int FIELD_ARGS_IDX = 2;
 	
-	private static final int HEADER_EXEC_CONF_DEVICE_IDX = 1;
-	private static final int HEADER_BINDIR_IDX = 2;
-	private static final int HEADER_EXECCMD_IDX = 3;
+	private static final int FIELD_EXEC_CONF_DEVICE_IDX = 1;
+	private static final int FIELD_BINDIR_IDX = 2;
+	private static final int FIELD_EXECCMD_IDX = 3;
 
-	public static final int HEADER_ELOG_ISSUE_IDX = 3;
-	public static final int HEADER_ELOG_STOP_IDX = 5;
-	public static final int HEADER_ELOG_ENERGY_IDX = 7;
+	public static final int FIELD_ELOG_ISSUE_IDX = 3;
+	public static final int FIELD_ELOG_STOP_IDX = 5;
+	public static final int FIELD_ELOG_ENERGY_IDX = 7;
 
 	
 	private static List<List<String>> parseRecords(Path csvFile, String expectedHeader) {
@@ -86,15 +88,15 @@ public final class OclBenchMapperCsvHandler {
 	
 	
 	
-	public static Hashtable<BenchmarkBin, Hashtable<DataSetSize, ExecutionDevice>> parsePrecomputedMapping(Path csvFile) {
+	public static Hashtable<Benchmark, Hashtable<DataSetSize, ExecutionDevice>> parsePrecomputedMapping(Path csvFile) {
 		List<List<String>> recs = parseRecords(csvFile, OclBenchMapperCsvHandler.PRECOMP_MAPPING_HEADER);
 		
-		Hashtable<BenchmarkBin, Hashtable<DataSetSize, ExecutionDevice>> map =  new Hashtable<>();
+		Hashtable<Benchmark, Hashtable<DataSetSize, ExecutionDevice>> map =  new Hashtable<>();
 		
 		for (List<String> record : recs) {
-			BenchmarkBin rbin = BenchmarkBin.valueOf(record.get(HEADER_BIN_IDX));
-			DataSetSize data = DataSetSize.valueOf(record.get(HEADER_DATA_IDX));
-			ExecutionDevice dev = ExecutionDevice.valueOf(record.get(HEADER_DEVICE_IDX));
+			Benchmark rbin = Benchmark.valueOf(record.get(FIELD_BIN_IDX));
+			DataSetSize data = DataSetSize.valueOf(record.get(FIELD_DATA_IDX));
+			ExecutionDevice dev = ExecutionDevice.valueOf(record.get(FIELD_DEVICE_IDX));
 			
 			if(!map.containsKey(rbin)) map.put(rbin, new Hashtable<>());
 			map.get(rbin).put(data, dev);
@@ -115,11 +117,11 @@ public final class OclBenchMapperCsvHandler {
 		
 		List<UserCommand> res = new ArrayList<>();
 		for (List<String> record : recs) {
-			BenchmarkBin rbin = BenchmarkBin.valueOf(record.get(HEADER_BIN_IDX));
-			DataSetSize data = DataSetSize.valueOf(record.get(HEADER_DATA_IDX));
-			ExecutionDevice dev = ExecutionDevice.valueOf(record.get(HEADER_DEVICE_IDX));
+			Benchmark rbin = Benchmark.valueOf(record.get(FIELD_BIN_IDX));
+			DataSetSize data = DataSetSize.valueOf(record.get(FIELD_DATA_IDX));
+			ExecutionDevice dev = ExecutionDevice.valueOf(record.get(FIELD_DEVICE_IDX));
 			
-			int iterations = Integer.valueOf(record.get(HEADER_ITER_IDX));
+			int iterations = Integer.valueOf(record.get(FIELD_ITER_IDX));
 			
 			for(int i = 0; i < iterations; i++) {
 				res.add(new RunBenchCmd(rbin, data, dev));
@@ -130,19 +132,19 @@ public final class OclBenchMapperCsvHandler {
 	}
 	
 	
-	public static Hashtable<BenchmarkBin, Hashtable<DataSetSize, Hashtable<ExecutionDevice, BenchExecutionResults>>> parseExecutionStats(
+	public static Hashtable<Benchmark, Hashtable<DataSetSize, Hashtable<ExecutionDevice, BenchExecutionResults>>> parseExecutionStats(
 			Path csvFile) {
 
 		List<List<String>> recs = parseRecords(csvFile, OclBenchMapperCsvHandler.EXEC_STATS_HEADER);
 
-		Hashtable<BenchmarkBin, Hashtable<DataSetSize, Hashtable<ExecutionDevice, BenchExecutionResults>>> res = new Hashtable<>();
+		Hashtable<Benchmark, Hashtable<DataSetSize, Hashtable<ExecutionDevice, BenchExecutionResults>>> res = new Hashtable<>();
 		
 		for (List<String> record : recs) {
-			BenchmarkBin rbin = BenchmarkBin.valueOf(record.get(HEADER_BIN_IDX));
-			DataSetSize data = DataSetSize.valueOf(record.get(HEADER_DATA_IDX));
-			ExecutionDevice dev = ExecutionDevice.valueOf(record.get(HEADER_DEVICE_IDX));
-			double avg_energyJ = Double.valueOf(record.get(HEADER_ENERGY_IDX));
-			double avg_runtimeMS = Double.valueOf(record.get(HEADER_RUNTIME_IDX));
+			Benchmark rbin = Benchmark.valueOf(record.get(FIELD_BIN_IDX));
+			DataSetSize data = DataSetSize.valueOf(record.get(FIELD_DATA_IDX));
+			ExecutionDevice dev = ExecutionDevice.valueOf(record.get(FIELD_DEVICE_IDX));
+			double avg_energyJ = Double.valueOf(record.get(FIELD_ENERGY_IDX));
+			double avg_runtimeMS = Double.valueOf(record.get(FIELD_RUNTIME_IDX));
 			
 			if(!res.containsKey(rbin))
 				res.put(rbin, new Hashtable<>());
@@ -171,16 +173,16 @@ public final class OclBenchMapperCsvHandler {
 	}
 	
 	
-	public static Hashtable<BenchmarkBin, Hashtable<DataSetSize, String>> parseBenchmarkDataConfig(Path csvFile) {
+	public static Hashtable<Benchmark, Hashtable<DataSetSize, String>> parseBenchmarkDataConfig(Path csvFile) {
 
 		List<List<String>> recs = parseRecords(csvFile, OclBenchMapperCsvHandler.BENCHMARK_DATA_CONFIG_HEADER);
 
-		Hashtable<BenchmarkBin, Hashtable<DataSetSize, String>> res = new Hashtable<>();
+		Hashtable<Benchmark, Hashtable<DataSetSize, String>> res = new Hashtable<>();
 		
 		for (List<String> record : recs) {
-			BenchmarkBin rbin = BenchmarkBin.valueOf(record.get(HEADER_BIN_IDX));
-			DataSetSize data = DataSetSize.valueOf(record.get(HEADER_DATA_IDX));
-			String args = record.get(HEADER_ARGS_IDX);
+			Benchmark rbin = Benchmark.valueOf(record.get(FIELD_BIN_IDX));
+			DataSetSize data = DataSetSize.valueOf(record.get(FIELD_DATA_IDX));
+			String args = record.get(FIELD_ARGS_IDX);
 			
 			if(!res.containsKey(rbin))
 				res.put(rbin, new Hashtable<>());
@@ -190,21 +192,34 @@ public final class OclBenchMapperCsvHandler {
 		return res;
 	}
 	
-	public static Hashtable<BenchmarkBin, Hashtable<ExecutionDevice, BenchExecArgs>> parseBenchmarkExecConfig(Path csvFile) {
+	public static Hashtable<Benchmark, Hashtable<ExecutionDevice, BenchExecArgs>> parseBenchmarkExecConfig(Path csvFile) {
 
 		List<List<String>> recs = parseRecords(csvFile, OclBenchMapperCsvHandler.BENCHMARK_EXEC_CONFIG_HEADER);
 
-		Hashtable<BenchmarkBin, Hashtable<ExecutionDevice, BenchExecArgs>> res = new Hashtable<>();
+		Hashtable<Benchmark, Hashtable<ExecutionDevice, BenchExecArgs>> res = new Hashtable<>();
 		
 		for (List<String> record : recs) {
-			BenchmarkBin rbin = BenchmarkBin.valueOf(record.get(HEADER_BIN_IDX));
-			ExecutionDevice dev = ExecutionDevice.valueOf(record.get(HEADER_EXEC_CONF_DEVICE_IDX));
-			String binDir = record.get(HEADER_BINDIR_IDX);
-			String execCmd = record.get(HEADER_EXECCMD_IDX);
+			Benchmark rbin = Benchmark.valueOf(record.get(FIELD_BIN_IDX));
+			ExecutionDevice dev = ExecutionDevice.valueOf(record.get(FIELD_EXEC_CONF_DEVICE_IDX));
+			String binDir = record.get(FIELD_BINDIR_IDX);
+			String execCmd = record.get(FIELD_EXECCMD_IDX);
 			
 			if(!res.containsKey(rbin))
 				res.put(rbin, new Hashtable<>());
 			res.get(rbin).put(dev, new BenchExecArgs(binDir, execCmd));
+		}
+		
+		return res;
+	}
+
+	public static List<String> parseBenchmarkConfig(Path csvFile) {
+
+		List<List<String>> recs = parseRecords(csvFile, OclBenchMapperCsvHandler.BENCHMARK_CONFIG_HEADER);
+
+		List<String> res = new ArrayList<>();
+		
+		for (List<String> record : recs) {
+			res.add(record.get(FIELD_BIN_IDX));
 		}
 		
 		return res;

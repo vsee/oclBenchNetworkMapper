@@ -4,14 +4,14 @@ import java.util.Hashtable;
 import java.util.Scanner;
 import java.util.StringJoiner;
 
+import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
+import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
 import lancs.dividend.oclBenchMapper.connection.ServerConnection;
 import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
-import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.DataSetSize;
-import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.BenchmarkBin;
 import lancs.dividend.oclBenchMapper.ui.UserInterface;
 import lancs.dividend.oclBenchMapper.userCmd.ExitCmd;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
@@ -42,13 +42,13 @@ public class ClientConsoleUi implements UserInterface {
 
 		// Generate menu strings
 		StringJoiner join = new StringJoiner(",","{","}");
-		for (BenchmarkBin b : BenchmarkBin.values()) join.add(b.name());
+		for (Benchmark b : Benchmark.values()) join.add(b.name());
 		BENCHMARK_LIST = join.toString();
 		
 		BENCHMARK_TOP_MENU = 
 		"\n1. Enter benchmark name from selection: " + BENCHMARK_LIST + "\n" +
 		"2. Enter '" + EXIT_CMD + "' to shut down client.\n>> ";
-		
+
 		join = new StringJoiner(",","{","}");
 		for (DataSetSize d : DataSetSize.values()) join.add(d.name());
 		DSET_SIZE_LIST = join.toString();
@@ -81,11 +81,11 @@ public class ClientConsoleUi implements UserInterface {
 			System.out.print(BENCHMARK_TOP_MENU);
 			String line = cmdIn.nextLine();
 			
-			BenchmarkBin rbin = null;
+			Benchmark rbin = null;
 			if(line.trim().equals(EXIT_CMD)) {
 				return new ExitCmd();
 			}
-			else if((rbin = isBenchmarkBin(line.trim())) != null) {
+			else if((rbin = isBenchmark(line.trim())) != null) {
 				DataSetSize dsetSize = displayDataSetSizeMenu();
 				if(dsetSize != null) {
 					System.out.println("Benchmark: " + rbin + " selected with a " + dsetSize + 
@@ -125,9 +125,9 @@ public class ClientConsoleUi implements UserInterface {
 		}
 	}
 
-	private BenchmarkBin isBenchmarkBin(String bin) {
+	private Benchmark isBenchmark(String bin) {
 		try {
-			return BenchmarkBin.valueOf(bin);
+			return Benchmark.valueOf(bin);
 		} catch(IllegalArgumentException e) {
 			return null;
 		}

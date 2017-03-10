@@ -1,4 +1,4 @@
-package lancs.dividend.oclBenchMapper.server;
+package lancs.dividend.oclBenchMapper.benchmark;
 
 public class BenchExecArgs {
 	public final String binDir;

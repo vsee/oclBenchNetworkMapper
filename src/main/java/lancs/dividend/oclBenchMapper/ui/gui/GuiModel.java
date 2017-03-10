@@ -7,9 +7,9 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 
+import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
+import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
-import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.DataSetSize;
-import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.BenchmarkBin;
 import lancs.dividend.oclBenchMapper.ui.console.BenchExecutionResults;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
 
@@ -33,7 +33,7 @@ public class GuiModel {
 	protected ExecutionMode activeMode;
 	
 	protected JFrame frame;
-	protected JComboBox<BenchmarkBin> benchcbox;
+	protected JComboBox<Benchmark> benchcbox;
 	protected JComboBox<DataSetSize> datacbox;
 	protected XChartPanel<XYChart> eChartPanel;
 	protected XChartPanel<XYChart> pChartPanel;
@@ -47,7 +47,7 @@ public class GuiModel {
 	protected ClientConnectionHandler cmdHandler;
 	protected String[] serverAdresses;
 
-	protected Hashtable<BenchmarkBin, Hashtable<DataSetSize, Hashtable<ExecutionDevice, BenchExecutionResults>>> serverExecStats;
+	protected Hashtable<Benchmark, Hashtable<DataSetSize, Hashtable<ExecutionDevice, BenchExecutionResults>>> serverExecStats;
 	
 	protected double iteration;
 	protected List<Double> iterationData;

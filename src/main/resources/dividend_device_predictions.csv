@@ -1,4 +1,4 @@
-BenchmarkBin,DataSetSize,ExecutionDevice
+Benchmark,DataSetSize,ExecutionDevice
 KMEANS,MEDIUM,GPU
 KMEANS,LARGE,GPU
 KMEANS,SMALL,CPU

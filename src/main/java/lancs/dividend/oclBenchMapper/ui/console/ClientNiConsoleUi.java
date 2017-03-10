@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
+import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
+import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
 import lancs.dividend.oclBenchMapper.connection.ServerConnection;
 import lancs.dividend.oclBenchMapper.energy.EnergyLog;
@@ -12,8 +14,6 @@ import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
-import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.DataSetSize;
-import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.BenchmarkBin;
 import lancs.dividend.oclBenchMapper.ui.UserInterface;
 import lancs.dividend.oclBenchMapper.userCmd.ExitCmd;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
@@ -28,7 +28,7 @@ public class ClientNiConsoleUi implements UserInterface {
 	
 	private final List<UserCommand> execCmds;
 	private final List<BenchExecutionResults> results;
-	private final Hashtable<BenchmarkBin, Hashtable<DataSetSize, 
+	private final Hashtable<Benchmark, Hashtable<DataSetSize, 
 								Hashtable<ExecutionDevice, 
 									List<BenchExecutionResults>>>> bestMappingStats;
 	
@@ -74,7 +74,7 @@ public class ClientNiConsoleUi implements UserInterface {
 		List<String[]> mappingRecords = new ArrayList<>();
 		List<String[]> statsRecords = new ArrayList<>();
 		
-		for(BenchmarkBin bin : bestMappingStats.keySet()) {
+		for(Benchmark bin : bestMappingStats.keySet()) {
 			for(DataSetSize data : bestMappingStats.get(bin).keySet()) {
 				
 				ExecutionDevice bestDevice = null;

@@ -1,4 +1,4 @@
-package lancs.dividend.oclBenchMapper.server;
+package lancs.dividend.oclBenchMapper.benchmark;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -17,11 +17,10 @@ import lancs.dividend.oclBenchMapper.utils.ShellCmdExecutor;
 
 public class BenchmarkRunner {
 
-	public enum BenchmarkBin { KMEANS }
 	public enum DataSetSize { SMALL, MEDIUM, LARGE }
 	
-	private final Hashtable<BenchmarkBin, Hashtable<ExecutionDevice, BenchExecArgs>> execArgConfig;
-	private final Hashtable<BenchmarkBin, Hashtable<DataSetSize, String>> dataArgConfig;
+	private final Hashtable<Benchmark, Hashtable<ExecutionDevice, BenchExecArgs>> execArgConfig;
+	private final Hashtable<Benchmark, Hashtable<DataSetSize, String>> dataArgConfig;
 	
 	public BenchmarkRunner(Path execConfigCsv, Path dataConfigCsv) {
 		if(execConfigCsv == null) throw new IllegalArgumentException("Benchmark execution configuration must not be null.");
@@ -31,7 +30,7 @@ public class BenchmarkRunner {
 		dataArgConfig = OclBenchMapperCsvHandler.parseBenchmarkDataConfig(dataConfigCsv);
 	}
 
-	public ResponseMessage run(BenchmarkBin binary, DataSetSize dsetSize, ExecutionDevice device, boolean monitorEnergy) {
+	public ResponseMessage run(Benchmark binary, DataSetSize dsetSize, ExecutionDevice device, boolean monitorEnergy) {
 		String execPrefix = "";
 		if(monitorEnergy) {
 			try {
@@ -66,7 +65,7 @@ public class BenchmarkRunner {
 		return response;
 	}
 	
-	private ResponseMessage executeBenchmark(String execPrefix, BenchmarkBin bin, DataSetSize dsetSize, ExecutionDevice device) {
+	private ResponseMessage executeBenchmark(String execPrefix, Benchmark bin, DataSetSize dsetSize, ExecutionDevice device) {
 		StringBuilder cmdBld = new StringBuilder();
 		
 		// enter benchmark directory

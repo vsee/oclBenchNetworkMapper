@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner;
 import lancs.dividend.oclBenchMapper.connection.ClientConnection;
 import lancs.dividend.oclBenchMapper.energy.EnergyLog;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;

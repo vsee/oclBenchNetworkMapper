@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
 import lancs.dividend.oclBenchMapper.client.OclMapperClient;
 import lancs.dividend.oclBenchMapper.mapping.MapperFactory;
 import lancs.dividend.oclBenchMapper.mapping.MapperFactory.MapperType;
@@ -19,6 +20,7 @@ import lancs.dividend.oclBenchMapper.ui.UserInterfaceFactory;
 import lancs.dividend.oclBenchMapper.ui.UserInterfaceFactory.UserInterfaceType;
 import lancs.dividend.oclBenchMapper.ui.console.NiConsoleConfig;
 import lancs.dividend.oclBenchMapper.ui.gui.ClientGuiConfig;
+import lancs.dividend.oclBenchMapper.utils.OclBenchMapperCsvHandler;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
@@ -37,12 +39,16 @@ public class Main {
 	private static final Path DEFAULT_EXECUTION_STATS_FILE = Paths.get("./src/main/resources/dividend_device_executionStats.csv");
 	private static final Path DEFAULT_BENCH_EXEC_CONFIG = Paths.get("./src/main/resources/dividend_rodinia_bench_config.csv");
 	private static final Path DEFAULT_BENCH_ARGS_CONFIG = Paths.get("./src/main/resources/dividend_rodinia_data_config.csv");
+	private static final Path DEFAULT_BENCH_CONFIG = Paths.get("./src/main/resources/dividend_benchmark_config.csv");
 	
 	private static Namespace parseArguments(String[] args) {
 		
 		ArgumentParser parser = ArgumentParsers.newArgumentParser("oclBenchMapper")
 			     .description("Run server or client side for mapping opencl benchmarks "
 			     		+ "to heterogeneous devices available in the network.");
+		parser.addArgument("--benchmarkConfig")
+	    	.type(Arguments.fileType().verifyCanRead().verifyIsFile())
+			.help("Configuration file for available benchmarks.").setDefault(DEFAULT_BENCH_CONFIG);
 		
 	    Subparsers subparsers = parser.addSubparsers().help("Execution role of oclBenchMapper instance.");
 
@@ -124,7 +130,10 @@ public class Main {
 	public static void main(String[] args) {
 	    
 		Namespace ns = parseArguments(args);
-
+		
+		List<String> benchList = OclBenchMapperCsvHandler.parseBenchmarkConfig(Paths.get(ns.getString("benchmarkConfig")));
+		Benchmark.initialise(benchList);
+		
 		ExecutionRole role = ns.get("role");
 		switch(role) {
 			case CLIENT:

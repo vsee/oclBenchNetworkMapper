@@ -9,13 +9,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 
+import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
+import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.connection.ServerConnection;
 import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
-import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.DataSetSize;
-import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.BenchmarkBin;
 import lancs.dividend.oclBenchMapper.ui.console.BenchExecutionResults;
 import lancs.dividend.oclBenchMapper.ui.gui.GuiModel.ExecutionMode;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
@@ -63,7 +63,7 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, Hashtable<Str
 	private UserCommand receiveCommand(boolean randomDataSize) {
 		Random rnd = new Random();
 		
-		BenchmarkBin rbin = (BenchmarkBin) gui.benchcbox.getSelectedItem();
+		Benchmark rbin = (Benchmark) gui.benchcbox.getSelectedItem();
 		DataSetSize dsetSize;
 		if(!randomDataSize) dsetSize = (DataSetSize) gui.datacbox.getSelectedItem();
 		else dsetSize = DataSetSize.values()[rnd.nextInt(DataSetSize.values().length)];

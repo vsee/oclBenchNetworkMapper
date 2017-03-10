@@ -2,8 +2,8 @@ package lancs.dividend.oclBenchMapper.userCmd;
 
 import java.util.StringJoiner;
 
-import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.DataSetSize;
-import lancs.dividend.oclBenchMapper.server.BenchmarkRunner.BenchmarkBin;
+import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
+import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 
 public class RunBenchCmd extends UserCommand {
 
@@ -14,22 +14,22 @@ public class RunBenchCmd extends UserCommand {
 
 	private static final ExecutionDevice DEFAULT_EXEC_DEVICE = ExecutionDevice.CPU;
 	
-	private final BenchmarkBin bin;
+	private final Benchmark bin;
 	private final DataSetSize dsetSize;
 	private ExecutionDevice device;
 	
-	public RunBenchCmd(BenchmarkBin benchBinary, DataSetSize datasetSize) {
+	public RunBenchCmd(Benchmark benchBinary, DataSetSize datasetSize) {
 		this(benchBinary, datasetSize, DEFAULT_EXEC_DEVICE);
 	}
 	
-	public RunBenchCmd(BenchmarkBin benchBinary, DataSetSize datasetSize, ExecutionDevice execDev) {
+	public RunBenchCmd(Benchmark benchBinary, DataSetSize datasetSize, ExecutionDevice execDev) {
 		super(CmdType.RUNBENCH);
 		bin = benchBinary;
 		dsetSize = datasetSize;
 		device = execDev;
 	}
 
-	public BenchmarkBin getBinaryName() { return bin; }
+	public Benchmark getBinaryName() { return bin; }
 	public DataSetSize getDataSetSize() { return dsetSize; }
 	public ExecutionDevice getExecutionDevice() { return device; }
 	
