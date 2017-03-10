@@ -66,6 +66,7 @@ The client provides a graphical user interface which can be started using the ``
 The displayed GUI has control elements in the upper part and two graphs displaying energy consumption (left) and execution performance (right). 
 * Two combo boxes allow the selection of a benchmark and a corresponding workload. 
 * Pressing the ```Run``` button executes the selected benchmark with the given workload on the available servers using the specified workload mapper.
+* Pressing the ```Start Automatic``` button initiates an automatic mode. In this mode the client automatically executes the selected benchmark over and over on the available servers. The dataset size is selected randomly for each execution.
 * Execution results of all servers are combined and displayed in the two charts.
 * The ```mapper``` series shows execution results using the device mapping made by the client.
 * Additionally, a graph is displayed for each possible combination of CPU or GPU depending on available servers. This allows comparing mapper results to alternative combinations. For example, the mapper executes a workload on the GPU of server 1 and the CPU of server 2. Alternative mappings for all combinations of server 1 and 2 as well as GPU or CPU are displayed for comparisson.
