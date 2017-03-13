@@ -1,17 +1,18 @@
 package lancs.dividend.oclBenchMapper.ui.console;
 
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Scanner;
 import java.util.StringJoiner;
 
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
 import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
-import lancs.dividend.oclBenchMapper.connection.ServerConnection;
 import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
+import lancs.dividend.oclBenchMapper.mapping.WorkloadMapper;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
-import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
+import lancs.dividend.oclBenchMapper.message.response.ResponseMessage.ResponseType;
 import lancs.dividend.oclBenchMapper.ui.UserInterface;
 import lancs.dividend.oclBenchMapper.userCmd.ExitCmd;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
@@ -36,10 +37,12 @@ public class ClientConsoleUi implements UserInterface {
 	private final String BENCHMARK_DSET_SIZE_MENU;
 	
 	private final Scanner cmdIn;
+	private boolean exitClient;
 
 	public ClientConsoleUi() {
         cmdIn = new Scanner(System.in);
-
+        exitClient = false;
+        
 		// Generate menu strings
 		StringJoiner join = new StringJoiner(",","{","}");
 		for (Benchmark b : Benchmark.values()) join.add(b.name());
@@ -58,17 +61,18 @@ public class ClientConsoleUi implements UserInterface {
 	}
 	
 	@Override
-	public void run(ClientConnectionHandler cmdHandler) {
+	public void run(ClientConnectionHandler cmdHandler, WorkloadMapper mapper) {
 		if(cmdHandler == null)
 			throw new IllegalArgumentException("Given command handler must not be null.");
+		if(mapper == null)
+			throw new IllegalArgumentException("Given workload mapper must not be null.");
 		
-		while(true) {
+		while(!exitClient) {
 			UserCommand cmd = receiveCommand();
-			Hashtable<ServerConnection, ExecutionItem> executionMap = new Hashtable<>();
-
-			if(!cmdHandler.handleUserCommand(cmd, executionMap)) break;
-			
-			processServerResponse(executionMap, cmd);
+			Hashtable<String, List<ExecutionItem>> execMapping = 
+					mapper.mapWorkload(cmdHandler.getServerAdresses(), cmd);
+			cmdHandler.executeCommands(cmd, execMapping);
+			processServerResponse(execMapping, cmd);
 		}
 		
 		cmdIn.close();
@@ -133,8 +137,8 @@ public class ClientConsoleUi implements UserInterface {
 		}
 	}
 	
-	public void processServerResponse(Hashtable<ServerConnection, ExecutionItem> executionMap, UserCommand cmd) {
-		if(executionMap == null || executionMap.size() == 0)
+	public void processServerResponse(Hashtable<String, List<ExecutionItem>> execMapping, UserCommand cmd) {
+		if(execMapping == null || execMapping.size() == 0)
 			throw new RuntimeException("Given execution map must not be null or empty.");
 		if(cmd == null)
 			throw new RuntimeException("Given user command must not be null.");
@@ -142,38 +146,40 @@ public class ClientConsoleUi implements UserInterface {
 		System.out.println("###############################################");
 		System.out.println("Original User Command:\n\t" + cmd);
 		
-		for (ServerConnection s : executionMap.keySet()) {
-			ExecutionItem item = executionMap.get(s);
+		for (String serverAdr : execMapping.keySet()) {
 
-			System.out.println("\nExecution result of server " + s);
-			System.out.println("Command:\n\t" + item.getCommand());
-			System.out.println("Response:");
-			
-			if(!item.resultsAvailable())
-				System.out.println("ERROR: No results received!");
-			else {
-				ResponseMessage response = item.getResponse();
+			System.out.println("\n## Execution result of server " + serverAdr);
+
+			for(ExecutionItem item : execMapping.get(serverAdr)) {
 				
-				switch (response.getType()) {
-					case BENCHSTATS:
-						BenchStatsResponseMessage br = (BenchStatsResponseMessage) response;
-						System.out.println("### Execution standard output:\n" + br.getStdOut());
-						System.out.println("### Has Energy Log: " + br.hasEnergyLog());
-						
-						if(br.hasEnergyLog()) {
-							System.out.println("### Energy Log:");
-							System.out.println(br.getEnergyLog().getLogRecords().size() + " log entries found.");
-							System.out.println("### Energy: " + br.getEnergyLog().getEnergyJ() + " J");
-							System.out.println("### Runtime: " + br.getEnergyLog().getRuntimeMS() + " ms");
-						}
-						
-						break;
-					case ERROR:
-						System.err.println("\tERROR: " + ((ErrorResponseMessage) response).getText());
-						break;
-					default:
-						System.err.println("\tUnknown response type: " + response.getType());
-						break;
+				System.out.println("\n# Command: " + item.getCommand());
+				System.out.println("Result:");
+				
+				if(item.hasError()) {
+					System.out.println(item.getErrorMsg());
+				} else {
+					switch(cmd.getType()) {
+						case EXIT:
+							exitClient = true;
+							break;
+						case RUNBENCH:
+							ResponseMessage response = item.getResponse();
+							assert response != null : "Response message must not be null if error flag is not set.";
+							assert response.getType() == ResponseType.BENCHSTATS : "Invalid response type at this point: " + response.getType();
+							
+							BenchStatsResponseMessage br = (BenchStatsResponseMessage) response;
+							System.out.println("### Execution standard output:\n" + br.getStdOut());
+							System.out.println("### Has Energy Log: " + br.hasEnergyLog());
+							
+							if(br.hasEnergyLog()) {
+								System.out.println("### Energy Log:");
+								System.out.println(br.getEnergyLog().getLogRecords().size() + " log entries found.");
+								System.out.println("### Energy: " + br.getEnergyLog().getEnergyJ() + " J");
+								System.out.println("### Runtime: " + br.getEnergyLog().getRuntimeMS() + " ms");
+							}
+							break;
+						default: throw new RuntimeException("Unknown user command type: " + cmd.getType());
+					}
 				}
 			}
 		}

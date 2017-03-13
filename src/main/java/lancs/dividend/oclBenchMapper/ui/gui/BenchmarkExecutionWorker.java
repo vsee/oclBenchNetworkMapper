@@ -77,17 +77,27 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, Hashtable<Str
 
 		if(!gui.cmdHandler.handleUserCommand(cmd, executionMap)) {
 			if(cmd.getType() == CmdType.EXIT) {
+				System.out.println("Shutting down client!");
+				// TODO execute this on EDT
 				JOptionPane.showMessageDialog(null, "Shutting down client.", 
 						"Exit", JOptionPane.INFORMATION_MESSAGE);
 			} else {
+				System.err.println("ERROR: Server communication failed, Shutting down client!");
+				// TODO execute this on EDT
 				JOptionPane.showMessageDialog(null, "Server communication failed. Shutting Down client.", 
 						"Communication Error", JOptionPane.ERROR_MESSAGE);
 			}
 			gui.frame.dispatchEvent(new WindowEvent(gui.frame, WindowEvent.WINDOW_CLOSING));
+		} else {
+			
+			// TODO execution of mapper was successful
+			// if option is set
+			// determine commands for alternative mappings
+			// execute alternative commands and add to result list
 		}
 		
-		// TODO do something graphical about null returns
-		 Hashtable<String, GraphUpdate> gupdates = processServerResponse(executionMap, cmd);
+		// TODO do something graphical about null returns on EDT
+		Hashtable<String, GraphUpdate> gupdates = processServerResponse(executionMap, cmd);
 		if(gupdates != null) publish(gupdates);
 	}
 	
@@ -109,7 +119,7 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, Hashtable<Str
 			System.out.println("Response:");
 			
 			if(!item.resultsAvailable()) {
-				System.out.println("ERROR: No results received!");
+				System.err.println("ERROR: No results received!");
 				validResponse = false;
 			} else {
 				ResponseMessage response = item.getResponse();
@@ -159,11 +169,11 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, Hashtable<Str
 						}
 						break;
 					case ERROR:
-						System.err.println("\tERROR: " + ((ErrorResponseMessage) response).getText());
+						System.err.println("ERROR: " + ((ErrorResponseMessage) response).getText());
 						validResponse = false;
 						break;
 					default:
-						System.err.println("\tUnknown response type: " + response.getType());
+						System.err.println("ERROR: Unknown response type: " + response.getType());
 						validResponse = false;
 						break;
 				}
