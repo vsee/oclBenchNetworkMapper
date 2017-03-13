@@ -55,7 +55,7 @@ public class ClientGui implements UserInterface {
 		gui.energyChart.getStyler().setLegendPosition(LegendPosition.InsideNW);
 		gui.energyChart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
 		
-		gui.performanceChart = new XYChartBuilder().width(600).height(400).title("Performance")
+		gui.performanceChart = new XYChartBuilder().width(600).height(400).title("Benchmark Execution Time")
 				.xAxisTitle("Iteration").yAxisTitle("Execution Time Normalised To Best Mapping").build();
 		gui.performanceChart.getStyler().setLegendPosition(LegendPosition.InsideNW);
 		gui.performanceChart.getStyler().setDefaultSeriesRenderStyle(XYSeriesRenderStyle.Line);
