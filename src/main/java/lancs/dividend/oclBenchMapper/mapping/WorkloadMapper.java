@@ -12,7 +12,7 @@ public interface WorkloadMapper {
 	 * 
 	 * @param serverAdresses list of available servers
 	 * @param cmd benchmark command issued by the user
-	 * @return a mapping of server addresses to execution items
+	 * @return a mapping of server addresses to command and execution device.
 	 */
 	public abstract Hashtable<String, CmdToDeviceMapping> mapWorkload(String[] serverAdresses, UserCommand cmd);
 
