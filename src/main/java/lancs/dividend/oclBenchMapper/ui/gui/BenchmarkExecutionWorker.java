@@ -12,10 +12,13 @@ import javax.swing.SwingWorker;
 
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
 import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
-import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
+import lancs.dividend.oclBenchMapper.client.ExecutionItem;
+import lancs.dividend.oclBenchMapper.mapping.CmdToDeviceMapping;
+import lancs.dividend.oclBenchMapper.message.CommandMessage;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage.ResponseType;
+import lancs.dividend.oclBenchMapper.server.ExecutionDevice;
 import lancs.dividend.oclBenchMapper.ui.console.BenchExecutionResults;
 import lancs.dividend.oclBenchMapper.ui.gui.GuiModel.ExecutionMode;
 import lancs.dividend.oclBenchMapper.ui.gui.update.GuiUpdate;
@@ -23,9 +26,13 @@ import lancs.dividend.oclBenchMapper.ui.gui.update.GuiUpdateError;
 import lancs.dividend.oclBenchMapper.ui.gui.update.GuiUpdateExit;
 import lancs.dividend.oclBenchMapper.ui.gui.update.GuiUpdateGraph;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
-import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
+import lancs.dividend.oclBenchMapper.userCmd.UserCommand.CmdType;
 
+/**
+ * @author vseeker
+ *
+ */
 public class BenchmarkExecutionWorker extends SwingWorker<Integer, List<GuiUpdate>> {
 
 	private AtomicBoolean endAutoMode;
@@ -77,95 +84,151 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, List<GuiUpdat
 	private void handleUserCmdGuiEffects(UserCommand cmd) {
 		assert gui.cmdHandler != null && gui.wlMap != null : "Command handler and mapper must not be null at this point.";
 
-		Hashtable<String, List<ExecutionItem>> execMapping = 
+		Hashtable<String, CmdToDeviceMapping> execMapping = 
 				gui.wlMap.mapWorkload(gui.cmdHandler.getServerAdresses(), cmd);
 		
-		// TODO add additional execution commands depending on gui option box
-		
-		gui.cmdHandler.executeCommands(cmd, execMapping);
-		List<GuiUpdate> updates = processServerResponse(execMapping, cmd);
+		Hashtable<String, List<ExecutionItem>> execItems = 
+				generateExecutionItems(execMapping);
+				
+		gui.cmdHandler.executeCommands(cmd, execItems);
+		List<GuiUpdate> updates = processServerResponse(execMapping, execItems, cmd);
 		publish(updates);
 	}
 	
-	public List<GuiUpdate> processServerResponse(Hashtable<String, List<ExecutionItem>> execMapping, UserCommand cmd) {
+	private Hashtable<String, List<ExecutionItem>> generateExecutionItems(
+			Hashtable<String, CmdToDeviceMapping> execMapping) {
+
+		Hashtable<String, List<ExecutionItem>> execItems = new Hashtable<>();
+		for (String serverAddr : execMapping.keySet()) {
+
+			CmdToDeviceMapping mapping = execMapping.get(serverAddr);
+			if(mapping == null) continue; // no workload assigned
+
+			List<ExecutionItem> items = new ArrayList<>();
+			items.add(new ExecutionItem(mapping.userCmd, mapping.execDev, serverAddr));
+			
+			// Make sure the selected workload is executed on all available execution devices on this server
+			if(gui.alterChkBox.isSelected()) {
+				ExecutionDevice alterDevice = null;
+				switch (mapping.execDev) {
+					case CPU:
+						alterDevice = ExecutionDevice.GPU;
+						break;
+					case GPU:
+						alterDevice = ExecutionDevice.CPU;
+						break;
+	
+					default: throw new RuntimeException("Unknown execution device: " + mapping.execDev);
+				}
+				items.add(new ExecutionItem(mapping.userCmd, alterDevice, serverAddr));
+			}
+			
+			execItems.put(serverAddr, items);
+		}
+		
+		return execItems;
+	}
+
+	public List<GuiUpdate> processServerResponse(Hashtable<String, CmdToDeviceMapping> execMapping, 
+			Hashtable<String, List<ExecutionItem>> execItems, UserCommand cmd) {
+		
 		if(execMapping == null || execMapping.size() == 0)
 			throw new RuntimeException("Given execution map must not be null or empty.");
 		if(cmd == null)
 			throw new RuntimeException("Given user command must not be null.");
 
+		boolean error = false;
 		List<GuiUpdate> gUpdates = new ArrayList<>();
 		Hashtable<String, GraphUpdate> seriesUpdates = new Hashtable<>();
 		
-		for (String serverAdr : execMapping.keySet()) {
-
-			for(ExecutionItem item : execMapping.get(serverAdr)) {
-				
-				if(item.hasError()) {
-					StringBuilder errorBld = new StringBuilder("Execution Error: ");
-					errorBld.append(item.getErrorMsg());
-					Exception e = item.getErrorException();
-					if(e != null) {
-						errorBld.append(e.getMessage());
-						System.out.println(e.getMessage());
-						e.printStackTrace();
-					}
-					
-					gUpdates.add(new GuiUpdateError(errorBld.toString()));
-				} else {
-					switch(cmd.getType()) {
-						case EXIT:
-							gUpdates.add(new GuiUpdateExit());
-							break;
-						case RUNBENCH:
-							ResponseMessage response = item.getResponse();
-							assert response != null : "Response message must not be null if error flag is not set.";
-							assert response.getType() == ResponseType.BENCHSTATS : "Invalid response type at this point: " + response.getType();
-							
-							RunBenchCmd bcmd = (RunBenchCmd) cmd;
-							BenchStatsResponseMessage br = (BenchStatsResponseMessage) response;
-							
-							// save energy and runtime results for each graph series
-							// consider measured results for the mapper series
-							// and precomputations for the alternative ones
-							for(String name : gui.series.keySet()) {
-								if(!seriesUpdates.containsKey(name)) {
-									Hashtable<ExecutionDevice, BenchExecutionResults> res = 
-											gui.serverExecStats.get(bcmd.getBinaryName()).get(bcmd.getDataSetSize());
-									GraphUpdate up = new GraphUpdate(bcmd.getBinaryName(), 
-											bcmd.getDataSetSize(), bcmd.getExecutionDevice(),
-											Math.min(res.get(ExecutionDevice.CPU).energyJ, res.get(ExecutionDevice.GPU).energyJ),
-											Math.min(res.get(ExecutionDevice.CPU).runtimeMS, res.get(ExecutionDevice.GPU).runtimeMS));
-									seriesUpdates.put(name, up);
-								}
-								GraphUpdate update = seriesUpdates.get(name);
-								
-								if(name.equals(GuiModel.GRAPH_SERIES_NAME_MAPPER)) {
-									update.addStatUpdate(br.getEnergyLog().getEnergyJ(), 
-											br.getEnergyLog().getRuntimeMS());
-								} else {
-									// get fixed mapping
-									ExecutionDevice device = gui.series.get(name).fixedMapping.get(serverAdr);
-									if(device != null) {
-										BenchExecutionResults execRes = gui.serverExecStats.get(bcmd.getBinaryName())
-												.get(bcmd.getDataSetSize()).get(device);
-										
-										update.addStatUpdate(execRes.energyJ, execRes.runtimeMS);
-									}
-								}
-							}
-							break;
-						default: throw new RuntimeException("Unknown user command type: " + cmd.getType());
-					}
-				}
-			}
-		}
+		// collect all execution items of all servers
+		// evaluate them to graph updates
 		
-		if(!seriesUpdates.isEmpty())
+//		for (String serverAdr : execMapping.keySet()) {
+//
+//			for(ExecutionItem item : execMapping.get(serverAdr)) {
+//				
+//				if(item.hasError()) {
+//					StringBuilder errorBld = new StringBuilder("Execution Error: ");
+//					errorBld.append(item.getErrorMsg());
+//					Exception e = item.getErrorException();
+//					if(e != null) {
+//						errorBld.append(e.getMessage());
+//						System.out.println(e.getMessage());
+//						e.printStackTrace();
+//					}
+//					
+//					gUpdates.add(new GuiUpdateError(errorBld.toString()));
+//					error = true;
+//				} else {
+//					switch(cmd.getType()) {
+//						case EXIT:
+//							gUpdates.add(new GuiUpdateExit());
+//							break;
+//						case RUNBENCH:
+//							ResponseMessage response = item.getResponse();
+//							assert response != null : "Response message must not be null if error flag is not set.";
+//							assert response.getType() == ResponseType.BENCHSTATS : "Invalid response type at this point: " + response.getType();
+//							
+//							RunBenchCmd bcmd = (RunBenchCmd) cmd;
+//							BenchStatsResponseMessage br = (BenchStatsResponseMessage) response;
+//							
+//							processBenchmarkResponse((RunBenchCmd) cmd, (BenchStatsResponseMessage) response, 
+//									serverAdr, seriesUpdates);
+//							break;
+//						default: throw new RuntimeException("Unknown user command type: " + cmd.getType());
+//					}
+//				}
+//			}
+//		}
+//		
+		// only update graphs if all executions went successfully
+		if(!seriesUpdates.isEmpty() && !error)
 			gUpdates.add(new GuiUpdateGraph(seriesUpdates));
 		
 		return gUpdates;
 	}
 	
+//	/**
+//	 * Extract energy and runtime from execution result message and collect them in
+//	 * a GraphUpdate class for each available series in the charts.
+//	 * 
+//	 * @param bcmd The specific execution command for the current response.
+//	 * @param benchResp The response message of the benchmark execution.
+//	 * @param serverAdr The address of the executing server.
+//	 * @param seriesUpdates Collection for extracted statistics.
+//	 */
+//	private void processBenchmarkResponse(RunBenchCmd bcmd, BenchStatsResponseMessage benchResp,
+//			String serverAdr, Hashtable<String, GraphUpdate> seriesUpdates) {
+//		
+//		for(String name : gui.series.keySet()) {
+//			if(!seriesUpdates.containsKey(name)) {
+//				Hashtable<ExecutionDevice, BenchExecutionResults> res = 
+//						gui.serverExecStats.get(bcmd.getBinaryName()).get(bcmd.getDataSetSize());
+//				GraphUpdate up = new GraphUpdate(bcmd.getBinaryName(), 
+//						bcmd.getDataSetSize(), bcmd.getExecutionDevice(),
+//						Math.min(res.get(ExecutionDevice.CPU).energyJ, res.get(ExecutionDevice.GPU).energyJ),
+//						Math.min(res.get(ExecutionDevice.CPU).runtimeMS, res.get(ExecutionDevice.GPU).runtimeMS));
+//				seriesUpdates.put(name, up);
+//			}
+//			GraphUpdate update = seriesUpdates.get(name);
+//			
+//			if(name.equals(GuiModel.GRAPH_SERIES_NAME_MAPPER)) {
+//				update.addStatUpdate(benchResp.getEnergyLog().getEnergyJ(), 
+//						benchResp.getEnergyLog().getRuntimeMS());
+//			} else {
+//				// get fixed mapping
+//				ExecutionDevice device = gui.series.get(name).fixedMapping.get(serverAdr);
+//				if(device != null) {
+//					BenchExecutionResults execRes = gui.serverExecStats.get(bcmd.getBinaryName())
+//							.get(bcmd.getDataSetSize()).get(device);
+//					
+//					update.addStatUpdate(execRes.energyJ, execRes.runtimeMS);
+//				}
+//			}
+//		}
+//	}
+
 	@Override
 	protected void process(List<List<GuiUpdate>> chunks) {
 		

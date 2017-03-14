@@ -6,7 +6,7 @@ import java.util.Hashtable;
 import java.util.List;
 
 import lancs.dividend.oclBenchMapper.connection.ServerConnection;
-import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
+import lancs.dividend.oclBenchMapper.message.CommandMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage.ResponseType;
@@ -30,7 +30,7 @@ public class ClientConnectionHandler {
 
 			for (ExecutionItem item : executionLoad) {
 				sendExecutionItem(item);
-				if(!item.hasError() && item.getCmdMsg().getCommand().getType() != CmdType.EXIT)
+				if(!item.hasError() && item.getCmd().getType() != CmdType.EXIT)
 					receiveExecutionResults(item);
 			}
 			
@@ -38,7 +38,7 @@ public class ClientConnectionHandler {
 
 		private void sendExecutionItem(ExecutionItem item) {
 			try {
-				server.sendMessage(item.getCmdMsg());
+				server.sendMessage(new CommandMessage(item.getCmd(), item.getExecDevice()));
 			} catch (IOException e) {
 				item.setError("ERROR: sending command to server " + server.getAddress() + " failed.",e);
 			}

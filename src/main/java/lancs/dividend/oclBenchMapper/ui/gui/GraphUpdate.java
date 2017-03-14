@@ -5,7 +5,7 @@ import java.util.List;
 
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
 import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
-import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
+import lancs.dividend.oclBenchMapper.server.ExecutionDevice;
 
 public class GraphUpdate {
 	

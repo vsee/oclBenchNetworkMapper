@@ -1,5 +1,6 @@
 package lancs.dividend.oclBenchMapper.ui.console;
 
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Scanner;
@@ -8,7 +9,8 @@ import java.util.StringJoiner;
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
 import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
-import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
+import lancs.dividend.oclBenchMapper.client.ExecutionItem;
+import lancs.dividend.oclBenchMapper.mapping.CmdToDeviceMapping;
 import lancs.dividend.oclBenchMapper.mapping.WorkloadMapper;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
@@ -68,10 +70,21 @@ public class ClientConsoleUi implements UserInterface {
 		
 		while(!exitClient) {
 			UserCommand cmd = receiveCommand();
-			Hashtable<String, List<ExecutionItem>> execMapping = 
+			Hashtable<String, CmdToDeviceMapping> execMapping = 
 					mapper.mapWorkload(cmdHandler.getServerAdresses(), cmd);
-			cmdHandler.executeCommands(cmd, execMapping);
-			processServerResponse(execMapping, cmd);
+			
+			Hashtable<String, List<ExecutionItem>> execItems = new Hashtable<>();
+			for (String serverAddr : execMapping.keySet()) {
+				CmdToDeviceMapping mapping = execMapping.get(serverAddr);
+				if(mapping == null) continue; // no workload assigned
+				
+				List<ExecutionItem> items = new ArrayList<>();
+				items.add(new ExecutionItem(mapping.userCmd, mapping.execDev, serverAddr));
+				execItems.put(serverAddr, items);
+			}
+			
+			cmdHandler.executeCommands(cmd, execItems);
+			processServerResponse(execItems, cmd);
 		}
 		
 		cmdIn.close();
@@ -151,8 +164,9 @@ public class ClientConsoleUi implements UserInterface {
 
 			for(ExecutionItem item : execMapping.get(serverAdr)) {
 				
-				System.out.println("\n# Command: " + item.getCmdMsg());
-				
+				System.out.println("\n# Command: " + item.getCmd());
+				System.out.println("Execution Device " + item.getExecDevice());
+
 				if(item.hasError()) {
 					System.out.println("# Execution Error:");
 					System.out.println(item.getErrorMsg());
@@ -168,7 +182,7 @@ public class ClientConsoleUi implements UserInterface {
 							break;
 						case RUNBENCH:
 							System.out.println("# Result:");
-
+							
 							ResponseMessage response = item.getResponse();
 							assert response != null : "Response message must not be null if error flag is not set.";
 							assert response.getType() == ResponseType.BENCHSTATS : "Invalid response type at this point: " + response.getType();

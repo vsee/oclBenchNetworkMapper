@@ -1,7 +1,8 @@
-package lancs.dividend.oclBenchMapper.mapping;
+package lancs.dividend.oclBenchMapper.client;
 
-import lancs.dividend.oclBenchMapper.message.CommandMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
+import lancs.dividend.oclBenchMapper.server.ExecutionDevice;
+import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 
 /**
  * An execution item holds a command specifying 
@@ -16,7 +17,8 @@ import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
  */
 public class ExecutionItem {
 
-	private final CommandMessage cmd;
+	private final UserCommand cmd;
+	private final ExecutionDevice device;
 	private final String serverAddress;
 	
 	private ResponseMessage response;
@@ -24,11 +26,13 @@ public class ExecutionItem {
 	private String errorMsg;
 	private Exception errorExcep;
 	
-	public ExecutionItem(CommandMessage cmd, String server) {
+	public ExecutionItem(UserCommand cmd, ExecutionDevice dev, String server) {
 		if(cmd == null) throw new IllegalArgumentException("Given command message must not be null.");
 		if(server == null) throw new IllegalArgumentException("Given server address must not be null.");
+		if(dev == null) throw new IllegalArgumentException("Given execution device must not be null.");
 		
 		this.cmd = cmd;
+		device = dev;
 		serverAddress = server;
 	}
 	
@@ -44,7 +48,8 @@ public class ExecutionItem {
 		errorExcep = e;
 	}
 	
-	public CommandMessage getCmdMsg() { return cmd; }
+	public UserCommand getCmd() { return cmd; }
+	public ExecutionDevice getExecDevice() { return device; }
 	public String getServer() { return serverAddress; }
 	
 	public ResponseMessage getResponse() { return response; }

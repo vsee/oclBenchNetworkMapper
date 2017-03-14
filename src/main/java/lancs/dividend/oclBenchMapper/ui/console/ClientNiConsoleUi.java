@@ -8,16 +8,18 @@ import java.util.List;
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
 import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
+import lancs.dividend.oclBenchMapper.client.ExecutionItem;
 import lancs.dividend.oclBenchMapper.energy.EnergyLog;
-import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
+import lancs.dividend.oclBenchMapper.mapping.CmdToDeviceMapping;
 import lancs.dividend.oclBenchMapper.mapping.WorkloadMapper;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage.ResponseType;
+import lancs.dividend.oclBenchMapper.server.ExecutionDevice;
+import lancs.dividend.oclBenchMapper.server.OclMapperServer;
 import lancs.dividend.oclBenchMapper.ui.UserInterface;
 import lancs.dividend.oclBenchMapper.userCmd.ExitCmd;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
-import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 import lancs.dividend.oclBenchMapper.utils.OclBenchMapperCsvHandler;
 
@@ -26,7 +28,7 @@ public class ClientNiConsoleUi implements UserInterface {
 	private static final String EXECUTION_STATS_CSV = "executionStats.csv";
 	private static final String OPTIMAL_MAPPING_CSV = "optimalMapping.csv";
 	
-	private final List<UserCommand> execCmds;
+	private final List<CmdToDeviceMapping> execCmds;
 	private final List<BenchExecutionResults> results;
 	private final Hashtable<Benchmark, Hashtable<DataSetSize, 
 								Hashtable<ExecutionDevice, 
@@ -39,7 +41,7 @@ public class ClientNiConsoleUi implements UserInterface {
 		if(conf == null) throw new IllegalArgumentException("Given configuration must not be null.");
 		
 		execCmds = OclBenchMapperCsvHandler.parseUserCommands(conf.cmdInputFile);
-		execCmds.add(new ExitCmd());
+		execCmds.add(new CmdToDeviceMapping(new ExitCmd(), OclMapperServer.DEFAULT_SEVER_EXECUTION_DEVICE));
 		
 		bestMappingStats = new Hashtable<>();
 		
@@ -54,18 +56,26 @@ public class ClientNiConsoleUi implements UserInterface {
 			throw new IllegalArgumentException("Given command handler must not be null.");
 		if(mapper == null)
 			throw new IllegalArgumentException("Given workload mapper must not be null.");
+		if(cmdHandler.getServerAdresses().length != 1) 
+			throw new RuntimeException("Expected a single server for a non-interactive run.");
+		
+		String serverAddr = cmdHandler.getServerAdresses()[0];
 		
 		System.out.println();
 		
 		int current = 1;
-		for (UserCommand cmd : execCmds) {
+		for (CmdToDeviceMapping cmdMapping : execCmds) {
 			if(exitClient) break;
-			System.out.println("## Executing command " + current++ + "/" + execCmds.size() + ": " + cmd);
+			System.out.println("## Executing command " + current++ + "/" + execCmds.size() + ": " + 
+					cmdMapping.userCmd + " on " + cmdMapping.execDev);
 			
-			Hashtable<String, List<ExecutionItem>> execMapping = 
-					mapper.mapWorkload(cmdHandler.getServerAdresses(), cmd);
-			cmdHandler.executeCommands(cmd, execMapping);
-			processServerResponse(execMapping, cmd);
+			Hashtable<String, List<ExecutionItem>> execItems = new Hashtable<>();
+			List<ExecutionItem> items = new ArrayList<>();
+			items.add(new ExecutionItem(cmdMapping.userCmd, cmdMapping.execDev, serverAddr));
+			execItems.put(serverAddr, items);
+			
+			cmdHandler.executeCommands(cmdMapping.userCmd, execItems);
+			processServerResponse(execItems, cmdMapping.userCmd);
 		}
 		
 		saveStatsAndBestMapping();
@@ -129,7 +139,8 @@ public class ClientNiConsoleUi implements UserInterface {
 
 			for(ExecutionItem item : execMapping.get(serverAdr)) {
 				
-				System.out.println("\n# Command: " + item.getCmdMsg());
+				System.out.println("\n# Command: " + item.getCmd());
+				System.out.println("Execution Device " + item.getExecDevice());
 				
 				if(item.hasError()) {
 					System.out.println("# Execution Error:");
@@ -166,10 +177,10 @@ public class ClientNiConsoleUi implements UserInterface {
 								bestMappingStats.put(bcmd.getBinaryName(), new Hashtable<>());
 							if(!bestMappingStats.get(bcmd.getBinaryName()).containsKey(bcmd.getDataSetSize()))
 								bestMappingStats.get(bcmd.getBinaryName()).put(bcmd.getDataSetSize(), new Hashtable<>());
-							if(!bestMappingStats.get(bcmd.getBinaryName()).get(bcmd.getDataSetSize()).containsKey(bcmd.getExecutionDevice()))
-								bestMappingStats.get(bcmd.getBinaryName()).get(bcmd.getDataSetSize()).put(bcmd.getExecutionDevice(), new ArrayList<>());
+							if(!bestMappingStats.get(bcmd.getBinaryName()).get(bcmd.getDataSetSize()).containsKey(item.getExecDevice()))
+								bestMappingStats.get(bcmd.getBinaryName()).get(bcmd.getDataSetSize()).put(item.getExecDevice(), new ArrayList<>());
 							
-							bestMappingStats.get(bcmd.getBinaryName()).get(bcmd.getDataSetSize()).get(bcmd.getExecutionDevice()).add(execRes);
+							bestMappingStats.get(bcmd.getBinaryName()).get(bcmd.getDataSetSize()).get(item.getExecDevice()).add(execRes);
 							
 							System.out.println("Energy: " + elog.getEnergyJ() + " J - Runtime: " + elog.getRuntimeMS() + " ms");
 							break;
