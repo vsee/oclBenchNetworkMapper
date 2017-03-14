@@ -132,16 +132,20 @@ public class ClientNiConsoleUi implements UserInterface {
 				System.out.println("\n# Command: " + item.getCmdMsg());
 				
 				if(item.hasError()) {
-					System.out.println("ERROR:");
+					System.out.println("# Execution Error:");
 					System.out.println(item.getErrorMsg());
-					// TODO exit on error?
+					Exception e = item.getErrorException();
+					if(e != null) {
+						System.out.println(e.getMessage());
+						e.printStackTrace();
+					}
 				} else {
 					switch(cmd.getType()) {
 						case EXIT:
 							exitClient = true;
 							break;
 						case RUNBENCH:
-							System.out.println("Result:");
+							System.out.println("# Result:");
 
 							ResponseMessage response = item.getResponse();
 							assert response != null : "Response message must not be null if error flag is not set.";

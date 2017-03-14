@@ -22,6 +22,7 @@ public class ExecutionItem {
 	private ResponseMessage response;
 	private boolean error;
 	private String errorMsg;
+	private Exception errorExcep;
 	
 	public ExecutionItem(CommandMessage cmd, String server) {
 		if(cmd == null) throw new IllegalArgumentException("Given command message must not be null.");
@@ -33,11 +34,14 @@ public class ExecutionItem {
 	
 	public boolean hasError() { return error; }
 	public String getErrorMsg() { return errorMsg; }
-	public void setError(String msg) {
+	public Exception getErrorException() { return errorExcep; }
+	public void setError(String msg) { setError(msg, null); }
+	public void setError(String msg, Exception e) {
 		if(msg == null) throw new IllegalArgumentException("Given error message must not be null.");
 
 		error = true;
 		errorMsg = msg;
+		errorExcep = e;
 	}
 	
 	public CommandMessage getCmdMsg() { return cmd; }

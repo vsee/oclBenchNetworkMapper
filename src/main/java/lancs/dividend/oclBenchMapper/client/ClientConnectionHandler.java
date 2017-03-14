@@ -40,7 +40,7 @@ public class ClientConnectionHandler {
 			try {
 				server.sendMessage(item.getCmdMsg());
 			} catch (IOException e) {
-				item.setError("ERROR: sending command to server " + server.getAddress() +" failed: " + e);
+				item.setError("ERROR: sending command to server " + server.getAddress() + " failed.",e);
 			}
 		}
 		
@@ -53,7 +53,7 @@ public class ClientConnectionHandler {
 					item.setError(((ErrorResponseMessage) response).getText());
 	        	}
 	        } catch (IOException e) {
-				item.setError("ERROR: receiving command from server " + server.getAddress() +" failed: " + e);
+				item.setError("ERROR: receiving command from " + server.getAddress() + " failed.",e);
 	        }
 		}
 	}
