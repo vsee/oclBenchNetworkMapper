@@ -245,9 +245,9 @@ public class ClientGui implements UserInterface {
 		gui.iterationData.add(gui.iteration++);
 
 		gui.series = new Hashtable<>();
-		addSeries(gui.series, GuiModel.GRAPH_SERIES_NAME_MAPPER, false);
 		
 		permutateAlterSeries(gui.cmdHandler.getServerAdresses().length, "");
+		addSeries(gui.series, GuiModel.GRAPH_SERIES_NAME_MAPPER, false);
 	}
 	
 	private void addSeries(Hashtable<String, GraphSeriesData> seriesList, String name, boolean addFixedMappings) {
