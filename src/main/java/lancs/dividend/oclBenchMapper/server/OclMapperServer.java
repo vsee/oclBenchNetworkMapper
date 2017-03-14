@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner;
 import lancs.dividend.oclBenchMapper.connection.ClientConnection;
 import lancs.dividend.oclBenchMapper.energy.EnergyLog;
+import lancs.dividend.oclBenchMapper.message.CommandMessage;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
@@ -25,6 +26,7 @@ import lancs.dividend.oclBenchMapper.userCmd.UserCommand.CmdType;
  */
 public class OclMapperServer {
 
+	public static final ExecutionDevice DEFAULT_SEVER_EXECUTION_DEVICE = ExecutionDevice.CPU;
 	private static final Path DUMMY_ENERGY_LOG = Paths.get("src/main/resources/ocleniMONITOR_sample.csv");
 	
 	private final BenchmarkRunner benchRunner;
@@ -70,15 +72,17 @@ public class OclMapperServer {
 		
 		while (!closeConnection) {
 			
-            UserCommand cmd = null;
             ResponseMessage response = null;
-			cmd = client.waitForCmd().getCommand();
+			CommandMessage cmdMsg = client.waitForCmd();
+			
+			UserCommand cmd = cmdMsg.getCommand();
+			ExecutionDevice device = cmdMsg.getExecutionDevice();
 			
             if (cmd.getType() == CmdType.EXIT) {
                 closeConnection = true;
                 System.out.println("Closing connection with client.");
             } else if(cmd.getType() == CmdType.RUNBENCH) {
-                response = executeCmd((RunBenchCmd) cmd);
+                response = executeCmd((RunBenchCmd) cmd, device);
             } else {
             	System.err.println("ERROR: Unknown command type: " + cmd.getType().name());
 				response = new ErrorResponseMessage("Unknown command type: " + cmd.getType().name());
@@ -99,16 +103,16 @@ public class OclMapperServer {
 	}
 
 	
-	private ResponseMessage executeCmd(RunBenchCmd cmd) {
+	private ResponseMessage executeCmd(RunBenchCmd cmd, ExecutionDevice device) {
 		switch (cmd.getType()) {
 			case RUNBENCH:
 				System.out.println("Executing: " + cmd.getBinaryName() + " " + 
-						cmd.getDataSetSize() + " on " + cmd.getExecutionDevice());
+						cmd.getDataSetSize() + " on " + device);
 				
 				ResponseMessage result;
 				
 				if(!isDummyServer) {
-					result = benchRunner.run(cmd.getBinaryName(), cmd.getDataSetSize(), cmd.getExecutionDevice(), true);
+					result = benchRunner.run(cmd.getBinaryName(), cmd.getDataSetSize(), device, true);
 				}
 				else {
 					result = new BenchStatsResponseMessage("DUMMY EXECUTION");

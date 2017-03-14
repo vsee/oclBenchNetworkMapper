@@ -11,7 +11,7 @@ import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage.ResponseType;
-import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
+import lancs.dividend.oclBenchMapper.server.ExecutionDevice;
 import lancs.dividend.oclBenchMapper.utils.OclBenchMapperCsvHandler;
 import lancs.dividend.oclBenchMapper.utils.ShellCmdExecutor;
 

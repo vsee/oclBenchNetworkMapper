@@ -51,6 +51,6 @@ public class OclMapperClient {
 			return;
 		}
 
-		ui.run(new ClientConnectionHandler(servers, wlMap));
+		ui.run(new ClientConnectionHandler(servers), wlMap);
 	}
 }

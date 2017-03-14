@@ -1,119 +1,120 @@
 package lancs.dividend.oclBenchMapper.client;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
 import lancs.dividend.oclBenchMapper.connection.ServerConnection;
-import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
-import lancs.dividend.oclBenchMapper.mapping.WorkloadMapper;
+import lancs.dividend.oclBenchMapper.message.CommandMessage;
+import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
+import lancs.dividend.oclBenchMapper.message.response.ResponseMessage.ResponseType;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand.CmdType;
 
 public class ClientConnectionHandler {
 	
-	private final List<ServerConnection> servers;
-	private final WorkloadMapper wlMap;
-	
-	public ClientConnectionHandler(List<ServerConnection> servers, WorkloadMapper wlMap) {
-		if(servers == null || servers.isEmpty())
-			throw new IllegalArgumentException("Given server connections must not be null or empty.");
-		if(wlMap == null)
-			throw new IllegalArgumentException("Given workload mapper must not be null.");
-		
-		this.wlMap = wlMap;
-		this.servers = servers;		
-	}
-	
-	public String[] getServerAdresses() {
-		String[] res = new String[servers.size()];
-		for(int i = 0; i < servers.size(); i++) {
-			res[i] = servers.get(i).getAddress();
-		}
-		return res;
-	}
+	private class ServerLoadHandler implements Runnable {
 
-	/**
-	 * Handles workload mapping and execution for a given user command.
-	 * NOTE: The given execution map will be cleared and refilled by this method.
-	 * 
-	 * @param cmd The command to be executed on the servers.
-	 * @param executionMap This map is used to map the workload to available servers and filled with execution results.
-	 * @return true if execution was successful.
-	 */
-	public boolean handleUserCommand(UserCommand cmd, Hashtable<ServerConnection, ExecutionItem> executionMap) {
-		if(cmd == null)
-			throw new IllegalArgumentException("Given user command must not be null or empty.");
-		if(executionMap == null)
-			throw new IllegalArgumentException("Given execution map must not be null.");
+		private final List<ExecutionItem> executionLoad;
+		private final ServerConnection server;
 		
-		wlMap.mapWorkload(servers, cmd, executionMap);
-		
-		if(!sendExecutionCommands(executionMap) || cmd.getType() == CmdType.EXIT) 
-			return false;
-
-		if(!receiveExecutionResults(executionMap)) return false;
-
-		return true;
-	}
-	
-	/**
-	 * Waits for a response of all execution servers considered
-	 * in the workload mapping and returns them. 
-	 *  
-	 * @param executionMap The mapping of benchmark workload to server currently being executed. 
-	 * 
-	 * @return A mapping of server to execution response or null if an error happened.
-	 */
-	private boolean receiveExecutionResults(Hashtable<ServerConnection, ExecutionItem> executionMap) {
-		
-		assert executionMap != null && executionMap.size() > 0 : "Invalid command to server mapping.";
-		
-		for (ServerConnection s : executionMap.keySet()) {
-	        try {
-	        	ResponseMessage response = s.waitForCmdResponse();
-	        	ExecutionItem item = executionMap.get(s);
-	        	item.setResponse(response);
-	        } catch (IOException e) {
-	        	System.err.println(e.getMessage());
-	        	e.printStackTrace();
-	        	return false;
-	        }
+		public ServerLoadHandler(List<ExecutionItem> load, ServerConnection server) {
+			executionLoad = load;
+			this.server = server;
 		}
 		
-		return true;
-	}
+		@Override
+		public void run() {
 
-	/** 
-	 * Takes a mapping of workload execution commands to servers and
-	 * starts workload execution by sending the corresponding messages 
-	 * to their paired servers. It gives up as soon as a single message
-	 * could not be send successfully.
-	 * 
-	 * @param executionMap mapping of CommandMessages to ServerConnections
-	 * @return true if all messages were send out successfully
-	 */
-	private boolean sendExecutionCommands(Hashtable<ServerConnection, ExecutionItem> executionMap) {
+			for (ExecutionItem item : executionLoad) {
+				sendExecutionItem(item);
+				if(!item.hasError() && item.getCmd().getType() != CmdType.EXIT)
+					receiveExecutionResults(item);
+			}
+			
+		}
 
-		assert executionMap != null && executionMap.size() > 0 : "Invalid command to server mapping.";
-		
-		for (ServerConnection s : executionMap.keySet()) {
+		private void sendExecutionItem(ExecutionItem item) {
 			try {
-				s.sendMessage(executionMap.get(s).getCommand());
+				server.sendMessage(new CommandMessage(item.getCmd(), item.getExecDevice()));
 			} catch (IOException e) {
-				System.err.println("ERROR: sending command to server " + s +" failed: " + e);
-				e.printStackTrace();
-				return false;
+				item.setError("ERROR: sending command to server " + server.getAddress() + " failed.",e);
 			}
 		}
 		
-		return true;
+		private void receiveExecutionResults(ExecutionItem item) {
+	        try {
+	        	ResponseMessage response = server.waitForCmdResponse();
+	        	item.setResponse(response);
+	        	
+	        	if(response.getType() == ResponseType.ERROR) {
+					item.setError(((ErrorResponseMessage) response).getText());
+	        	}
+	        } catch (IOException e) {
+				item.setError("ERROR: receiving command from " + server.getAddress() + " failed.",e);
+	        }
+		}
 	}
+	
+	// # ------------------------------------------------------------------------------------ #
+	
+	private final Hashtable<String, ServerConnection> servers;
+	private final String[] serverAdresses;
+	
+	public ClientConnectionHandler(List<ServerConnection> connections) {
+		if(connections == null || connections.isEmpty())
+			throw new IllegalArgumentException("Given server connections must not be null or empty.");
+
+		this.servers = new Hashtable<>();
+		for(ServerConnection sc : connections) {
+			if(sc == null) throw new IllegalArgumentException("Given server connection must not be null.");
+			servers.put(sc.getAddress(), sc);
+		}
+
+		serverAdresses = servers.keySet().toArray(new String[servers.keySet().size()]);
+	}
+	
+	public String[] getServerAdresses() {
+		return serverAdresses;
+	}
+		
+	public void executeCommands(UserCommand cmd, Hashtable<String, List<ExecutionItem>> execMapping) {
+		if(cmd == null)
+			throw new IllegalArgumentException("Given user command must not be null or empty.");
+		if(execMapping == null)
+			throw new IllegalArgumentException("Given execution mapping must not be null.");
+		
+		// issue worker threads
+		List<Thread> handlers = new ArrayList<>();
+		for(String serverAddr : execMapping.keySet()) {
+			List<ExecutionItem> execItems = execMapping.get(serverAddr);
+			
+			assert execItems != null : "Given execution items for server " + serverAddr + " must not be null.";
+			
+			Thread loadHandlerThread = new Thread(new ServerLoadHandler(execItems, servers.get(serverAddr)));
+			loadHandlerThread.start();
+			handlers.add(loadHandlerThread);
+		}
+
+		// wait for them to finish
+		for (Thread loadHandlerThread : handlers) {
+			try {
+				loadHandlerThread.join();
+			} catch (InterruptedException e) {
+				System.out.println(e);
+				e.printStackTrace();
+
+				throw new RuntimeException("Benchmark execution worker thread was interrupted.");
+			}
+		}
+	}
+	
 
 	public void closeConnections() {
 		System.out.println("Closing server connections ...");
-		for(ServerConnection s : servers) s.closeConnection();
+		for(ServerConnection s : servers.values()) s.closeConnection();
 		servers.clear();
 	}	
 }

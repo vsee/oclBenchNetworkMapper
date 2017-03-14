@@ -11,10 +11,10 @@ import java.util.StringJoiner;
 import lancs.dividend.oclBenchMapper.benchmark.BenchExecArgs;
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
 import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
+import lancs.dividend.oclBenchMapper.mapping.CmdToDeviceMapping;
+import lancs.dividend.oclBenchMapper.server.ExecutionDevice;
 import lancs.dividend.oclBenchMapper.ui.console.BenchExecutionResults;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
-import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
-import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 
 public final class OclBenchMapperCsvHandler {
 
@@ -112,10 +112,10 @@ public final class OclBenchMapperCsvHandler {
 	
 	
 	
-	public static List<UserCommand> parseUserCommands(Path csvFile) {
+	public static List<CmdToDeviceMapping> parseUserCommands(Path csvFile) {
 		List<List<String>> recs = parseRecords(csvFile, OclBenchMapperCsvHandler.USER_COMMAND_HEADER);
 		
-		List<UserCommand> res = new ArrayList<>();
+		List<CmdToDeviceMapping> res = new ArrayList<>();
 		for (List<String> record : recs) {
 			Benchmark rbin = Benchmark.valueOf(record.get(FIELD_BIN_IDX));
 			DataSetSize data = DataSetSize.valueOf(record.get(FIELD_DATA_IDX));
@@ -124,7 +124,7 @@ public final class OclBenchMapperCsvHandler {
 			int iterations = Integer.valueOf(record.get(FIELD_ITER_IDX));
 			
 			for(int i = 0; i < iterations; i++) {
-				res.add(new RunBenchCmd(rbin, data, dev));
+				res.add(new CmdToDeviceMapping(new RunBenchCmd(rbin, data), dev));
 			}
 		}
 		

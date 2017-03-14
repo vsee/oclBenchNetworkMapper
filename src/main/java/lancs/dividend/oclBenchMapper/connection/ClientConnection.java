@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 
 import lancs.dividend.oclBenchMapper.message.CommandMessage;
+import lancs.dividend.oclBenchMapper.server.OclMapperServer;
 import lancs.dividend.oclBenchMapper.userCmd.ExitCmd;
 
 public class ClientConnection extends ConnectionHandler {
@@ -50,7 +51,7 @@ public class ClientConnection extends ConnectionHandler {
 			e.printStackTrace();
 		}
 		
-		return new CommandMessage(new ExitCmd());
+		return new CommandMessage(new ExitCmd(), OclMapperServer.DEFAULT_SEVER_EXECUTION_DEVICE);
 	}
 
 	public void shutDown() throws IOException {

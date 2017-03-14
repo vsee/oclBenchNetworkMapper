@@ -1,10 +1,8 @@
 package lancs.dividend.oclBenchMapper.mapping;
 
 import java.util.Hashtable;
-import java.util.List;
 
-import lancs.dividend.oclBenchMapper.connection.ServerConnection;
-import lancs.dividend.oclBenchMapper.message.CommandMessage;
+import lancs.dividend.oclBenchMapper.server.OclMapperServer;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand.CmdType;
 
@@ -17,27 +15,25 @@ import lancs.dividend.oclBenchMapper.userCmd.UserCommand.CmdType;
 public class FcfsMapper implements WorkloadMapper {
 
 	@Override
-	public void mapWorkload(List<ServerConnection> servers, UserCommand cmd,
-			Hashtable<ServerConnection, ExecutionItem> executionMap) {
-		
-		if(servers == null || servers.isEmpty())
+	public Hashtable<String, CmdToDeviceMapping> mapWorkload(String[] serverAdresses, UserCommand cmd) {
+		if(serverAdresses == null || serverAdresses.length == 0)
 			throw new IllegalArgumentException("Given server connections must not be null or empty.");
 		if(cmd == null)
 			throw new IllegalArgumentException("Given command must not be null.");
-		if(executionMap == null)
-			throw new IllegalArgumentException("Given execution map must not be null.");
 		
-		executionMap.clear();
+		Hashtable<String, CmdToDeviceMapping> map = new Hashtable<>();
 		
 		boolean assigned = false;
-		for(ServerConnection s : servers) {
+		for(String s : serverAdresses) {
 			// assign only once to first server in list
 			// except for exit methods, they are send to all servers
 			if(!assigned || cmd.getType() == CmdType.EXIT) {
-				executionMap.put(s, new ExecutionItem(new CommandMessage(cmd)));
+				map.put(s, new CmdToDeviceMapping(cmd, OclMapperServer.DEFAULT_SEVER_EXECUTION_DEVICE));
 				assigned = true;
 			}
 		}
+		
+		return map;
 	}
 
 }

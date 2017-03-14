@@ -4,14 +4,18 @@ import java.util.Hashtable;
 import java.util.List;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
 import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
+import lancs.dividend.oclBenchMapper.mapping.WorkloadMapper;
+import lancs.dividend.oclBenchMapper.server.ExecutionDevice;
 import lancs.dividend.oclBenchMapper.ui.console.BenchExecutionResults;
-import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
 
 import org.knowm.xchart.XChartPanel;
 import org.knowm.xchart.XYChart;
@@ -26,6 +30,7 @@ public class GuiModel {
 	
 	protected static final String RUN_BTN_RUN_TEXT = "Run";
 	protected static final String RUN_BTN_RUNNING_TEXT = "Running";
+	protected static final String ALTER_CHECKBOX_TEXT = "Execute Alternative Mappings";
 
 	protected static final String GRAPH_SERIES_NAME_MAPPER = "mapper";
 	protected static final int MAX_ITERATION_DISPLAY = 10;
@@ -43,9 +48,13 @@ public class GuiModel {
 	
 	protected JButton btnRun;
 	protected JButton btnAutomatic;
+	protected JCheckBox alterChkBox;
+	
+	protected JScrollPane msgOutScroll;
+	protected JTextArea msgOutTextArea;
 	
 	protected ClientConnectionHandler cmdHandler;
-	protected String[] serverAdresses;
+	protected WorkloadMapper wlMap;
 
 	protected Hashtable<Benchmark, Hashtable<DataSetSize, Hashtable<ExecutionDevice, BenchExecutionResults>>> serverExecStats;
 	

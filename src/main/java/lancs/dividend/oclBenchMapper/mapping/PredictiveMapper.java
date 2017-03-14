@@ -1,14 +1,12 @@
 package lancs.dividend.oclBenchMapper.mapping;
 
 import java.util.Hashtable;
-import java.util.List;
 
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
 import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
-import lancs.dividend.oclBenchMapper.connection.ServerConnection;
-import lancs.dividend.oclBenchMapper.message.CommandMessage;
+import lancs.dividend.oclBenchMapper.server.ExecutionDevice;
+import lancs.dividend.oclBenchMapper.server.OclMapperServer;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
-import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand.CmdType;
 import lancs.dividend.oclBenchMapper.utils.OclBenchMapperCsvHandler;
@@ -30,6 +28,7 @@ import lancs.dividend.oclBenchMapper.utils.OclBenchMapperCsvHandler;
  */
 public class PredictiveMapper implements WorkloadMapper {
 	
+	// TODO read prediction depending on server architecture
 	private final Hashtable<Benchmark, Hashtable<DataSetSize, ExecutionDevice>> preDeviceMapping;
 	
 	public PredictiveMapper(PredictiveMapperConfig config) {
@@ -37,36 +36,41 @@ public class PredictiveMapper implements WorkloadMapper {
 	}
 
 	@Override
-	public void mapWorkload(List<ServerConnection> servers, UserCommand cmd,
-			Hashtable<ServerConnection, ExecutionItem> executionMap) {
-		
-		if(servers == null || servers.isEmpty())
+	public Hashtable<String, CmdToDeviceMapping> mapWorkload(String[] serverAdresses, UserCommand cmd) {
+		if(serverAdresses == null || serverAdresses.length == 0)
 			throw new IllegalArgumentException("Given server connections must not be null or empty.");
 		if(cmd == null)
 			throw new IllegalArgumentException("Given command must not be null.");
-		if(executionMap == null)
-			throw new IllegalArgumentException("Given execution map must not be null.");
 		
-		executionMap.clear();
+		Hashtable<String, CmdToDeviceMapping> map = new Hashtable<>();
 		
-		if(cmd.getType() == CmdType.RUNBENCH) {
-			setExecutionDevice((RunBenchCmd) cmd);
+		for(String s : serverAdresses) {
+			ExecutionDevice device = null;
+			
+			if(cmd.getType() == CmdType.RUNBENCH) {
+				device = getExecutionDevice((RunBenchCmd) cmd, s);
+			} else {
+				device = OclMapperServer.DEFAULT_SEVER_EXECUTION_DEVICE;
+			}
+			
+			map.put(s, new CmdToDeviceMapping(cmd, device));
 		}
 		
-		for(ServerConnection s : servers) {
-			executionMap.put(s, new ExecutionItem(new CommandMessage(cmd)));
-		}
+		return map;
 	}
+	
 
-	private void setExecutionDevice(RunBenchCmd bcmd) {
-		Hashtable<DataSetSize, ExecutionDevice> dataMap = preDeviceMapping.get(bcmd.getBinaryName());
-		if(dataMap == null) throw new RuntimeException("No data set size mappings found for benchmark: " + bcmd.getBinaryName());
+	private ExecutionDevice getExecutionDevice(RunBenchCmd originalCommand, String serverId) {
+		// TODO include the server id to pick the predictions for the corresponding architecture
 		
-		ExecutionDevice device = dataMap.get(bcmd.getDataSetSize());
+		Hashtable<DataSetSize, ExecutionDevice> dataMap = preDeviceMapping.get(originalCommand.getBinaryName());
+		if(dataMap == null) throw new RuntimeException("No data set size mappings found for benchmark: " + originalCommand.getBinaryName());
+		
+		ExecutionDevice device = dataMap.get(originalCommand.getDataSetSize());
 		if(device == null) throw new RuntimeException("No device mappings found for benchmark: " 
-				+ bcmd.getBinaryName() + " with dataset size " + bcmd.getDataSetSize());
+				+ originalCommand.getBinaryName() + " with dataset size " + originalCommand.getDataSetSize());
 		
-		bcmd.setExecutionDevice(device);
+		return device;
 	}
 
 
