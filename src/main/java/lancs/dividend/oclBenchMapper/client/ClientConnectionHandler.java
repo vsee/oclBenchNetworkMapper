@@ -58,8 +58,10 @@ public class ClientConnectionHandler {
 		}
 	}
 	
+	// # ------------------------------------------------------------------------------------ #
 	
 	private final Hashtable<String, ServerConnection> servers;
+	private final String[] serverAdresses;
 	
 	public ClientConnectionHandler(List<ServerConnection> connections) {
 		if(connections == null || connections.isEmpty())
@@ -70,10 +72,12 @@ public class ClientConnectionHandler {
 			if(sc == null) throw new IllegalArgumentException("Given server connection must not be null.");
 			servers.put(sc.getAddress(), sc);
 		}
+
+		serverAdresses = servers.keySet().toArray(new String[servers.keySet().size()]);
 	}
 	
 	public String[] getServerAdresses() {
-		return servers.keySet().toArray(new String[servers.keySet().size()]);
+		return serverAdresses;
 	}
 		
 	public void executeCommands(UserCommand cmd, Hashtable<String, List<ExecutionItem>> execMapping) {
