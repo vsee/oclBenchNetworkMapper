@@ -7,8 +7,11 @@ import java.util.List;
 
 import lancs.dividend.oclBenchMapper.connection.ServerConnection;
 import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
+import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
+import lancs.dividend.oclBenchMapper.message.response.ResponseMessage.ResponseType;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
+import lancs.dividend.oclBenchMapper.userCmd.UserCommand.CmdType;
 
 public class ClientConnectionHandler {
 	
@@ -27,7 +30,7 @@ public class ClientConnectionHandler {
 
 			for (ExecutionItem item : executionLoad) {
 				sendExecutionItem(item);
-				if(!item.hasError())
+				if(!item.hasError() && item.getCmdMsg().getCommand().getType() != CmdType.EXIT)
 					receiveExecutionResults(item);
 			}
 			
@@ -35,7 +38,7 @@ public class ClientConnectionHandler {
 
 		private void sendExecutionItem(ExecutionItem item) {
 			try {
-				server.sendMessage(item.getCommand());
+				server.sendMessage(item.getCmdMsg());
 			} catch (IOException e) {
 				item.setError("ERROR: sending command to server " + server.getAddress() +" failed: " + e);
 			}
@@ -45,6 +48,10 @@ public class ClientConnectionHandler {
 	        try {
 	        	ResponseMessage response = server.waitForCmdResponse();
 	        	item.setResponse(response);
+	        	
+	        	if(response.getType() == ResponseType.ERROR) {
+					item.setError(((ErrorResponseMessage) response).getText());
+	        	}
 	        } catch (IOException e) {
 				item.setError("ERROR: receiving command from server " + server.getAddress() +" failed: " + e);
 	        }

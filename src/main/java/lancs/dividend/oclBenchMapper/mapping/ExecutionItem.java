@@ -40,7 +40,7 @@ public class ExecutionItem {
 		errorMsg = msg;
 	}
 	
-	public CommandMessage getCommand() { return cmd; }
+	public CommandMessage getCmdMsg() { return cmd; }
 	public String getServer() { return serverAddress; }
 	
 	public ResponseMessage getResponse() { return response; }

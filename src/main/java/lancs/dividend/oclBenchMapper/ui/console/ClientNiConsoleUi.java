@@ -8,12 +8,12 @@ import java.util.List;
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
 import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
-import lancs.dividend.oclBenchMapper.connection.ServerConnection;
 import lancs.dividend.oclBenchMapper.energy.EnergyLog;
 import lancs.dividend.oclBenchMapper.mapping.ExecutionItem;
+import lancs.dividend.oclBenchMapper.mapping.WorkloadMapper;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
-import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
+import lancs.dividend.oclBenchMapper.message.response.ResponseMessage.ResponseType;
 import lancs.dividend.oclBenchMapper.ui.UserInterface;
 import lancs.dividend.oclBenchMapper.userCmd.ExitCmd;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
@@ -33,6 +33,7 @@ public class ClientNiConsoleUi implements UserInterface {
 									List<BenchExecutionResults>>>> bestMappingStats;
 	
 	private final Path statOutputDir;
+	private boolean exitClient;
 	
 	public ClientNiConsoleUi(NiConsoleConfig conf) {
 		if(conf == null) throw new IllegalArgumentException("Given configuration must not be null.");
@@ -46,29 +47,32 @@ public class ClientNiConsoleUi implements UserInterface {
 		
 		results = new ArrayList<>();
 	}
-
+	
 	@Override
-	public void run(ClientConnectionHandler cmdHandler) {
+	public void run(ClientConnectionHandler cmdHandler, WorkloadMapper mapper) {
 		if(cmdHandler == null)
 			throw new IllegalArgumentException("Given command handler must not be null.");
+		if(mapper == null)
+			throw new IllegalArgumentException("Given workload mapper must not be null.");
 		
 		System.out.println();
 		
 		int current = 1;
 		for (UserCommand cmd : execCmds) {
-			Hashtable<ServerConnection, ExecutionItem> executionMap = new Hashtable<>();
-
+			if(exitClient) break;
 			System.out.println("## Executing command " + current++ + "/" + execCmds.size() + ": " + cmd);
-			if(!cmdHandler.handleUserCommand(cmd, executionMap)) break;
 			
-			processServerResponse(executionMap, cmd);
+			Hashtable<String, List<ExecutionItem>> execMapping = 
+					mapper.mapWorkload(cmdHandler.getServerAdresses(), cmd);
+			cmdHandler.executeCommands(cmd, execMapping);
+			processServerResponse(execMapping, cmd);
 		}
 		
 		saveStatsAndBestMapping();
 		
 		cmdHandler.closeConnections();
 	}
-
+	
 	private void saveStatsAndBestMapping() {
 		
 		List<String[]> mappingRecords = new ArrayList<>();
@@ -112,53 +116,61 @@ public class ClientNiConsoleUi implements UserInterface {
 		OclBenchMapperCsvHandler.writeExecutionStats(statOutputDir.resolve(EXECUTION_STATS_CSV), statsRecords);
 	}
 
-	private void processServerResponse(
-			Hashtable<ServerConnection, ExecutionItem> executionMap,
-			UserCommand cmd) {
-
-		if(executionMap == null || executionMap.size() == 0)
+	public void processServerResponse(Hashtable<String, List<ExecutionItem>> execMapping, UserCommand cmd) {
+		if(execMapping == null || execMapping.size() == 0)
 			throw new RuntimeException("Given execution map must not be null or empty.");
 		if(cmd == null)
 			throw new RuntimeException("Given user command must not be null.");
 		
-		for (ServerConnection s : executionMap.keySet()) {
-			ExecutionItem item = executionMap.get(s);
+		
+		for (String serverAdr : execMapping.keySet()) {
 
-			if(!item.resultsAvailable())
-				System.out.println("ERROR: No results received!");
-			else {
-				ResponseMessage response = item.getResponse();
+			System.out.println("\n## Execution result of server " + serverAdr);
+
+			for(ExecutionItem item : execMapping.get(serverAdr)) {
 				
-				switch (response.getType()) {
-					case BENCHSTATS:
-						BenchStatsResponseMessage br = (BenchStatsResponseMessage) response;
-						if(!br.hasEnergyLog()) {
-							System.out.println("ERROR: No energy results received!");
+				System.out.println("\n# Command: " + item.getCmdMsg());
+				
+				if(item.hasError()) {
+					System.out.println("ERROR:");
+					System.out.println(item.getErrorMsg());
+					// TODO exit on error?
+				} else {
+					switch(cmd.getType()) {
+						case EXIT:
+							exitClient = true;
 							break;
-						}
-						RunBenchCmd bcmd = (RunBenchCmd) cmd;
-						EnergyLog elog = br.getEnergyLog();
-						BenchExecutionResults execRes = new BenchExecutionResults(elog.getEnergyJ(), elog.getRuntimeMS());
-						
-						results.add(execRes);
-						
-						if(!bestMappingStats.containsKey(bcmd.getBinaryName()))
-							bestMappingStats.put(bcmd.getBinaryName(), new Hashtable<>());
-						if(!bestMappingStats.get(bcmd.getBinaryName()).containsKey(bcmd.getDataSetSize()))
-							bestMappingStats.get(bcmd.getBinaryName()).put(bcmd.getDataSetSize(), new Hashtable<>());
-						if(!bestMappingStats.get(bcmd.getBinaryName()).get(bcmd.getDataSetSize()).containsKey(bcmd.getExecutionDevice()))
-							bestMappingStats.get(bcmd.getBinaryName()).get(bcmd.getDataSetSize()).put(bcmd.getExecutionDevice(), new ArrayList<>());
-						
-						bestMappingStats.get(bcmd.getBinaryName()).get(bcmd.getDataSetSize()).get(bcmd.getExecutionDevice()).add(execRes);
-						
-						System.out.println("Energy: " + elog.getEnergyJ() + " J - Runtime: " + elog.getRuntimeMS() + " ms");
-						break;
-					case ERROR:
-						System.err.println("ERROR: " + ((ErrorResponseMessage) response).getText());
-						break;
-					default:
-						System.err.println("ERROR: Unknown response type: " + response.getType());
-						break;
+						case RUNBENCH:
+							System.out.println("Result:");
+
+							ResponseMessage response = item.getResponse();
+							assert response != null : "Response message must not be null if error flag is not set.";
+							assert response.getType() == ResponseType.BENCHSTATS : "Invalid response type at this point: " + response.getType();
+							
+							BenchStatsResponseMessage br = (BenchStatsResponseMessage) response;
+							if(!br.hasEnergyLog()) {
+								System.out.println("ERROR: No energy results received!");
+								break;
+							}
+							RunBenchCmd bcmd = (RunBenchCmd) cmd;
+							EnergyLog elog = br.getEnergyLog();
+							BenchExecutionResults execRes = new BenchExecutionResults(elog.getEnergyJ(), elog.getRuntimeMS());
+							
+							results.add(execRes);
+							
+							if(!bestMappingStats.containsKey(bcmd.getBinaryName()))
+								bestMappingStats.put(bcmd.getBinaryName(), new Hashtable<>());
+							if(!bestMappingStats.get(bcmd.getBinaryName()).containsKey(bcmd.getDataSetSize()))
+								bestMappingStats.get(bcmd.getBinaryName()).put(bcmd.getDataSetSize(), new Hashtable<>());
+							if(!bestMappingStats.get(bcmd.getBinaryName()).get(bcmd.getDataSetSize()).containsKey(bcmd.getExecutionDevice()))
+								bestMappingStats.get(bcmd.getBinaryName()).get(bcmd.getDataSetSize()).put(bcmd.getExecutionDevice(), new ArrayList<>());
+							
+							bestMappingStats.get(bcmd.getBinaryName()).get(bcmd.getDataSetSize()).get(bcmd.getExecutionDevice()).add(execRes);
+							
+							System.out.println("Energy: " + elog.getEnergyJ() + " J - Runtime: " + elog.getRuntimeMS() + " ms");
+							break;
+						default: throw new RuntimeException("Unknown user command type: " + cmd.getType());
+					}
 				}
 			}
 		}

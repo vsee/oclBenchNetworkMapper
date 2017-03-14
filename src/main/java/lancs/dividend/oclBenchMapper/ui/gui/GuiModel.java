@@ -10,6 +10,7 @@ import javax.swing.JFrame;
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
 import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
+import lancs.dividend.oclBenchMapper.mapping.WorkloadMapper;
 import lancs.dividend.oclBenchMapper.ui.console.BenchExecutionResults;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
 
@@ -45,6 +46,7 @@ public class GuiModel {
 	protected JButton btnAutomatic;
 	
 	protected ClientConnectionHandler cmdHandler;
+	protected WorkloadMapper wlMap;
 	protected String[] serverAdresses;
 
 	protected Hashtable<Benchmark, Hashtable<DataSetSize, Hashtable<ExecutionDevice, BenchExecutionResults>>> serverExecStats;

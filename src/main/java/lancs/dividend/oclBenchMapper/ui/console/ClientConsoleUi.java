@@ -41,7 +41,6 @@ public class ClientConsoleUi implements UserInterface {
 
 	public ClientConsoleUi() {
         cmdIn = new Scanner(System.in);
-        exitClient = false;
         
 		// Generate menu strings
 		StringJoiner join = new StringJoiner(",","{","}");
@@ -147,22 +146,25 @@ public class ClientConsoleUi implements UserInterface {
 		System.out.println("Original User Command:\n\t" + cmd);
 		
 		for (String serverAdr : execMapping.keySet()) {
-
-			System.out.println("\n## Execution result of server " + serverAdr);
+			System.out.println("\n###############################################");
+			System.out.println("## Execution result of server " + serverAdr);
 
 			for(ExecutionItem item : execMapping.get(serverAdr)) {
 				
-				System.out.println("\n# Command: " + item.getCommand());
-				System.out.println("Result:");
+				System.out.println("\n# Command: " + item.getCmdMsg());
 				
 				if(item.hasError()) {
+					System.out.println("ERROR:");
 					System.out.println(item.getErrorMsg());
+					// TODO exit on error?
 				} else {
 					switch(cmd.getType()) {
 						case EXIT:
 							exitClient = true;
 							break;
 						case RUNBENCH:
+							System.out.println("Result:");
+
 							ResponseMessage response = item.getResponse();
 							assert response != null : "Response message must not be null if error flag is not set.";
 							assert response.getType() == ResponseType.BENCHSTATS : "Invalid response type at this point: " + response.getType();

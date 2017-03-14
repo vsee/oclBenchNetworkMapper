@@ -20,6 +20,7 @@ import javax.swing.border.TitledBorder;
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
 import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
+import lancs.dividend.oclBenchMapper.mapping.WorkloadMapper;
 import lancs.dividend.oclBenchMapper.ui.UserInterface;
 import lancs.dividend.oclBenchMapper.ui.gui.GuiModel.ExecutionMode;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd.ExecutionDevice;
@@ -175,11 +176,12 @@ public class ClientGui implements UserInterface {
 	}
 	
 	@Override
-	public void run(ClientConnectionHandler cmdHandler) {
+	public void run(ClientConnectionHandler cmdHandler, WorkloadMapper mapper) {
 		if(cmdHandler == null)
 			throw new IllegalArgumentException("Given command handler must not be null.");
 		
 		gui.cmdHandler = cmdHandler;
+		gui.wlMap = mapper;
 		initialiseChartSeries();
 		
 		EventQueue.invokeLater(new Runnable() {

@@ -75,30 +75,25 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, Hashtable<Str
 		assert gui.cmdHandler != null : "Command handler must not be null at this point.";
 		Hashtable<ServerConnection, ExecutionItem> executionMap = new Hashtable<>();
 
-		if(!gui.cmdHandler.handleUserCommand(cmd, executionMap)) {
-			if(cmd.getType() == CmdType.EXIT) {
-				System.out.println("Shutting down client!");
-				// TODO execute this on EDT
-				JOptionPane.showMessageDialog(null, "Shutting down client.", 
-						"Exit", JOptionPane.INFORMATION_MESSAGE);
-			} else {
-				System.err.println("ERROR: Server communication failed, Shutting down client!");
-				// TODO execute this on EDT
-				JOptionPane.showMessageDialog(null, "Server communication failed. Shutting Down client.", 
-						"Communication Error", JOptionPane.ERROR_MESSAGE);
-			}
-			gui.frame.dispatchEvent(new WindowEvent(gui.frame, WindowEvent.WINDOW_CLOSING));
-		} else {
-			
-			// TODO execution of mapper was successful
-			// if option is set
-			// determine commands for alternative mappings
-			// execute alternative commands and add to result list
-		}
-		
-		// TODO do something graphical about null returns on EDT
-		Hashtable<String, GraphUpdate> gupdates = processServerResponse(executionMap, cmd);
-		if(gupdates != null) publish(gupdates);
+		//TODO fix this
+//		if(!gui.cmdHandler.handleUserCommand(cmd, executionMap)) {
+//			if(cmd.getType() == CmdType.EXIT) {
+//				System.out.println("Shutting down client!");
+//				// TODO execute this on EDT
+//				JOptionPane.showMessageDialog(null, "Shutting down client.", 
+//						"Exit", JOptionPane.INFORMATION_MESSAGE);
+//			} else {
+//				System.err.println("ERROR: Server communication failed, Shutting down client!");
+//				// TODO execute this on EDT
+//				JOptionPane.showMessageDialog(null, "Server communication failed. Shutting Down client.", 
+//						"Communication Error", JOptionPane.ERROR_MESSAGE);
+//			}
+//			gui.frame.dispatchEvent(new WindowEvent(gui.frame, WindowEvent.WINDOW_CLOSING));
+//		}
+//		
+//		// TODO do something graphical about null returns on EDT
+//		Hashtable<String, GraphUpdate> gupdates = processServerResponse(executionMap, cmd);
+//		if(gupdates != null) publish(gupdates);
 	}
 	
 	public Hashtable<String, GraphUpdate> processServerResponse(
@@ -111,74 +106,75 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, Hashtable<Str
 		boolean validResponse = true;
 		Hashtable<String, GraphUpdate> seriesUpdates = new Hashtable<>();
 		
-		for (ServerConnection s : executionMap.keySet()) {
-			ExecutionItem item = executionMap.get(s);
-			
-			System.out.println("\nExecution result of server " + s);
-			System.out.println("Command:\n\t" + item.getCommand());
-			System.out.println("Response:");
-			
-			if(!item.resultsAvailable()) {
-				System.err.println("ERROR: No results received!");
-				validResponse = false;
-			} else {
-				ResponseMessage response = item.getResponse();
-				
-				switch (response.getType()) {
-					case BENCHSTATS:
-						RunBenchCmd bcmd = (RunBenchCmd) cmd;
-						BenchStatsResponseMessage br = (BenchStatsResponseMessage) response;
-						System.out.println("### Execution standard output:\n" + br.getStdOut());
-						System.out.println("### Has Energy Log: " + br.hasEnergyLog());
-						
-						if(br.hasEnergyLog()) {
-							System.out.println("### Energy Log:");
-							System.out.println(br.getEnergyLog().getLogRecords().size() + " log entries found.");
-							System.out.println("### Energy: " + br.getEnergyLog().getEnergyJ() + " J");
-							System.out.println("### Runtime: " + br.getEnergyLog().getRuntimeMS() + " ms");
-						}
-						
-						// save energy and runtime results for each graph series
-						// consider measured results for the mapper series
-						// and precomputations for the alternative ones
-						for(String name : gui.series.keySet()) {
-							if(!seriesUpdates.containsKey(name)) {
-								Hashtable<ExecutionDevice, BenchExecutionResults> res = 
-										gui.serverExecStats.get(bcmd.getBinaryName()).get(bcmd.getDataSetSize());
-								GraphUpdate up = new GraphUpdate(bcmd.getBinaryName(), 
-										bcmd.getDataSetSize(), bcmd.getExecutionDevice(),
-										Math.min(res.get(ExecutionDevice.CPU).energyJ, res.get(ExecutionDevice.GPU).energyJ),
-										Math.min(res.get(ExecutionDevice.CPU).runtimeMS, res.get(ExecutionDevice.GPU).runtimeMS));
-								seriesUpdates.put(name, up);
-							}
-							GraphUpdate update = seriesUpdates.get(name);
-							
-							if(name.equals(GuiModel.GRAPH_SERIES_NAME_MAPPER)) {
-								update.addStatUpdate(br.getEnergyLog().getEnergyJ(), 
-										br.getEnergyLog().getRuntimeMS());
-							} else {
-								// get fixed mapping
-								ExecutionDevice device = gui.series.get(name).fixedMapping.get(s.getAddress());
-								if(device != null) {
-									BenchExecutionResults execRes = gui.serverExecStats.get(bcmd.getBinaryName())
-											.get(bcmd.getDataSetSize()).get(device);
-									
-									update.addStatUpdate(execRes.energyJ, execRes.runtimeMS);
-								}
-							}
-						}
-						break;
-					case ERROR:
-						System.err.println("ERROR: " + ((ErrorResponseMessage) response).getText());
-						validResponse = false;
-						break;
-					default:
-						System.err.println("ERROR: Unknown response type: " + response.getType());
-						validResponse = false;
-						break;
-				}
-			}
-		}
+		// TODO fix this
+//		for (ServerConnection s : executionMap.keySet()) {
+//			ExecutionItem item = executionMap.get(s);
+//			
+//			System.out.println("\nExecution result of server " + s);
+//			System.out.println("Command:\n\t" + item.getCommand());
+//			System.out.println("Response:");
+//			
+//			if(!item.resultsAvailable()) {
+//				System.err.println("ERROR: No results received!");
+//				validResponse = false;
+//			} else {
+//				ResponseMessage response = item.getResponse();
+//				
+//				switch (response.getType()) {
+//					case BENCHSTATS:
+//						RunBenchCmd bcmd = (RunBenchCmd) cmd;
+//						BenchStatsResponseMessage br = (BenchStatsResponseMessage) response;
+//						System.out.println("### Execution standard output:\n" + br.getStdOut());
+//						System.out.println("### Has Energy Log: " + br.hasEnergyLog());
+//						
+//						if(br.hasEnergyLog()) {
+//							System.out.println("### Energy Log:");
+//							System.out.println(br.getEnergyLog().getLogRecords().size() + " log entries found.");
+//							System.out.println("### Energy: " + br.getEnergyLog().getEnergyJ() + " J");
+//							System.out.println("### Runtime: " + br.getEnergyLog().getRuntimeMS() + " ms");
+//						}
+//						
+//						// save energy and runtime results for each graph series
+//						// consider measured results for the mapper series
+//						// and precomputations for the alternative ones
+//						for(String name : gui.series.keySet()) {
+//							if(!seriesUpdates.containsKey(name)) {
+//								Hashtable<ExecutionDevice, BenchExecutionResults> res = 
+//										gui.serverExecStats.get(bcmd.getBinaryName()).get(bcmd.getDataSetSize());
+//								GraphUpdate up = new GraphUpdate(bcmd.getBinaryName(), 
+//										bcmd.getDataSetSize(), bcmd.getExecutionDevice(),
+//										Math.min(res.get(ExecutionDevice.CPU).energyJ, res.get(ExecutionDevice.GPU).energyJ),
+//										Math.min(res.get(ExecutionDevice.CPU).runtimeMS, res.get(ExecutionDevice.GPU).runtimeMS));
+//								seriesUpdates.put(name, up);
+//							}
+//							GraphUpdate update = seriesUpdates.get(name);
+//							
+//							if(name.equals(GuiModel.GRAPH_SERIES_NAME_MAPPER)) {
+//								update.addStatUpdate(br.getEnergyLog().getEnergyJ(), 
+//										br.getEnergyLog().getRuntimeMS());
+//							} else {
+//								// get fixed mapping
+//								ExecutionDevice device = gui.series.get(name).fixedMapping.get(s.getAddress());
+//								if(device != null) {
+//									BenchExecutionResults execRes = gui.serverExecStats.get(bcmd.getBinaryName())
+//											.get(bcmd.getDataSetSize()).get(device);
+//									
+//									update.addStatUpdate(execRes.energyJ, execRes.runtimeMS);
+//								}
+//							}
+//						}
+//						break;
+//					case ERROR:
+//						System.err.println("ERROR: " + ((ErrorResponseMessage) response).getText());
+//						validResponse = false;
+//						break;
+//					default:
+//						System.err.println("ERROR: Unknown response type: " + response.getType());
+//						validResponse = false;
+//						break;
+//				}
+//			}
+//		}
 
 		if(validResponse) return seriesUpdates;
 		else return null;
