@@ -18,6 +18,14 @@ public class GraphUpdate {
 		runtimeBaseLines.add(runtimeBaselineMS);
 	}
 	
+	public double getTotalEnergyJ() {
+		return getTotal(energyUpdates);
+	}
+	
+	public double getTotalRuntimeMS() {
+		return getTotal(runtimeUpdates);
+	}
+
 	public double getNormalisedEnergy() {
 		return normalise(energyBaseLines, energyUpdates);
 	}
@@ -26,11 +34,14 @@ public class GraphUpdate {
 		return normalise(runtimeBaseLines, runtimeUpdates);
 	}
 
+
+	
 	private double normalise(List<Double> baseLines, List<Double> updates) {
 		assert baseLines.size() == updates.size() : "Baselines and updates do not match";
-		
-		double sum = updates.stream().mapToDouble(d -> d).sum();
-		double baseline = baseLines.stream().mapToDouble(d -> d).sum();
-		return sum / baseline;
+		return getTotal(updates) / getTotal(baseLines);
+	}
+	
+	private double getTotal(List<Double> updates) {
+		return updates.stream().mapToDouble(d -> d).sum();
 	}
 }

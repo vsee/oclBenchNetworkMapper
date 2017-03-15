@@ -8,7 +8,9 @@ public abstract class GuiUpdate {
 		/** Update Energy and Runtime graphs */
 		GRAPH,
 		/** Handle error case */
-		ERROR
+		ERROR,
+		/** Display messages */
+		MESSAGE
 	}
 
 	protected GuiUpdateType type;

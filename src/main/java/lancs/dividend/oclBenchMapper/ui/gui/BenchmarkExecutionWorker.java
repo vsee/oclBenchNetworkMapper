@@ -24,6 +24,7 @@ import lancs.dividend.oclBenchMapper.ui.gui.update.GuiUpdate;
 import lancs.dividend.oclBenchMapper.ui.gui.update.GuiUpdateError;
 import lancs.dividend.oclBenchMapper.ui.gui.update.GuiUpdateExit;
 import lancs.dividend.oclBenchMapper.ui.gui.update.GuiUpdateGraph;
+import lancs.dividend.oclBenchMapper.ui.gui.update.GuiUpdateMessage;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand.CmdType;
@@ -33,6 +34,9 @@ import lancs.dividend.oclBenchMapper.userCmd.UserCommand.CmdType;
  *
  */
 public class BenchmarkExecutionWorker extends SwingWorker<Integer, List<GuiUpdate>> {
+	
+	private static final String MSG_INSET = "   ";
+	private static final String RESULT_FORMAT = "%.3f";
 	
 	private AtomicBoolean endAutoMode;
 	private GuiModel gui;
@@ -55,7 +59,7 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, List<GuiUpdat
 	protected Integer doInBackground() throws Exception {
 		switch (gui.activeMode) {
 			case MANUAL:
-	    		handleUserCmdGuiEffects(receiveCommand(false)); 
+				handleUserCmdGuiEffects(receiveCommand(false)); 
 				break;
 			case AUTOMATIC:
 				while(!endAutoMode.get()) {
@@ -82,16 +86,57 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, List<GuiUpdat
 	
 	private void handleUserCmdGuiEffects(UserCommand cmd) {
 		assert gui.cmdHandler != null && gui.wlMap != null : "Command handler and mapper must not be null at this point.";
+		List<GuiUpdate> updates = new ArrayList<>();
 
 		Hashtable<String, CmdToDeviceMapping> execMapping = 
 				gui.wlMap.mapWorkload(gui.cmdHandler.getServerAdresses(), cmd);
+		
+		updates.add(printExecutionStart(cmd, execMapping));
+		publish(updates);
 		
 		Hashtable<String, List<ExecutionItem>> execItems = 
 				generateExecutionItems(execMapping);
 				
 		gui.cmdHandler.executeCommands(cmd, execItems);
-		List<GuiUpdate> updates = processServerResponse(execMapping, execItems, cmd);
+		
+		updates.clear();
+		updates = processServerResponse(execMapping, execItems, cmd);
 		publish(updates);
+	}
+
+	private GuiUpdateMessage printExecutionStart(UserCommand cmd, Hashtable<String, CmdToDeviceMapping> execMapping) {
+		StringBuilder execMsgBld = new StringBuilder();
+		
+		switch(cmd.getType()) {
+			case EXIT:
+				execMsgBld.append("Disconnecting and shutting down client ...\n");
+				break;
+			case RUNBENCH:
+				RunBenchCmd bcmd = (RunBenchCmd) cmd;
+				execMsgBld.append("### Executing benchmark: ").append(bcmd.getBinaryName())
+					.append(" with ").append(bcmd.getDataSetSize()).append(" workload.\n");
+
+				execMsgBld.append("Execution device mapping:");
+				for (String addr : execMapping.keySet()) {
+					execMsgBld.append("\n").append(MSG_INSET).append(addr).append(": ")
+						.append(execMapping.get(addr).execDev);
+				}
+				break;
+		}
+		
+		return new GuiUpdateMessage(execMsgBld.toString());
+	}
+	
+	private GuiUpdateMessage printExecutionEnd(GraphUpdate update) {
+		StringBuilder execMsgBld = new StringBuilder();
+		
+		execMsgBld.append("# Execution finished.\n")
+			.append(MSG_INSET).append("Energy Consumption:\t")
+				.append(String.format(RESULT_FORMAT, update.getTotalEnergyJ())).append(" J\n")
+			.append(MSG_INSET).append("Execution Runtime:\t")
+				.append(String.format(RESULT_FORMAT, update.getTotalRuntimeMS())).append(" ms\n");
+		
+		return new GuiUpdateMessage(execMsgBld.toString());
 	}
 	
 	private Hashtable<String, List<ExecutionItem>> generateExecutionItems(
@@ -200,6 +245,8 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, List<GuiUpdat
 			Hashtable<String, GraphUpdate> seriesUpdates = 
 					processExecutionStatistics(execMapping, execStats, bestMapping, (RunBenchCmd) cmd);
 			gUpdates.add(new GuiUpdateGraph(seriesUpdates));
+			
+			gUpdates.add(printExecutionEnd(seriesUpdates.get(GuiModel.GRAPH_SERIES_NAME_MAPPER)));
 		}
 		
 		return gUpdates;
@@ -295,6 +342,11 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, List<GuiUpdat
 								"Exit", JOptionPane.INFORMATION_MESSAGE);
 						gui.frame.dispatchEvent(new WindowEvent(gui.frame, WindowEvent.WINDOW_CLOSING));
 						break;
+					case MESSAGE:
+						GuiUpdateMessage uMsg = (GuiUpdateMessage) update;
+						gui.msgOutTextArea.append("\n");
+						gui.msgOutTextArea.append(uMsg.message);
+						break;
 					case ERROR:
 						GuiUpdateError uErr = (GuiUpdateError) update;
 						gui.msgOutTextArea.append("\n");
@@ -308,7 +360,11 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, List<GuiUpdat
 					case GRAPH:
 						GuiUpdateGraph uGraph = (GuiUpdateGraph) update;
 						
-						gui.iterationData.add(gui.iteration++);
+						if(gui.initialIteration) {
+							gui.iterationData.clear();
+							gui.initialIteration = false;
+						}
+						gui.iterationData.add((double)gui.iteration++);
 						if(gui.iterationData.size() > GuiModel.MAX_ITERATION_DISPLAY)
 							gui.iterationData.remove(0);
 						
@@ -316,7 +372,7 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, List<GuiUpdat
 						for (String	seriesName : uGraph.seriesUpdates.keySet()) {
 							GraphSeriesData sdata = gui.series.get(seriesName);
 							GraphUpdate supdate = uGraph.seriesUpdates.get(seriesName);
-							sdata.addData(supdate.getNormalisedEnergy(), supdate.getNormalisedRuntime());
+							sdata.addData(supdate);
 							
 							gui.energyChart.updateXYSeries(seriesName, gui.iterationData, sdata.energyData, null);
 							gui.performanceChart.updateXYSeries(seriesName, gui.iterationData, sdata.performanceData, null);
@@ -331,6 +387,7 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, List<GuiUpdat
 				}
 				
 				gui.msgOutTextArea.update(gui.msgOutTextArea.getGraphics());
+				gui.resTable.repaint();
 			}
 		}
 	}

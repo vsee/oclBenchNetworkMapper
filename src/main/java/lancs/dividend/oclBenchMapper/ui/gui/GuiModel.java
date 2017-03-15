@@ -2,12 +2,14 @@ package lancs.dividend.oclBenchMapper.ui.gui;
 
 import java.util.Hashtable;
 import java.util.List;
+import java.util.TreeMap;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
@@ -23,7 +25,7 @@ import org.knowm.xchart.XYChart;
 public class GuiModel {
 	
 	public enum ExecutionMode { MANUAL, AUTOMATIC }
-	
+		
 	protected static final String AUTOMATIC_BTN_STOP_TEXT = "Stop Automatic";
 	protected static final String AUTOMATIC_BTN_START_TEXT = "Start Automatic";
 	protected static final String AUTOMATIC_BTN_STOPPING_TEXT = "Stopping Automatic";
@@ -53,12 +55,15 @@ public class GuiModel {
 	protected JScrollPane msgOutScroll;
 	protected JTextArea msgOutTextArea;
 	
+	protected JTable resTable;
+	
 	protected ClientConnectionHandler cmdHandler;
 	protected WorkloadMapper wlMap;
 
 	protected Hashtable<Benchmark, Hashtable<DataSetSize, Hashtable<ExecutionDevice, BenchExecutionResults>>> serverExecStats;
 	
-	protected double iteration;
+	protected long iteration;
+	protected boolean initialIteration;
 	protected List<Double> iterationData;
-	protected Hashtable<String, GraphSeriesData> series;
+	protected TreeMap<String, GraphSeriesData> series;
 }

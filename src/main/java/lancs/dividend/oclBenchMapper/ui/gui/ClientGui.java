@@ -10,7 +10,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.TreeMap;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -19,6 +19,7 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
@@ -40,8 +41,7 @@ import org.knowm.xchart.style.Styler.LegendPosition;
 
 public class ClientGui implements UserInterface {
 
-	// TODO add graceful shutdown upon window close
-	
+	// TODO add graceful shutdown upon window close	
 	private GuiModel gui;
 	private BenchmarkExecutionWorker bexecWorker;
 	
@@ -90,7 +90,7 @@ public class ClientGui implements UserInterface {
 		initControlPanel();
 		initChartPanel();
 	}
-
+		
 	private void initControlPanel() {
 		JPanel controlPanel = new JPanel();
 		controlPanel.setBorder(new TitledBorder(null, "Workload Selection", TitledBorder.LEADING, TitledBorder.TOP, null, null));
@@ -131,10 +131,10 @@ public class ClientGui implements UserInterface {
 		
 		gbc_cpanel.gridy = 4;
 		gui.alterChkBox = new JCheckBox(GuiModel.ALTER_CHECKBOX_TEXT);
-		gui.alterChkBox.setSelected(true);
+		gui.alterChkBox.setSelected(false);
 		controlPanel.add(gui.alterChkBox, gbc_cpanel);
 		
-		gbc_cpanel.weightx = 9;
+		gbc_cpanel.weightx = 5;
 		gbc_cpanel.weighty = 5;
 		gbc_cpanel.gridheight = 5;
 		gbc_cpanel.gridx = 1;
@@ -147,6 +147,14 @@ public class ClientGui implements UserInterface {
 		gui.msgOutScroll = new JScrollPane(gui.msgOutTextArea);
 		gui.msgOutScroll.setBorder(new LineBorder(new Color(0, 0, 0)));
 		controlPanel.add(gui.msgOutScroll, gbc_cpanel);
+		
+		gui.resTable = new JTable();
+		JScrollPane scrollPane = new JScrollPane(gui.resTable);
+		gui.resTable.setFillsViewportHeight(true);
+		gbc_cpanel.weightx = 4;
+		gbc_cpanel.gridx = 2;
+		gbc_cpanel.insets = new Insets(0, 10, 0, 0);
+		controlPanel.add(scrollPane, gbc_cpanel);
 	}
 
 	private void initChartPanel() {
@@ -229,6 +237,8 @@ public class ClientGui implements UserInterface {
 		gui.wlMap = mapper;
 		initialiseChartSeries();
 		
+		gui.resTable.setModel(new ExecutionResultsTableModel(gui.series));
+		
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
@@ -242,18 +252,18 @@ public class ClientGui implements UserInterface {
 	
 	private void initialiseChartSeries() {
 		gui.iterationData = new ArrayList<>();
-		gui.iterationData.add(gui.iteration++);
+		gui.iterationData.add((double)gui.iteration++);
+		gui.initialIteration = true;
 
-		gui.series = new Hashtable<>();
+		gui.series = new TreeMap<>();
 		
 		permutateAlterSeries(gui.cmdHandler.getServerAdresses().length, "");
 		addSeries(gui.series, GuiModel.GRAPH_SERIES_NAME_MAPPER, false);
 	}
 	
-	private void addSeries(Hashtable<String, GraphSeriesData> seriesList, String name, boolean addFixedMappings) {
+	private void addSeries(TreeMap<String, GraphSeriesData> seriesList, String name, boolean addFixedMappings) {
 		GraphSeriesData series = new GraphSeriesData(name);
 		seriesList.put(name, series);
-		series.addData(0.0, 0.0);
 		gui.energyChart.addSeries(name, gui.iterationData, series.energyData);
 		gui.performanceChart.addSeries(name, gui.iterationData, series.performanceData);
 		
