@@ -1,19 +1,24 @@
 package lancs.dividend.oclBenchMapper.utils;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.StringJoiner;
 
 import lancs.dividend.oclBenchMapper.benchmark.BenchExecArgs;
+import lancs.dividend.oclBenchMapper.benchmark.BenchExecutionResults;
+import lancs.dividend.oclBenchMapper.benchmark.BenchFullExecutionResults;
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
 import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.mapping.CmdToDeviceMapping;
 import lancs.dividend.oclBenchMapper.server.ExecutionDevice;
-import lancs.dividend.oclBenchMapper.ui.console.BenchExecutionResults;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
 
 public final class OclBenchMapperCsvHandler {
@@ -27,7 +32,7 @@ public final class OclBenchMapperCsvHandler {
 	
 	private static final String PRECOMP_MAPPING_HEADER = "Architecture,Benchmark,DataSetSize,ExecutionDevice";
 	private static final String EXEC_STATS_HEADER = PRECOMP_MAPPING_HEADER + ",AvgEnergyJ,AvgRuntimeMS";
-	
+
 	private static final String ENERGY_LOG_HEADER = "Status;Event;Command;Issue;Start;Stop;Workload;Energy;Name";
 	private static final int ENERGY_LOG_HEADER_SKIP = 2;
 	private static final char ENERGY_LOG_SEPARATOR = ';';
@@ -174,6 +179,41 @@ public final class OclBenchMapperCsvHandler {
 		System.out.println("Execution statistics written to: " + csvFile);
 	}
 	
+	public static List<BenchFullExecutionResults> readFullExecutionStats(Path datFile) {
+		List<BenchFullExecutionResults> res = new ArrayList<>();
+		
+		try (ObjectInputStream ois = new ObjectInputStream(
+				Files.newInputStream(datFile, StandardOpenOption.READ))) {
+
+			int size = ois.readInt();
+			for(int i = 0; i < size; i++) {
+				res.add((BenchFullExecutionResults) ois.readObject());
+			}
+			
+		} catch (IOException | ClassNotFoundException e) {
+			System.err.println("Reading full execution statistics failed: " + e);
+			e.printStackTrace();
+			return null;
+		}
+		
+		return res;
+	}
+	
+	public static void writeFullExecutionStats(Path datFile, List<BenchFullExecutionResults> results) {
+		try(ObjectOutputStream oos = new ObjectOutputStream(
+				Files.newOutputStream(datFile, StandardOpenOption.CREATE, 
+						StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING))) {
+			
+			oos.writeInt(results.size());
+			for (BenchFullExecutionResults res : results) {
+				oos.writeObject(res);
+			}
+			System.out.println("Full execution statistics written to: " + datFile);
+		} catch (IOException e) {
+			System.err.println("Writing full execution statistics failed: " + e);
+			e.printStackTrace();
+		}
+	}
 	
 	public static List<List<String>> parseEnergyLogFile(Path csvFile) {
 		if (!csvFile.toFile().exists() || 

@@ -1,6 +1,10 @@
-package lancs.dividend.oclBenchMapper.ui.console;
+package lancs.dividend.oclBenchMapper.benchmark;
 
-public class BenchExecutionResults {
+import java.io.Serializable;
+
+public class BenchExecutionResults implements Serializable {
+	private static final long serialVersionUID = -1546465187190799926L;
+	
 	public final double energyJ;
 	public final double runtimeMS;
 	public final double tradeoff; // the smaller the better

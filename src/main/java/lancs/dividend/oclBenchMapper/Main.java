@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import lancs.dividend.oclBenchMapper.benchmark.BenchFullExecutionResults;
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
 import lancs.dividend.oclBenchMapper.client.OclMapperClient;
 import lancs.dividend.oclBenchMapper.mapping.MapperFactory;
@@ -78,6 +79,8 @@ public class Main {
 	    niClientParser.addArgument("-o","--outputDir")
 	    	.type(Arguments.fileType().verifyCanWrite().verifyIsDirectory())
 			.help("Output directory for statistic results.").setDefault(DEFAULT_NICLIENT_OUTPUT);
+	    niClientParser.addArgument("--fullStats").action(Arguments.storeTrue())
+			.help("Save a full list of execution stats.");
 	}
 	
 	private static void addServerArgs(Subparsers subparsers) {
@@ -181,7 +184,7 @@ public class Main {
 					Path output = Paths.get(ns.getString("outputDir"));
 					
 					UserInterface ui = UserInterfaceFactory.createUserInterface(
-							UserInterfaceType.NICONSOLE, new NiConsoleConfig(input, output));
+							UserInterfaceType.NICONSOLE, new NiConsoleConfig(input, output, ns.getBoolean("fullStats")));
 					WorkloadMapper mapper = MapperFactory.createWorkloadMapper(MapperType.FCFS);
 					
 					new OclMapperClient(Arrays.asList(new String[] { ns.get("address") }), mapper, ui).runClient();

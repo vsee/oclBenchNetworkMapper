@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
+import lancs.dividend.oclBenchMapper.benchmark.BenchFullExecutionResults;
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
 import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
@@ -17,6 +18,7 @@ import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage.ResponseType;
 import lancs.dividend.oclBenchMapper.server.ExecutionDevice;
 import lancs.dividend.oclBenchMapper.server.OclMapperServer;
+import lancs.dividend.oclBenchMapper.server.ServerDescription;
 import lancs.dividend.oclBenchMapper.ui.UserInterface;
 import lancs.dividend.oclBenchMapper.userCmd.ExitCmd;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
@@ -27,15 +29,17 @@ public class ClientNiConsoleUi implements UserInterface {
 
 	private static final String EXECUTION_STATS_CSV = "executionStats.csv";
 	private static final String OPTIMAL_MAPPING_CSV = "optimalMapping.csv";
+	private static final String EXECUTION_FULLSTATS_DAT = "executionFullStats.dat";
 	
 	private final List<CmdToDeviceMapping> execCmds;
-	private final List<BenchExecutionResults> results;
+	private final List<BenchFullExecutionResults> results;
 	private final Hashtable<Benchmark, Hashtable<DataSetSize, 
 								Hashtable<ExecutionDevice, 
-									List<BenchExecutionResults>>>> bestMappingStats;
+									List<BenchFullExecutionResults>>>> bestMappingStats;
 	
 	private final Path statOutputDir;
 	private boolean exitClient;
+	private final boolean saveFullStats;
 	
 	public ClientNiConsoleUi(NiConsoleConfig conf) {
 		if(conf == null) throw new IllegalArgumentException("Given configuration must not be null.");
@@ -46,7 +50,7 @@ public class ClientNiConsoleUi implements UserInterface {
 		bestMappingStats = new Hashtable<>();
 		
 		statOutputDir = conf.statOutputDir;
-		
+		saveFullStats = conf.saveFullStats;
 		results = new ArrayList<>();
 	}
 	
@@ -59,7 +63,7 @@ public class ClientNiConsoleUi implements UserInterface {
 		if(cmdHandler.getServerDescriptions().length != 1) 
 			throw new RuntimeException("Expected a single server for a non-interactive run.");
 		
-		String serverAddr = cmdHandler.getServerDescriptions()[0].address;
+		ServerDescription serverDescr = cmdHandler.getServerDescriptions()[0];
 		
 		System.out.println();
 		
@@ -71,19 +75,19 @@ public class ClientNiConsoleUi implements UserInterface {
 			
 			Hashtable<String, List<ExecutionItem>> execItems = new Hashtable<>();
 			List<ExecutionItem> items = new ArrayList<>();
-			items.add(new ExecutionItem(cmdMapping.userCmd, cmdMapping.execDev, serverAddr));
-			execItems.put(serverAddr, items);
+			items.add(new ExecutionItem(cmdMapping.userCmd, cmdMapping.execDev, serverDescr.address));
+			execItems.put(serverDescr.address, items);
 			
 			cmdHandler.executeCommands(cmdMapping.userCmd, execItems);
 			processServerResponse(execItems, cmdMapping.userCmd);
 		}
 		
-		saveStatsAndBestMapping();
+		saveStatsAndBestMapping(serverDescr.architecture);
 		
 		cmdHandler.closeConnections();
 	}
 	
-	private void saveStatsAndBestMapping() {
+	private void saveStatsAndBestMapping(String architecture) {
 		
 		List<String[]> mappingRecords = new ArrayList<>();
 		List<String[]> statsRecords = new ArrayList<>();
@@ -94,12 +98,12 @@ public class ClientNiConsoleUi implements UserInterface {
 				ExecutionDevice bestDevice = null;
 				double lowestAvgTradeoff = Double.MAX_VALUE;
 				for(ExecutionDevice device : bestMappingStats.get(bin).get(data).keySet()) {
-					List<BenchExecutionResults> mappings = bestMappingStats.get(bin).get(data).get(device);
+					List<BenchFullExecutionResults> mappings = bestMappingStats.get(bin).get(data).get(device);
 					
 					double avg_tradeoff = 0;
 					double avg_energyJ = 0;
 					double avg_runtimeMS = 0;
-					for(BenchExecutionResults map : mappings) {
+					for(BenchFullExecutionResults map : mappings) {
 						avg_tradeoff += map.tradeoff;
 						avg_energyJ += map.energyJ;
 						avg_runtimeMS += map.runtimeMS;
@@ -114,16 +118,18 @@ public class ClientNiConsoleUi implements UserInterface {
 						lowestAvgTradeoff = avg_tradeoff;
 					}
 					
-					statsRecords.add(new String[] { bin.name(), data.name(), device.name(), 
+					statsRecords.add(new String[] { architecture, bin.name(), data.name(), device.name(), 
 							Double.toString(avg_energyJ), Double.toString(avg_runtimeMS) });
 				}
 				
-				mappingRecords.add(new String[] { bin.name(), data.name(), bestDevice.name() });
+				mappingRecords.add(new String[] { architecture, bin.name(), data.name(), bestDevice.name() });
 			}
 		}
 		
 		OclBenchMapperCsvHandler.writePrecomputedMapping(statOutputDir.resolve(OPTIMAL_MAPPING_CSV), mappingRecords);
 		OclBenchMapperCsvHandler.writeExecutionStats(statOutputDir.resolve(EXECUTION_STATS_CSV), statsRecords);
+		if(saveFullStats)
+			OclBenchMapperCsvHandler.writeFullExecutionStats(statOutputDir.resolve(EXECUTION_FULLSTATS_DAT), results);
 	}
 
 	public void processServerResponse(Hashtable<String, List<ExecutionItem>> execMapping, UserCommand cmd) {
@@ -169,7 +175,7 @@ public class ClientNiConsoleUi implements UserInterface {
 							}
 							RunBenchCmd bcmd = (RunBenchCmd) cmd;
 							EnergyLog elog = br.getEnergyLog();
-							BenchExecutionResults execRes = new BenchExecutionResults(elog.getEnergyJ(), elog.getRuntimeMS());
+							BenchFullExecutionResults execRes = new BenchFullExecutionResults(elog.getEnergyJ(), elog.getRuntimeMS(), br.getStdOut());
 							
 							results.add(execRes);
 							
