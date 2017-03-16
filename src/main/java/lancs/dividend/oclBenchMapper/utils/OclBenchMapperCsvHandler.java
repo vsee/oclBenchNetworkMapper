@@ -180,7 +180,7 @@ public final class OclBenchMapperCsvHandler {
 	}
 	
 	public static Hashtable<Benchmark, Hashtable<DataSetSize, 
-					Hashtable<ExecutionDevice, BenchFullExecutionResults>>> parseFullExecutionStats(Path datFile) {
+					Hashtable<ExecutionDevice, List<BenchFullExecutionResults>>>> parseFullExecutionStats(Path datFile) {
 		List<BenchFullExecutionResults> rawList = new ArrayList<>();
 		
 		try (ObjectInputStream ois = new ObjectInputStream(
@@ -198,15 +198,17 @@ public final class OclBenchMapperCsvHandler {
 		}
 		
 		Hashtable<Benchmark, Hashtable<DataSetSize, 
-			Hashtable<ExecutionDevice, BenchFullExecutionResults>>> res = new Hashtable<>();
+			Hashtable<ExecutionDevice, List<BenchFullExecutionResults>>>> res = new Hashtable<>();
 		
 		for (BenchFullExecutionResults exec : rawList) {
 			if(!res.containsKey(exec.bin))
 				res.put(exec.bin, new Hashtable<>());
 			if(!res.get(exec.bin).containsKey(exec.dset))
 				res.get(exec.bin).put(exec.dset, new Hashtable<>());
-			
-			res.get(exec.bin).get(exec.dset).put(exec.dev, exec);
+			if(!res.get(exec.bin).get(exec.dset).containsKey(exec.dev))
+				res.get(exec.bin).get(exec.dset).put(exec.dev, new ArrayList<BenchFullExecutionResults>());
+
+			res.get(exec.bin).get(exec.dset).get(exec.dev).add(exec);
 		}
 		
 		return res;

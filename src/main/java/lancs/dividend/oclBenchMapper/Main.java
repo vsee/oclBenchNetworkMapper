@@ -100,8 +100,9 @@ public class Main {
 	    serverParser.addArgument("--benchDataConfig")
 	    	.type(Arguments.fileType().verifyCanRead().verifyIsFile())
 			.help("Configuration file for benchmark data arguments.").setDefault(DEFAULT_BENCH_ARGS_CONFIG);
-	    serverParser.addArgument("--dummy").action(Arguments.storeTrue())
-			.help("Run the server as dummy executing no workloads and returning dummy results.");
+	    serverParser.addArgument("--simulation")
+	    	.type(Arguments.fileType().verifyCanRead().verifyIsFile())
+			.help("Run a server simulation based on results from hardware measurements.");
 	}
 
 	private static void addClientArgs(Subparsers subparsers) {
@@ -171,8 +172,10 @@ public class Main {
 					int port = ns.getInt("port");
 					Path benchExecConf = Paths.get(ns.getString("benchExecConfig"));
 					Path benchDataConf = Paths.get(ns.getString("benchDataConfig"));
+					Path simulationConf = ns.getString("simulation") != null ? Paths.get(ns.getString("simulation")) : null;
+						
 					new OclMapperServer(port, benchExecConf, benchDataConf, 
-							ns.get("architecture"), ns.getBoolean("dummy")).runServer();
+							ns.get("architecture"), simulationConf).runServer();
 				} catch (IOException e) {
 					throw new UncheckedIOException("ERROR: Starting server failed: ", e);
 				}
