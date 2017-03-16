@@ -46,7 +46,7 @@ public class ClientConnectionHandler {
 		
 		private void receiveExecutionResults(ExecutionItem item) {
 	        try {
-	        	ResponseMessage response = server.waitForCmdResponse();
+	        	ResponseMessage response = server.waitForResponse();
 	        	item.setResponse(response);
 	        	
 	        	if(response.getType() == ResponseType.ERROR) {

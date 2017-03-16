@@ -5,12 +5,15 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+import lancs.dividend.oclBenchMapper.message.response.ArchResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
+import lancs.dividend.oclBenchMapper.message.response.ResponseMessage.ResponseType;
 
 
 public class ServerConnection extends ConnectionHandler {
 
 	private final String serverAddress;
+	private final String serverDescr;
 	
 	public ServerConnection(String serverAddr) throws IOException {
 		serverAddress = serverAddr;
@@ -30,8 +33,22 @@ public class ServerConnection extends ConnectionHandler {
 		oos = new ObjectOutputStream(connectionSocket.getOutputStream());
 		ois = new ObjectInputStream(connectionSocket.getInputStream());
 		connectionEstablished = true;
+
+		serverDescr = receiveDescription();
 	}
 	
+	private String receiveDescription() throws IOException {
+		ResponseMessage resp = waitForResponse();
+		if(resp.getType() != ResponseType.ARCH)
+			throw new RuntimeException("Server connection failed. Missing architecture description message.");
+		
+		return ((ArchResponseMessage) resp).getArchDescription();
+	}
+	
+	public String getServerArchDesc() {
+		return serverDescr;
+	}
+
 	@Override
 	public String toString() {
 		return serverAddress;
@@ -41,7 +58,7 @@ public class ServerConnection extends ConnectionHandler {
 		return serverAddress;
 	}
 	
-	public ResponseMessage waitForCmdResponse() throws IOException {
+	public ResponseMessage waitForResponse() throws IOException {
 		if(!isConnected()) 
 			throw new RuntimeException("Established connection needed before messages can be received.");
 		

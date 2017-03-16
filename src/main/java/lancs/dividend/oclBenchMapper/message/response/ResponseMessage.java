@@ -8,7 +8,9 @@ public abstract class ResponseMessage extends Message {
 		/** Response containing benchmark results */
 		BENCHSTATS,
 		/** Server reports an error */
-		ERROR
+		ERROR,
+		/** Architecture description of the server */
+		ARCH
 	}
 	
 	private static final long serialVersionUID = 5253394986954716580L;

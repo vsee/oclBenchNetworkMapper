@@ -8,6 +8,7 @@ import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner;
 import lancs.dividend.oclBenchMapper.connection.ClientConnection;
 import lancs.dividend.oclBenchMapper.energy.EnergyLog;
 import lancs.dividend.oclBenchMapper.message.CommandMessage;
+import lancs.dividend.oclBenchMapper.message.response.ArchResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
@@ -30,19 +31,23 @@ public class OclMapperServer {
 	private static final Path DUMMY_ENERGY_LOG = Paths.get("src/main/resources/ocleniMONITOR_sample.csv");
 	
 	private final BenchmarkRunner benchRunner;
-	private final ClientConnection client;
+	private final ClientConnection clientConnection;
 	
 	/** If this flag is true, the server does not execute benchmark but merely sends back
 	 * dummy energy and performance statistics. This mode is meant for test and development purposes. */
 	private final boolean isDummyServer;
+
+	private final String archDescr;
 	
-	public OclMapperServer(int port, Path benchExecConf, Path benchDataConf, boolean isDummy) throws IOException {
+	public OclMapperServer(int port, Path benchExecConf, Path benchDataConf, String archDescr, boolean isDummy) throws IOException {
 		if(port <= 0) throw new IllegalArgumentException("Invalid server port: " + port);
 		if(benchExecConf == null) throw new IllegalArgumentException("Benchmark execution configuration must not be null.");
 		if(benchDataConf == null) throw new IllegalArgumentException("Benchmark data configuration must not be null.");
 		
 		benchRunner = new BenchmarkRunner(benchExecConf, benchDataConf);
-		client = new ClientConnection(port);
+		clientConnection = new ClientConnection(port);
+		
+		this.archDescr = archDescr;
 		isDummyServer = isDummy;
 		System.out.println("Starting server at port " + port);
 		if(isDummy) System.out.println("Running server as dummy!");
@@ -52,14 +57,24 @@ public class OclMapperServer {
 		try {
 			while(true) {
 				System.out.println("Waiting for client ...");
-				if(client.establishConnection())  {
+				if(clientConnection.establishConnection())  {
 					System.out.println("Connection established with client.");
+					
+					System.out.println("Sending architecture description: " + archDescr);
+					try {
+						clientConnection.sendMessage(new ArchResponseMessage(archDescr));
+					} catch(IOException e) {
+						System.err.println("ERROR: Sending architecture description to client failed. Disconnecting ...");
+						clientConnection.closeConnection();
+						continue;
+					}
+					
 					handleMessages();
 				}
 			}
 		} finally {
             try {
-                client.shutDown();
+                clientConnection.shutDown();
             } catch (IOException e) {
             	System.out.println("ERROR: Shutting down server failed: " + e);
             	e.printStackTrace();
@@ -73,7 +88,7 @@ public class OclMapperServer {
 		while (!closeConnection) {
 			
             ResponseMessage response = null;
-			CommandMessage cmdMsg = client.waitForCmd();
+			CommandMessage cmdMsg = clientConnection.waitForCmd();
 			
 			UserCommand cmd = cmdMsg.getCommand();
 			ExecutionDevice device = cmdMsg.getExecutionDevice();
@@ -90,7 +105,7 @@ public class OclMapperServer {
 				
             if(response != null) {
             	try {
-					client.sendMessage(response);
+					clientConnection.sendMessage(response);
 				} catch (IOException e) {
 					System.err.println("ERROR: sending response failed: " + e);
 					e.printStackTrace();
@@ -99,7 +114,7 @@ public class OclMapperServer {
             }
         }
 		
-		client.closeConnection();
+		clientConnection.closeConnection();
 	}
 
 	
