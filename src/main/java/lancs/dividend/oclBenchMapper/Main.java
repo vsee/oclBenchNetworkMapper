@@ -35,8 +35,8 @@ public class Main {
 	private static final int DEFAULT_PORT = 9090;
 	private static final String DEFAULT_SERVER_ADDRESS = "127.0.0.1";
 	private static final Path DEFAULT_NICLIENT_OUTPUT = Paths.get("./");
-	private static final Path DEFAULT_PREDICTION_FILE = Paths.get("./src/main/resources/dividend_device_predictions.csv");
-	private static final Path DEFAULT_EXECUTION_STATS_FILE = Paths.get("./src/main/resources/dividend_device_executionStats.csv");
+	private static final Path DEFAULT_PREDICTION_FILE = Paths.get("./src/main/resources/serverConf/dividend_device_predictions.csv");
+	private static final Path DEFAULT_EXECUTION_STATS_FILE = Paths.get("./src/main/resources/serverConf/dividend_device_executionStats.csv");
 	private static final Path DEFAULT_BENCH_EXEC_CONFIG = Paths.get("./src/main/resources/benchmarkConf/dividend_rodinia_bench_config.csv");
 	private static final Path DEFAULT_BENCH_ARGS_CONFIG = Paths.get("./src/main/resources/benchmarkConf/dividend_rodinia_data_config.csv");
 	private static final Path DEFAULT_BENCH_CONFIG = Paths.get("./src/main/resources/benchmarkConf/dividend_benchmark_config.csv");

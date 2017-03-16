@@ -60,7 +60,8 @@ public class GuiModel {
 	protected ClientConnectionHandler cmdHandler;
 	protected WorkloadMapper wlMap;
 
-	protected Hashtable<Benchmark, Hashtable<DataSetSize, Hashtable<ExecutionDevice, BenchExecutionResults>>> serverExecStats;
+	protected Hashtable<String, Hashtable<Benchmark, Hashtable<DataSetSize, 
+					Hashtable<ExecutionDevice, BenchExecutionResults>>>> serverExecStats;
 	
 	protected long iteration;
 	protected boolean initialIteration;

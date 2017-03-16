@@ -56,10 +56,10 @@ public class ClientNiConsoleUi implements UserInterface {
 			throw new IllegalArgumentException("Given command handler must not be null.");
 		if(mapper == null)
 			throw new IllegalArgumentException("Given workload mapper must not be null.");
-		if(cmdHandler.getServerAdresses().length != 1) 
+		if(cmdHandler.getServerDescriptions().length != 1) 
 			throw new RuntimeException("Expected a single server for a non-interactive run.");
 		
-		String serverAddr = cmdHandler.getServerAdresses()[0];
+		String serverAddr = cmdHandler.getServerDescriptions()[0].address;
 		
 		System.out.println();
 		

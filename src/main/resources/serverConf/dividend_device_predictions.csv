@@ -1,7 +1,7 @@
-Benchmark,DataSetSize,ExecutionDevice
-KMEANS,MEDIUM,GPU
-KMEANS,LARGE,GPU
-KMEANS,SMALL,CPU
-LUD,MEDIUM,GPU
-LUD,SMALL,GPU
-LUD,LARGE,GPU
+Architecture,Benchmark,DataSetSize,ExecutionDevice
+dividend,KMEANS,MEDIUM,GPU
+dividend,KMEANS,LARGE,GPU
+dividend,KMEANS,SMALL,CPU
+dividend,LUD,MEDIUM,GPU
+dividend,LUD,SMALL,GPU
+dividend,LUD,LARGE,GPU

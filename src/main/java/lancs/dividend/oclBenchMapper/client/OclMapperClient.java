@@ -39,6 +39,7 @@ public class OclMapperClient {
 			if(s.isConnected()) {
 				servers.add(s);
 				System.out.println(" connected!");
+				System.out.println("Server architecture: " + s.getServerDescription().architecture);
 			} else {
 				System.err.println(" failed!");
 			}

@@ -10,6 +10,7 @@ import lancs.dividend.oclBenchMapper.message.CommandMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage.ResponseType;
+import lancs.dividend.oclBenchMapper.server.ServerDescription;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand.CmdType;
 
@@ -40,7 +41,7 @@ public class ClientConnectionHandler {
 			try {
 				server.sendMessage(new CommandMessage(item.getCmd(), item.getExecDevice()));
 			} catch (IOException e) {
-				item.setError("ERROR: sending command to server " + server.getAddress() + " failed.",e);
+				item.setError("ERROR: sending command to server " + server.getServerDescription().address + " failed.",e);
 			}
 		}
 		
@@ -53,7 +54,7 @@ public class ClientConnectionHandler {
 					item.setError(((ErrorResponseMessage) response).getText());
 	        	}
 	        } catch (IOException e) {
-				item.setError("ERROR: receiving command from " + server.getAddress() + " failed.",e);
+				item.setError("ERROR: receiving command from " + server.getServerDescription().address + " failed.",e);
 	        }
 		}
 	}
@@ -61,24 +62,32 @@ public class ClientConnectionHandler {
 	// # ------------------------------------------------------------------------------------ #
 	
 	private final Hashtable<String, ServerConnection> servers;
-	private final String[] serverAdresses;
+	private final ServerDescription[] serverDescriptions;
 	
 	public ClientConnectionHandler(List<ServerConnection> connections) {
 		if(connections == null || connections.isEmpty())
 			throw new IllegalArgumentException("Given server connections must not be null or empty.");
 
 		this.servers = new Hashtable<>();
+		serverDescriptions = new ServerDescription[connections.size()];
+		int descrIdx = 0;
 		for(ServerConnection sc : connections) {
 			if(sc == null) throw new IllegalArgumentException("Given server connection must not be null.");
-			servers.put(sc.getAddress(), sc);
+			servers.put(sc.getServerDescription().address, sc);
+			serverDescriptions[descrIdx++] = sc.getServerDescription();
 		}
-
-		serverAdresses = servers.keySet().toArray(new String[servers.keySet().size()]);
 	}
 	
-	public String[] getServerAdresses() {
-		return serverAdresses;
+	public ServerDescription[] getServerDescriptions() {
+		return serverDescriptions;
 	}
+	
+	public ServerDescription getServerDescription(String serverAdr) {
+		if(serverAdr == null) throw new IllegalArgumentException("Given server address must not be null.");
+		if(!servers.containsKey(serverAdr)) return null;
+		
+		return servers.get(serverAdr).getServerDescription();
+	}	
 		
 	public void executeCommands(UserCommand cmd, Hashtable<String, List<ExecutionItem>> execMapping) {
 		if(cmd == null)
@@ -116,5 +125,6 @@ public class ClientConnectionHandler {
 		System.out.println("Closing server connections ...");
 		for(ServerConnection s : servers.values()) s.closeConnection();
 		servers.clear();
-	}	
+	}
+
 }

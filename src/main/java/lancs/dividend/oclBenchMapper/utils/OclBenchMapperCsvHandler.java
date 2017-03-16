@@ -20,12 +20,13 @@ public final class OclBenchMapperCsvHandler {
 
 	private static final String BENCHMARK_CONFIG_HEADER = "Benchmark";
 
-	private static final String PRECOMP_MAPPING_HEADER = BENCHMARK_CONFIG_HEADER + ",DataSetSize,ExecutionDevice";
-	private static final String USER_COMMAND_HEADER = PRECOMP_MAPPING_HEADER + ",Iterations";
-	private static final String EXEC_STATS_HEADER = PRECOMP_MAPPING_HEADER + ",AvgEnergyJ,AvgRuntimeMS";
+	private static final String USER_COMMAND_HEADER = BENCHMARK_CONFIG_HEADER + ",DataSetSize,ExecutionDevice,Iterations";
 	
 	private static final String BENCHMARK_DATA_CONFIG_HEADER = BENCHMARK_CONFIG_HEADER + ",DataSetSize,DataArgs";
 	private static final String BENCHMARK_EXEC_CONFIG_HEADER = BENCHMARK_CONFIG_HEADER + ",ExecutionDevice,BinDir,ExecCmd";
+	
+	private static final String PRECOMP_MAPPING_HEADER = "Architecture,Benchmark,DataSetSize,ExecutionDevice";
+	private static final String EXEC_STATS_HEADER = PRECOMP_MAPPING_HEADER + ",AvgEnergyJ,AvgRuntimeMS";
 	
 	private static final String ENERGY_LOG_HEADER = "Status;Event;Command;Issue;Start;Stop;Workload;Energy;Name";
 	private static final int ENERGY_LOG_HEADER_SKIP = 2;
@@ -35,10 +36,15 @@ public final class OclBenchMapperCsvHandler {
 	private static final int FIELD_DATA_IDX = 1;
 	private static final int FIELD_DEVICE_IDX = 2;
 	
+	private static final int FIELD_STATS_ARCH_IDX = 0;
+	private static final int FIELD_STATS_BIN_IDX = 1;
+	private static final int FIELD_STATS_DATA_IDX = 2;
+	private static final int FIELD_STATS_DEVICE_IDX = 3;
+	
 	private static final int FIELD_ITER_IDX = 3;
 	
-	private static final int FIELD_ENERGY_IDX = 3;
-	private static final int FIELD_RUNTIME_IDX = 4;
+	private static final int FIELD_STATS_ENERGY_IDX = 4;
+	private static final int FIELD_STATS_RUNTIME_IDX = 5;
 	
 	private static final int FIELD_ARGS_IDX = 2;
 	
@@ -88,18 +94,20 @@ public final class OclBenchMapperCsvHandler {
 	
 	
 	
-	public static Hashtable<Benchmark, Hashtable<DataSetSize, ExecutionDevice>> parsePrecomputedMapping(Path csvFile) {
+	public static Hashtable<String, Hashtable<Benchmark, Hashtable<DataSetSize, ExecutionDevice>>> parsePrecomputedMapping(Path csvFile) {
 		List<List<String>> recs = parseRecords(csvFile, OclBenchMapperCsvHandler.PRECOMP_MAPPING_HEADER);
 		
-		Hashtable<Benchmark, Hashtable<DataSetSize, ExecutionDevice>> map =  new Hashtable<>();
+		Hashtable<String, Hashtable<Benchmark, Hashtable<DataSetSize, ExecutionDevice>>> map =  new Hashtable<>();
 		
 		for (List<String> record : recs) {
-			Benchmark rbin = Benchmark.valueOf(record.get(FIELD_BIN_IDX));
-			DataSetSize data = DataSetSize.valueOf(record.get(FIELD_DATA_IDX));
-			ExecutionDevice dev = ExecutionDevice.valueOf(record.get(FIELD_DEVICE_IDX));
+			String arch = record.get(FIELD_STATS_ARCH_IDX);
+			Benchmark rbin = Benchmark.valueOf(record.get(FIELD_STATS_BIN_IDX));
+			DataSetSize data = DataSetSize.valueOf(record.get(FIELD_STATS_DATA_IDX));
+			ExecutionDevice dev = ExecutionDevice.valueOf(record.get(FIELD_STATS_DEVICE_IDX));
 			
-			if(!map.containsKey(rbin)) map.put(rbin, new Hashtable<>());
-			map.get(rbin).put(data, dev);
+			if(!map.containsKey(arch)) map.put(arch, new Hashtable<>());
+			if(!map.get(arch).containsKey(rbin)) map.get(arch).put(rbin, new Hashtable<>());
+			map.get(arch).get(rbin).put(data, dev);
 		}
 		
 		return map;
@@ -132,26 +140,30 @@ public final class OclBenchMapperCsvHandler {
 	}
 	
 	
-	public static Hashtable<Benchmark, Hashtable<DataSetSize, Hashtable<ExecutionDevice, BenchExecutionResults>>> parseExecutionStats(
-			Path csvFile) {
+	public static Hashtable<String, Hashtable<Benchmark, Hashtable<DataSetSize, 
+							Hashtable<ExecutionDevice, BenchExecutionResults>>>> parseExecutionStats(Path csvFile) {
 
 		List<List<String>> recs = parseRecords(csvFile, OclBenchMapperCsvHandler.EXEC_STATS_HEADER);
 
-		Hashtable<Benchmark, Hashtable<DataSetSize, Hashtable<ExecutionDevice, BenchExecutionResults>>> res = new Hashtable<>();
+		Hashtable<String, Hashtable<Benchmark, Hashtable<DataSetSize, 
+				Hashtable<ExecutionDevice, BenchExecutionResults>>>> res = new Hashtable<>();
 		
 		for (List<String> record : recs) {
-			Benchmark rbin = Benchmark.valueOf(record.get(FIELD_BIN_IDX));
-			DataSetSize data = DataSetSize.valueOf(record.get(FIELD_DATA_IDX));
-			ExecutionDevice dev = ExecutionDevice.valueOf(record.get(FIELD_DEVICE_IDX));
-			double avg_energyJ = Double.valueOf(record.get(FIELD_ENERGY_IDX));
-			double avg_runtimeMS = Double.valueOf(record.get(FIELD_RUNTIME_IDX));
+			String arch = record.get(FIELD_STATS_ARCH_IDX);
+			Benchmark rbin = Benchmark.valueOf(record.get(FIELD_STATS_BIN_IDX));
+			DataSetSize data = DataSetSize.valueOf(record.get(FIELD_STATS_DATA_IDX));
+			ExecutionDevice dev = ExecutionDevice.valueOf(record.get(FIELD_STATS_DEVICE_IDX));
+			double avg_energyJ = Double.valueOf(record.get(FIELD_STATS_ENERGY_IDX));
+			double avg_runtimeMS = Double.valueOf(record.get(FIELD_STATS_RUNTIME_IDX));
 			
-			if(!res.containsKey(rbin))
-				res.put(rbin, new Hashtable<>());
-			if(!res.get(rbin).containsKey(data))
-				res.get(rbin).put(data, new Hashtable<>());
+			if(!res.containsKey(arch))
+				res.put(arch, new Hashtable<>());
+			if(!res.get(arch).containsKey(rbin))
+				res.get(arch).put(rbin, new Hashtable<>());
+			if(!res.get(arch).get(rbin).containsKey(data))
+				res.get(arch).get(rbin).put(data, new Hashtable<>());
 			
-			res.get(rbin).get(data).put(dev, new BenchExecutionResults(avg_energyJ, avg_runtimeMS));
+			res.get(arch).get(rbin).get(data).put(dev, new BenchExecutionResults(avg_energyJ, avg_runtimeMS));
 		}
 		
 		return res;

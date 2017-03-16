@@ -14,10 +14,12 @@ import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
 import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.client.ExecutionItem;
 import lancs.dividend.oclBenchMapper.mapping.CmdToDeviceMapping;
+import lancs.dividend.oclBenchMapper.mapping.WorkloadDistributionException;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage.ResponseType;
 import lancs.dividend.oclBenchMapper.server.ExecutionDevice;
+import lancs.dividend.oclBenchMapper.server.ServerDescription;
 import lancs.dividend.oclBenchMapper.ui.console.BenchExecutionResults;
 import lancs.dividend.oclBenchMapper.ui.gui.GuiModel.ExecutionMode;
 import lancs.dividend.oclBenchMapper.ui.gui.update.GuiUpdate;
@@ -88,8 +90,14 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, List<GuiUpdat
 		assert gui.cmdHandler != null && gui.wlMap != null : "Command handler and mapper must not be null at this point.";
 		List<GuiUpdate> updates = new ArrayList<>();
 
-		Hashtable<String, CmdToDeviceMapping> execMapping = 
-				gui.wlMap.mapWorkload(gui.cmdHandler.getServerAdresses(), cmd);
+		Hashtable<String, CmdToDeviceMapping> execMapping;
+		try {
+			execMapping = gui.wlMap.mapWorkload(gui.cmdHandler.getServerDescriptions(), cmd);
+		} catch (WorkloadDistributionException e) {
+			System.err.println("ERROR: Workload mapping failed: " + e.getMessage());
+			e.printStackTrace();
+			return;
+		}
 		
 		updates.add(printExecutionStart(cmd, execMapping));
 		publish(updates);
@@ -257,10 +265,14 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, List<GuiUpdat
 		
 		for (String serverAdr : execStats.keySet()) {
 			Hashtable<ExecutionDevice, BenchExecutionResults> serverStats = execStats.get(serverAdr);
+			ServerDescription descr = gui.cmdHandler.getServerDescription(serverAdr);
+			assert descr != null : "No known server description for address: " + serverAdr;
 			
 			for (ExecutionDevice device : ExecutionDevice.values()) {
 				if(!serverStats.containsKey(device)) {
+					
 					BenchExecutionResults precalcStats = gui.serverExecStats
+							.get(descr.architecture)
 							.get(bcmd.getBinaryName())
 							.get(bcmd.getDataSetSize())
 							.get(device);

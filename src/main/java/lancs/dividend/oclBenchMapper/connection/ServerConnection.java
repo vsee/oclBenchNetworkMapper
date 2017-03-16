@@ -8,15 +8,16 @@ import java.net.Socket;
 import lancs.dividend.oclBenchMapper.message.response.ArchResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage.ResponseType;
+import lancs.dividend.oclBenchMapper.server.ServerDescription;
 
 
 public class ServerConnection extends ConnectionHandler {
 
-	private final String serverAddress;
-	private final String serverDescr;
+	private final ServerDescription serverDescr;
 	
 	public ServerConnection(String serverAddr) throws IOException {
-		serverAddress = serverAddr;
+		if(serverAddr == null)
+			throw new IllegalArgumentException("Given server address must not be null.");
 		
 		String[] addrParts = serverAddr.split(":");
 		if(addrParts.length != 2)  throw new IllegalArgumentException("Given address invalid: " + serverAddr);
@@ -34,7 +35,7 @@ public class ServerConnection extends ConnectionHandler {
 		ois = new ObjectInputStream(connectionSocket.getInputStream());
 		connectionEstablished = true;
 
-		serverDescr = receiveDescription();
+		serverDescr = new ServerDescription(serverAddr, receiveDescription());
 	}
 	
 	private String receiveDescription() throws IOException {
@@ -45,17 +46,13 @@ public class ServerConnection extends ConnectionHandler {
 		return ((ArchResponseMessage) resp).getArchDescription();
 	}
 	
-	public String getServerArchDesc() {
+	public ServerDescription getServerDescription() {
 		return serverDescr;
 	}
 
 	@Override
 	public String toString() {
-		return serverAddress;
-	}
-	
-	public String getAddress() {
-		return serverAddress;
+		return serverDescr.address + " " + serverDescr.architecture;
 	}
 	
 	public ResponseMessage waitForResponse() throws IOException {
