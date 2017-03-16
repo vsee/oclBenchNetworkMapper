@@ -179,21 +179,34 @@ public final class OclBenchMapperCsvHandler {
 		System.out.println("Execution statistics written to: " + csvFile);
 	}
 	
-	public static List<BenchFullExecutionResults> readFullExecutionStats(Path datFile) {
-		List<BenchFullExecutionResults> res = new ArrayList<>();
+	public static Hashtable<Benchmark, Hashtable<DataSetSize, 
+					Hashtable<ExecutionDevice, BenchFullExecutionResults>>> parseFullExecutionStats(Path datFile) {
+		List<BenchFullExecutionResults> rawList = new ArrayList<>();
 		
 		try (ObjectInputStream ois = new ObjectInputStream(
 				Files.newInputStream(datFile, StandardOpenOption.READ))) {
 
 			int size = ois.readInt();
 			for(int i = 0; i < size; i++) {
-				res.add((BenchFullExecutionResults) ois.readObject());
+				rawList.add((BenchFullExecutionResults) ois.readObject());
 			}
-			
+
 		} catch (IOException | ClassNotFoundException e) {
 			System.err.println("Reading full execution statistics failed: " + e);
 			e.printStackTrace();
 			return null;
+		}
+		
+		Hashtable<Benchmark, Hashtable<DataSetSize, 
+			Hashtable<ExecutionDevice, BenchFullExecutionResults>>> res = new Hashtable<>();
+		
+		for (BenchFullExecutionResults exec : rawList) {
+			if(!res.containsKey(exec.bin))
+				res.put(exec.bin, new Hashtable<>());
+			if(!res.get(exec.bin).containsKey(exec.dset))
+				res.get(exec.bin).put(exec.dset, new Hashtable<>());
+			
+			res.get(exec.bin).get(exec.dset).put(exec.dev, exec);
 		}
 		
 		return res;
