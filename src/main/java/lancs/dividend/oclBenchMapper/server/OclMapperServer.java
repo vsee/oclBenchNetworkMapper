@@ -63,7 +63,7 @@ public class OclMapperServer {
 		}
 	}
 	
-	private boolean isSimulation() { return simulationData == null; }
+	private boolean isSimulation() { return simulationData != null; }
 
 	public void runServer() {
 		try {
