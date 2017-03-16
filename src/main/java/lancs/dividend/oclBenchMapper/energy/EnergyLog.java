@@ -23,7 +23,7 @@ public class EnergyLog implements Serializable {
 		
 		calculateStatistics(logRecords);
 	}
-
+	
 	public List<List<String>> getLogRecords() { return logRecords; }
 	
 	public double getEnergyJ() { return energyJ; }

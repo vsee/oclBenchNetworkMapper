@@ -11,6 +11,7 @@ import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
 import lancs.dividend.oclBenchMapper.client.ExecutionItem;
 import lancs.dividend.oclBenchMapper.mapping.CmdToDeviceMapping;
+import lancs.dividend.oclBenchMapper.mapping.WorkloadDistributionException;
 import lancs.dividend.oclBenchMapper.mapping.WorkloadMapper;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
@@ -70,8 +71,14 @@ public class ClientConsoleUi implements UserInterface {
 		
 		while(!exitClient) {
 			UserCommand cmd = receiveCommand();
-			Hashtable<String, CmdToDeviceMapping> execMapping = 
-					mapper.mapWorkload(cmdHandler.getServerAdresses(), cmd);
+			Hashtable<String, CmdToDeviceMapping> execMapping;
+			try {
+				execMapping = mapper.mapWorkload(cmdHandler.getServerDescriptions(), cmd);
+			} catch (WorkloadDistributionException e) {
+				System.err.println("ERROR: Workload mapping failed: " + e.getMessage());
+				e.printStackTrace();
+				continue;
+			}
 			
 			Hashtable<String, List<ExecutionItem>> execItems = new Hashtable<>();
 			for (String serverAddr : execMapping.keySet()) {

@@ -12,12 +12,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 
+import lancs.dividend.oclBenchMapper.benchmark.BenchExecutionResults;
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
 import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
 import lancs.dividend.oclBenchMapper.mapping.WorkloadMapper;
 import lancs.dividend.oclBenchMapper.server.ExecutionDevice;
-import lancs.dividend.oclBenchMapper.ui.console.BenchExecutionResults;
 
 import org.knowm.xchart.XChartPanel;
 import org.knowm.xchart.XYChart;
@@ -60,7 +60,8 @@ public class GuiModel {
 	protected ClientConnectionHandler cmdHandler;
 	protected WorkloadMapper wlMap;
 
-	protected Hashtable<Benchmark, Hashtable<DataSetSize, Hashtable<ExecutionDevice, BenchExecutionResults>>> serverExecStats;
+	protected Hashtable<String, Hashtable<Benchmark, Hashtable<DataSetSize, 
+					Hashtable<ExecutionDevice, BenchExecutionResults>>>> serverExecStats;
 	
 	protected long iteration;
 	protected boolean initialIteration;

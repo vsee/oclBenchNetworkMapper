@@ -3,17 +3,25 @@ package lancs.dividend.oclBenchMapper.server;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Random;
 
+import lancs.dividend.oclBenchMapper.benchmark.BenchFullExecutionResults;
+import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
 import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner;
+import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.connection.ClientConnection;
-import lancs.dividend.oclBenchMapper.energy.EnergyLog;
+import lancs.dividend.oclBenchMapper.energy.EnergySimulationLog;
 import lancs.dividend.oclBenchMapper.message.CommandMessage;
+import lancs.dividend.oclBenchMapper.message.response.ArchResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.BenchStatsResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ErrorResponseMessage;
 import lancs.dividend.oclBenchMapper.message.response.ResponseMessage;
 import lancs.dividend.oclBenchMapper.userCmd.RunBenchCmd;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand;
 import lancs.dividend.oclBenchMapper.userCmd.UserCommand.CmdType;
+import lancs.dividend.oclBenchMapper.utils.OclBenchMapperCsvHandler;
 
 /**
  * 
@@ -30,36 +38,55 @@ public class OclMapperServer {
 	private static final Path DUMMY_ENERGY_LOG = Paths.get("src/main/resources/ocleniMONITOR_sample.csv");
 	
 	private final BenchmarkRunner benchRunner;
-	private final ClientConnection client;
+	private final ClientConnection clientConnection;
 	
-	/** If this flag is true, the server does not execute benchmark but merely sends back
-	 * dummy energy and performance statistics. This mode is meant for test and development purposes. */
-	private final boolean isDummyServer;
+	private final String archDescr;
+	private final Hashtable<Benchmark, Hashtable<DataSetSize, 
+					Hashtable<ExecutionDevice, List<BenchFullExecutionResults>>>> simulationData;
 	
-	public OclMapperServer(int port, Path benchExecConf, Path benchDataConf, boolean isDummy) throws IOException {
+	public OclMapperServer(int port, Path benchExecConf, Path benchDataConf, String archDescr, Path simulationConf) throws IOException {
 		if(port <= 0) throw new IllegalArgumentException("Invalid server port: " + port);
 		if(benchExecConf == null) throw new IllegalArgumentException("Benchmark execution configuration must not be null.");
 		if(benchDataConf == null) throw new IllegalArgumentException("Benchmark data configuration must not be null.");
 		
 		benchRunner = new BenchmarkRunner(benchExecConf, benchDataConf);
-		client = new ClientConnection(port);
-		isDummyServer = isDummy;
+		clientConnection = new ClientConnection(port);
+		
+		this.archDescr = archDescr;
 		System.out.println("Starting server at port " + port);
-		if(isDummy) System.out.println("Running server as dummy!");
+		
+		if(simulationConf != null) {
+			simulationData = OclBenchMapperCsvHandler.parseFullExecutionStats(simulationConf);
+			System.out.println("Running server simulation.");
+		} else {
+			simulationData = null;
+		}
 	}
+	
+	private boolean isSimulation() { return simulationData != null; }
 
 	public void runServer() {
 		try {
 			while(true) {
 				System.out.println("Waiting for client ...");
-				if(client.establishConnection())  {
+				if(clientConnection.establishConnection())  {
 					System.out.println("Connection established with client.");
+					
+					System.out.println("Sending architecture description: " + archDescr);
+					try {
+						clientConnection.sendMessage(new ArchResponseMessage(archDescr));
+					} catch(IOException e) {
+						System.err.println("ERROR: Sending architecture description to client failed. Disconnecting ...");
+						clientConnection.closeConnection();
+						continue;
+					}
+					
 					handleMessages();
 				}
 			}
 		} finally {
             try {
-                client.shutDown();
+                clientConnection.shutDown();
             } catch (IOException e) {
             	System.out.println("ERROR: Shutting down server failed: " + e);
             	e.printStackTrace();
@@ -73,7 +100,7 @@ public class OclMapperServer {
 		while (!closeConnection) {
 			
             ResponseMessage response = null;
-			CommandMessage cmdMsg = client.waitForCmd();
+			CommandMessage cmdMsg = clientConnection.waitForCmd();
 			
 			UserCommand cmd = cmdMsg.getCommand();
 			ExecutionDevice device = cmdMsg.getExecutionDevice();
@@ -90,7 +117,7 @@ public class OclMapperServer {
 				
             if(response != null) {
             	try {
-					client.sendMessage(response);
+					clientConnection.sendMessage(response);
 				} catch (IOException e) {
 					System.err.println("ERROR: sending response failed: " + e);
 					e.printStackTrace();
@@ -99,7 +126,7 @@ public class OclMapperServer {
             }
         }
 		
-		client.closeConnection();
+		clientConnection.closeConnection();
 	}
 
 	
@@ -111,12 +138,11 @@ public class OclMapperServer {
 				
 				ResponseMessage result;
 				
-				if(!isDummyServer) {
+				if(!isSimulation()) {
 					result = benchRunner.run(cmd.getBinaryName(), cmd.getDataSetSize(), device, true);
 				}
 				else {
-					result = new BenchStatsResponseMessage("DUMMY EXECUTION");
-					((BenchStatsResponseMessage) result).setEnergyLog(new EnergyLog(DUMMY_ENERGY_LOG));
+					result = simulateBenchmark(cmd, device);
 				}
 				
 				System.out.println("Execution finished. Returning results.");
@@ -125,5 +151,29 @@ public class OclMapperServer {
 				System.err.println("Unhandled command type: " + cmd.getType());
 				return new ErrorResponseMessage("Unable to execute command: " + cmd);
 		}
+	}
+
+	private ResponseMessage simulateBenchmark(RunBenchCmd cmd, ExecutionDevice device) {
+		ResponseMessage result;
+		Random rnd = new Random();
+		
+		// TODO add some error handling
+		List<BenchFullExecutionResults> execResults = 
+				simulationData.get(cmd.getBinaryName()).get(cmd.getDataSetSize()).get(device);
+		BenchFullExecutionResults res = execResults.get(rnd.nextInt(execResults.size()));
+		
+		result = new BenchStatsResponseMessage(res.stdOut);
+		((BenchStatsResponseMessage) result).setEnergyLog(
+				new EnergySimulationLog(DUMMY_ENERGY_LOG, res.energyJ, res.runtimeMS));
+
+		try {
+			Thread.sleep((long) res.runtimeMS);
+		} catch (InterruptedException e) {
+			System.err.println("Benchmark simulation interrupted: " + e.getMessage());
+			e.printStackTrace();
+		}
+		
+		System.out.println(res.stdOut);
+		return result;
 	}
 }

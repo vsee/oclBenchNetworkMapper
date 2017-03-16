@@ -35,11 +35,11 @@ public class Main {
 	private static final int DEFAULT_PORT = 9090;
 	private static final String DEFAULT_SERVER_ADDRESS = "127.0.0.1";
 	private static final Path DEFAULT_NICLIENT_OUTPUT = Paths.get("./");
-	private static final Path DEFAULT_PREDICTION_FILE = Paths.get("./src/main/resources/dividend_device_predictions.csv");
-	private static final Path DEFAULT_EXECUTION_STATS_FILE = Paths.get("./src/main/resources/dividend_device_executionStats.csv");
-	private static final Path DEFAULT_BENCH_EXEC_CONFIG = Paths.get("./src/main/resources/dividend_rodinia_bench_config.csv");
-	private static final Path DEFAULT_BENCH_ARGS_CONFIG = Paths.get("./src/main/resources/dividend_rodinia_data_config.csv");
-	private static final Path DEFAULT_BENCH_CONFIG = Paths.get("./src/main/resources/dividend_benchmark_config.csv");
+	private static final Path DEFAULT_PREDICTION_FILE = Paths.get("./src/main/resources/serverConf/dividend_device_predictions.csv");
+	private static final Path DEFAULT_EXECUTION_STATS_FILE = Paths.get("./src/main/resources/serverConf/dividend_device_executionStats.csv");
+	private static final Path DEFAULT_BENCH_EXEC_CONFIG = Paths.get("./src/main/resources/benchmarkConf/dividend_rodinia_bench_config.csv");
+	private static final Path DEFAULT_BENCH_ARGS_CONFIG = Paths.get("./src/main/resources/benchmarkConf/dividend_rodinia_data_config.csv");
+	private static final Path DEFAULT_BENCH_CONFIG = Paths.get("./src/main/resources/benchmarkConf/dividend_benchmark_config.csv");
 	
 	private static Namespace parseArguments(String[] args) {
 		
@@ -78,6 +78,8 @@ public class Main {
 	    niClientParser.addArgument("-o","--outputDir")
 	    	.type(Arguments.fileType().verifyCanWrite().verifyIsDirectory())
 			.help("Output directory for statistic results.").setDefault(DEFAULT_NICLIENT_OUTPUT);
+	    niClientParser.addArgument("--fullStats").action(Arguments.storeTrue())
+			.help("Save a full list of execution stats.");
 	}
 	
 	private static void addServerArgs(Subparsers subparsers) {
@@ -88,6 +90,9 @@ public class Main {
    			    .defaultHelp(true);
 	    serverParser.addArgument("-p","--port").type(Integer.class)
     		.help("Port used by the server to listen for clients.").setDefault(DEFAULT_PORT);
+	    serverParser.addArgument("-A","--architecture")
+		    .metavar("ARCH").type(String.class)
+		    .help("Identifier describing the servers architecture.").required(true);
 	    
 	    serverParser.addArgument("--benchExecConfig")
 	    	.type(Arguments.fileType().verifyCanRead().verifyIsFile())
@@ -95,8 +100,9 @@ public class Main {
 	    serverParser.addArgument("--benchDataConfig")
 	    	.type(Arguments.fileType().verifyCanRead().verifyIsFile())
 			.help("Configuration file for benchmark data arguments.").setDefault(DEFAULT_BENCH_ARGS_CONFIG);
-	    serverParser.addArgument("--dummy").action(Arguments.storeTrue())
-			.help("Run the server as dummy executing no workloads and returning dummy results.");
+	    serverParser.addArgument("--simulation")
+	    	.type(Arguments.fileType().verifyCanRead().verifyIsFile())
+			.help("Run a server simulation based on results from hardware measurements.");
 	}
 
 	private static void addClientArgs(Subparsers subparsers) {
@@ -166,7 +172,10 @@ public class Main {
 					int port = ns.getInt("port");
 					Path benchExecConf = Paths.get(ns.getString("benchExecConfig"));
 					Path benchDataConf = Paths.get(ns.getString("benchDataConfig"));
-					new OclMapperServer(port, benchExecConf, benchDataConf, ns.getBoolean("dummy")).runServer();
+					Path simulationConf = ns.getString("simulation") != null ? Paths.get(ns.getString("simulation")) : null;
+						
+					new OclMapperServer(port, benchExecConf, benchDataConf, 
+							ns.get("architecture"), simulationConf).runServer();
 				} catch (IOException e) {
 					throw new UncheckedIOException("ERROR: Starting server failed: ", e);
 				}
@@ -177,7 +186,7 @@ public class Main {
 					Path output = Paths.get(ns.getString("outputDir"));
 					
 					UserInterface ui = UserInterfaceFactory.createUserInterface(
-							UserInterfaceType.NICONSOLE, new NiConsoleConfig(input, output));
+							UserInterfaceType.NICONSOLE, new NiConsoleConfig(input, output, ns.getBoolean("fullStats")));
 					WorkloadMapper mapper = MapperFactory.createWorkloadMapper(MapperType.FCFS);
 					
 					new OclMapperClient(Arrays.asList(new String[] { ns.get("address") }), mapper, ui).runClient();

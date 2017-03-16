@@ -29,6 +29,7 @@ import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
 import lancs.dividend.oclBenchMapper.mapping.WorkloadMapper;
 import lancs.dividend.oclBenchMapper.server.ExecutionDevice;
+import lancs.dividend.oclBenchMapper.server.ServerDescription;
 import lancs.dividend.oclBenchMapper.ui.UserInterface;
 import lancs.dividend.oclBenchMapper.ui.gui.GuiModel.ExecutionMode;
 import lancs.dividend.oclBenchMapper.utils.OclBenchMapperCsvHandler;
@@ -243,6 +244,8 @@ public class ClientGui implements UserInterface {
 			public void run() {
 				try {
 					gui.frame.setVisible(true);
+					printServerInfo();
+					
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -250,6 +253,20 @@ public class ClientGui implements UserInterface {
 		});
 	}
 	
+	private void printServerInfo() {
+		
+		for (ServerDescription descr : gui.cmdHandler.getServerDescriptions()) {
+			gui.msgOutTextArea.append("Connected to server ");
+			gui.msgOutTextArea.append(descr.address);
+			gui.msgOutTextArea.append(" with architecture ");
+			gui.msgOutTextArea.append(descr.architecture);
+			gui.msgOutTextArea.append("\n");
+		}
+		
+		gui.msgOutTextArea.update(gui.msgOutTextArea.getGraphics());
+
+	}
+
 	private void initialiseChartSeries() {
 		gui.iterationData = new ArrayList<>();
 		gui.iterationData.add((double)gui.iteration++);
@@ -257,7 +274,7 @@ public class ClientGui implements UserInterface {
 
 		gui.series = new TreeMap<>();
 		
-		permutateAlterSeries(gui.cmdHandler.getServerAdresses().length, "");
+		permutateAlterSeries(gui.cmdHandler.getServerDescriptions().length, "");
 		addSeries(gui.series, GuiModel.GRAPH_SERIES_NAME_MAPPER, false);
 	}
 	
@@ -267,14 +284,14 @@ public class ClientGui implements UserInterface {
 		gui.energyChart.addSeries(name, gui.iterationData, series.energyData);
 		gui.performanceChart.addSeries(name, gui.iterationData, series.performanceData);
 		
-		String[] serverAdresses = gui.cmdHandler.getServerAdresses();
+		ServerDescription[] servers = gui.cmdHandler.getServerDescriptions();
 		if(addFixedMappings) {
 			String[] mappings = name.split("_");
-			assert mappings.length == serverAdresses.length : 
+			assert mappings.length == servers.length : 
 				"Fixed mapping length and server addresses don't match.";
 			
 			for (int i = 0; i < mappings.length; i++) {
-				series.addFixedMapping(serverAdresses[i], 
+				series.addFixedMapping(servers[i].address, 
 						ExecutionDevice.valueOf(mappings[i].substring(0, mappings[i].length() - 1)));
 			}
 		}

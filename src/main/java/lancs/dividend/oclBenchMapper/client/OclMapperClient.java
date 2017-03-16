@@ -27,10 +27,10 @@ public class OclMapperClient {
 		this.ui = ui;
 		
 		servers = new ArrayList<>(serverAddresses.size());
-		connectToClients(serverAddresses);
+		connectToServers(serverAddresses);
 	}
 	
-	private void connectToClients(List<String> serverAddresses) throws IOException {
+	private void connectToServers(List<String> serverAddresses) throws IOException {
 		for(String addr : serverAddresses) {
 
 			System.out.print("Connecting client with " + addr + " ...");
@@ -39,6 +39,7 @@ public class OclMapperClient {
 			if(s.isConnected()) {
 				servers.add(s);
 				System.out.println(" connected!");
+				System.out.println("Server architecture: " + s.getServerDescription().architecture);
 			} else {
 				System.err.println(" failed!");
 			}

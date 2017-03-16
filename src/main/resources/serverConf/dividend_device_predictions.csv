@@ -1,0 +1,7 @@
+Architecture,Benchmark,DataSetSize,ExecutionDevice
+dividend,KMEANS,MEDIUM,GPU
+dividend,KMEANS,LARGE,GPU
+dividend,KMEANS,SMALL,CPU
+dividend,LUD,MEDIUM,GPU
+dividend,LUD,SMALL,GPU
+dividend,LUD,LARGE,GPU
