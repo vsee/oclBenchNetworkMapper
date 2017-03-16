@@ -79,7 +79,7 @@ The client can be executed in ```non-interactive-client``` mode.
 * In this mode no user interface is provided. The client executes a set of commands provided via [input file](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/cmdInputDummy.csv).
 * The client can connect to only a single server in this mode.
 * Execution statistics are saved in [precomputation file](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/dividend_device_executionStats.csv) format.
-* Additionally an optimal execution device to benchmark mapping is generated and saved. It uses the same format as the [prediction configuration](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/dividend_device_predictions.csv) for the ``predicitve mapper```.
+* Additionally an optimal execution device to benchmark mapping is generated and saved.
 
 ### Configuring Benchmarks
 
