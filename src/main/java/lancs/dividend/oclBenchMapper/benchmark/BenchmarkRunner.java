@@ -17,20 +17,15 @@ import lancs.dividend.oclBenchMapper.utils.ShellCmdExecutor;
 
 public class BenchmarkRunner {
 
-	public enum DataSetSize { SMALL, MEDIUM, LARGE }
-	
 	private final Hashtable<Benchmark, Hashtable<ExecutionDevice, BenchExecArgs>> execArgConfig;
-	private final Hashtable<Benchmark, Hashtable<DataSetSize, String>> dataArgConfig;
 	
-	public BenchmarkRunner(Path execConfigCsv, Path dataConfigCsv) {
+	public BenchmarkRunner(Path execConfigCsv) {
 		if(execConfigCsv == null) throw new IllegalArgumentException("Benchmark execution configuration must not be null.");
-		if(dataConfigCsv == null) throw new IllegalArgumentException("Benchmark data configuration must not be null.");
 		
 		execArgConfig = OclBenchMapperCsvHandler.parseBenchmarkExecConfig(execConfigCsv);
-		dataArgConfig = OclBenchMapperCsvHandler.parseBenchmarkDataConfig(dataConfigCsv);
 	}
 
-	public ResponseMessage run(Benchmark binary, DataSetSize dsetSize, ExecutionDevice device, boolean monitorEnergy) {
+	public ResponseMessage run(Benchmark binary, String dsetSize, ExecutionDevice device, boolean monitorEnergy) {
 		String execPrefix = "";
 		if(monitorEnergy) {
 			try {
@@ -65,7 +60,7 @@ public class BenchmarkRunner {
 		return response;
 	}
 	
-	private ResponseMessage executeBenchmark(String execPrefix, Benchmark bin, DataSetSize dsetSize, ExecutionDevice device) {
+	private ResponseMessage executeBenchmark(String execPrefix, Benchmark bin, String dsetSize, ExecutionDevice device) {
 		StringBuilder cmdBld = new StringBuilder();
 		
 		// enter benchmark directory
@@ -76,7 +71,8 @@ public class BenchmarkRunner {
 		cmdBld.append(execPrefix);
 		
 		// get correct data file
-		String dataset = dataArgConfig.get(bin).get(dsetSize);
+		String dataset = BenchmarkData.getDataPath(bin, dsetSize);
+		assert dataset != null : "No data set specified for " + bin + " " + dsetSize;
 		
 		// execute command
 		String execCmd = execArgConfig.get(bin).get(device).execCmd;

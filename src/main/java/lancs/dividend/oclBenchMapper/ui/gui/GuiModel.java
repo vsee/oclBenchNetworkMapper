@@ -14,7 +14,6 @@ import javax.swing.JTextArea;
 
 import lancs.dividend.oclBenchMapper.benchmark.BenchExecutionResults;
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
-import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
 import lancs.dividend.oclBenchMapper.mapping.WorkloadMapper;
 import lancs.dividend.oclBenchMapper.server.ExecutionDevice;
@@ -41,7 +40,7 @@ public class GuiModel {
 	
 	protected JFrame frame;
 	protected JComboBox<Benchmark> benchcbox;
-	protected JComboBox<DataSetSize> datacbox;
+	protected JComboBox<String> datacbox;
 	protected XChartPanel<XYChart> eChartPanel;
 	protected XChartPanel<XYChart> pChartPanel;
 	
@@ -60,7 +59,7 @@ public class GuiModel {
 	protected ClientConnectionHandler cmdHandler;
 	protected WorkloadMapper wlMap;
 
-	protected Hashtable<String, Hashtable<Benchmark, Hashtable<DataSetSize, 
+	protected Hashtable<String, Hashtable<Benchmark, Hashtable<String, 
 					Hashtable<ExecutionDevice, BenchExecutionResults>>>> serverExecStats;
 	
 	protected long iteration;

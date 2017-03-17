@@ -7,7 +7,6 @@ import java.util.List;
 
 import lancs.dividend.oclBenchMapper.benchmark.BenchFullExecutionResults;
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
-import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
 import lancs.dividend.oclBenchMapper.client.ExecutionItem;
 import lancs.dividend.oclBenchMapper.energy.EnergyLog;
@@ -33,9 +32,8 @@ public class ClientNiConsoleUi implements UserInterface {
 	
 	private final List<CmdToDeviceMapping> execCmds;
 	private final List<BenchFullExecutionResults> results;
-	private final Hashtable<Benchmark, Hashtable<DataSetSize, 
-								Hashtable<ExecutionDevice, 
-									List<BenchFullExecutionResults>>>> bestMappingStats;
+	private final Hashtable<Benchmark, Hashtable<String, 
+								Hashtable<ExecutionDevice, List<BenchFullExecutionResults>>>> bestMappingStats;
 	
 	private final Path statOutputDir;
 	private boolean exitClient;
@@ -93,7 +91,7 @@ public class ClientNiConsoleUi implements UserInterface {
 		List<String[]> statsRecords = new ArrayList<>();
 		
 		for(Benchmark bin : bestMappingStats.keySet()) {
-			for(DataSetSize data : bestMappingStats.get(bin).keySet()) {
+			for(String data : bestMappingStats.get(bin).keySet()) {
 				
 				ExecutionDevice bestDevice = null;
 				double lowestAvgTradeoff = Double.MAX_VALUE;
@@ -118,11 +116,11 @@ public class ClientNiConsoleUi implements UserInterface {
 						lowestAvgTradeoff = avg_tradeoff;
 					}
 					
-					statsRecords.add(new String[] { architecture, bin.name(), data.name(), device.name(), 
+					statsRecords.add(new String[] { architecture, bin.name(), data, device.name(), 
 							Double.toString(avg_energyJ), Double.toString(avg_runtimeMS) });
 				}
 				
-				mappingRecords.add(new String[] { architecture, bin.name(), data.name(), bestDevice.name() });
+				mappingRecords.add(new String[] { architecture, bin.name(), data, bestDevice.name() });
 			}
 		}
 		

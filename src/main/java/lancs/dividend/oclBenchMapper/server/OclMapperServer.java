@@ -10,7 +10,6 @@ import java.util.Random;
 import lancs.dividend.oclBenchMapper.benchmark.BenchFullExecutionResults;
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
 import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner;
-import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.connection.ClientConnection;
 import lancs.dividend.oclBenchMapper.energy.EnergySimulationLog;
 import lancs.dividend.oclBenchMapper.message.CommandMessage;
@@ -41,15 +40,14 @@ public class OclMapperServer {
 	private final ClientConnection clientConnection;
 	
 	private final String archDescr;
-	private final Hashtable<Benchmark, Hashtable<DataSetSize, 
+	private final Hashtable<Benchmark, Hashtable<String, 
 					Hashtable<ExecutionDevice, List<BenchFullExecutionResults>>>> simulationData;
 	
-	public OclMapperServer(int port, Path benchExecConf, Path benchDataConf, String archDescr, Path simulationConf) throws IOException {
+	public OclMapperServer(int port, Path benchExecConf, String archDescr, Path simulationConf) throws IOException {
 		if(port <= 0) throw new IllegalArgumentException("Invalid server port: " + port);
 		if(benchExecConf == null) throw new IllegalArgumentException("Benchmark execution configuration must not be null.");
-		if(benchDataConf == null) throw new IllegalArgumentException("Benchmark data configuration must not be null.");
 		
-		benchRunner = new BenchmarkRunner(benchExecConf, benchDataConf);
+		benchRunner = new BenchmarkRunner(benchExecConf);
 		clientConnection = new ClientConnection(port);
 		
 		this.archDescr = archDescr;
