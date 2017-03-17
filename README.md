@@ -15,14 +15,26 @@ This tool provides client and server side to distribute the execution of an Open
 - It measures execution statistics and returns them.
 
 ### Available Benchmarks
-In this version the available benchmarks are restricted to a [Rodinia](http://www.cs.virginia.edu/~skadron/wiki/rodinia/index.php/Rodinia:Accelerating_Compute-Intensive_Applications_with_Accelerators) *Kmeans* and *Lud* kernels. They are able to be executed with a *Small*, a *Medium* and a *Large* dataset. Additional benchmarks can be configured using csv configuration files (see [Configuring Benchmarks](#configuring-benchmarks)).
+In this version the available benchmarks are restricted to [Rodinia](http://www.cs.virginia.edu/~skadron/wiki/rodinia/index.php/Rodinia:Accelerating_Compute-Intensive_Applications_with_Accelerators) *Kmeans* and *Lud* benchmarks. Different data set sizes are specified for each benchmark. Additional benchmarks and dataset sizes can be configured using csv configuration files (see [Configuring Benchmarks](#configuring-benchmarks)).
 
 ### Available Workload Mapper
-- **First come first served mapper**: maps the selected benchmark to the default device on the first available server.
-- **Duplicate mapper**: maps the entire selected benchmark to the default device on each available server.
-- **Predictive mapper**: maps the selected benchmark to each available server using an execution device predicted as optimal in terms of energy consumption and performance. Code features of the benchmark's OpenCL kernel(s) are passed to a model which returns an optimal GPU or CPU mapping. The model is trained for a particular server architecture. In the current version this architecture is assumed to be a *dividend* machine. Also, for performance reasons predictions were made ahead of execution time and saved in a [configuration file](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/dividend_device_predictions.csv) which is used at runtime by the client.
 
 The mapper to be used can be selected on client side with the ```-m``` or ```-mapperType``` argument.
+
+#### First come first served mapper (```-m FCFS```)
+aps the selected benchmark to the default device on the first available server.
+
+#### Duplicate mapper (```-m DUPLICATE```)
+Maps the entire selected benchmark to the default device on each available server.
+
+#### Predictive mapper (```-m PREDICTIVE```)
+Maps the selected benchmark to each available server using an execution device predicted as best fit in terms of energy consumption and performance. 
+
+Code features of the benchmark's OpenCL kernel(s) are passed to a model which returns an optimal GPU or CPU mapping for the kernel. The model is trained for a particular server architecture which can be specified when starting the server. Upon connection with the client, the server transfers an architecture id which allows the client to pick a corresponding workload to execution device prediction model. 
+
+For performance reasons predictions are made ahead of execution time and saved in a [configuration file](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/serverConf/dividend_device_predictions.csv) which is used at runtime by the client.
+
+The file with ahead of time predictions can be specified using the ```--offlinePredictions``` command line argument upon client startup.
 
 ---
 
@@ -31,7 +43,8 @@ The mapper to be used can be selected on client side with the ```-m``` or ```-ma
 ```
 $ java -jar ./build/libs/oclBenchMapper-x.x.x.jar client
 ```
-Starts the client with default configuration trying to connect to a single server at `localhost:9090`. 
+Starts the client with default configuration trying to connect to a single server at `localhost:9090`, using the 
+```FCFS``` workload mapper and a console based user interface.
 
 Multiple server addresses can be configured using the `-a` attribute. For example:
 ```
@@ -46,9 +59,15 @@ $ java -jar ./build/libs/oclBenchMapper-x.x.x.jar client -h
 
 #### Server
 ```
-$ java -jar ./build/libs/oclBenchMapper-x.x.x.jar server
+$ java -jar ./build/libs/oclBenchMapper-x.x.x.jar server -A dividend
 ```
-Starts the server with default configurations (see [Configuring Benchmarks](#configuring-benchmarks) for information on custom benchmark configurations).
+Starts the server with default benchmark configurations (see [Configuring Benchmarks](#configuring-benchmarks) for information on custom benchmark configurations).
+
+It is listening on default port 9090 for client connections which can be specified otherwise using the ```-p``` argument.
+
+```-A dividend``` specifies the server architecture and the given id is passed on to the client upon connection.
+
+Server simulation is available using the ```--simulation``` command and specifying a file with simulation data (see [Non Interactive Client](#non-interactive-client) on how to generate simulation data for a specific server architecture).
 
 To see additional help, execute:
 ```
@@ -61,7 +80,7 @@ $ java -jar ./build/libs/oclBenchMapper-x.x.x.jar server -h
 
 The client provides a graphical user interface which can be started using the ```--gui``` flag. (I am not a designer, keep that in mind!)
 
-![](https://cloud.githubusercontent.com/assets/17176876/23794284/4852b6d4-0587-11e7-9ca6-c5c2ede42aea.png)
+![](https://cloud.githubusercontent.com/assets/17176876/24053124/de6ae1d4-0b2f-11e7-94d1-e387b42e3a7b.png)
 
 The displayed GUI has control elements in the upper part and two graphs displaying energy consumption (left) and execution performance (right). 
 * Two combo boxes allow the selection of a benchmark and a corresponding workload. 
