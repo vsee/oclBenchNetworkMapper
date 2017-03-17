@@ -78,13 +78,16 @@ public class BenchmarkRunner {
 		String execCmd = execArgConfig.get(bin).get(device).execCmd;
 		cmdBld.append(execCmd).append(" ").append(dataset);
 		
+	    long startTimeMS = System.currentTimeMillis();
 		String stdout = ShellCmdExecutor.executeCmd(cmdBld.toString(), true);
+		long durationMS = System.currentTimeMillis() - startTimeMS;
+		
 		System.out.println(stdout);
 		
 		if(stdout.contains("ERROR"))
 			return new ErrorResponseMessage("Benchmark execution failed.\n" + stdout);
 		
-		return new BenchStatsResponseMessage(stdout);
+		return new BenchStatsResponseMessage(stdout, durationMS);
 	}
 
 }

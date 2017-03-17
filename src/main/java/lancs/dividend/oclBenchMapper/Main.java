@@ -33,6 +33,8 @@ import net.sourceforge.argparse4j.inf.Subparsers;
 
 public class Main {
 
+	// TODO rename energy and runtime to kernelEnergy and kernelRuntime where applicable
+	
 	private enum ExecutionRole { CLIENT, SERVER, NICLIENT };
 	
 	private static final int DEFAULT_PORT = 9090;

@@ -175,7 +175,7 @@ public class ClientNiConsoleUi implements UserInterface {
 							EnergyLog elog = br.getEnergyLog();
 							BenchFullExecutionResults execRes = 
 									new BenchFullExecutionResults(bcmd.getBinaryName(), bcmd.getDataSetSize(), 
-											item.getExecDevice(), elog.getEnergyJ(), elog.getRuntimeMS(), br.getStdOut());
+											item.getExecDevice(), elog.getEnergyJ(), elog.getRuntimeMS(), br.getStdOut(), br.getBenchmarkExecutionTimeMS());
 							
 							results.add(execRes);
 							

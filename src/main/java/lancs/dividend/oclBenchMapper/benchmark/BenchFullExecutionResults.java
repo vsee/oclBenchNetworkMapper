@@ -10,12 +10,15 @@ public class BenchFullExecutionResults extends BenchExecutionResults {
 	public final String dset;
 	public final ExecutionDevice dev;
 	public final String stdOut;
+	public final long benchmarkRuntimeMS;
 	
-	public BenchFullExecutionResults(Benchmark bin, String dset, ExecutionDevice dev, double e, double r, String stdOut) {
+	public BenchFullExecutionResults(Benchmark bin, String dset, ExecutionDevice dev, 
+			double e, double r, String stdOut, long benchRuntimeMS) {
 		super(e, r);
 		this.stdOut = stdOut;
 		this.bin = bin;
 		this.dset = dset;
 		this.dev = dev;
+		benchmarkRuntimeMS = benchRuntimeMS;
 	}
 }
