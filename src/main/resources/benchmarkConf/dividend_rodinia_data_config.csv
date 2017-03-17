@@ -1,7 +1,11 @@
 Benchmark,DataSetSize,DataArgs
 KMEANS,100,../../data/kmeans/100
+KMEANS,256,../../data/kmeans/256
+KMEANS,512,../../data/kmeans/512
+KMEANS,1024,../../data/kmeans/1024
 KMEANS,102400,../../data/kmeans/102400
 KMEANS,204800,../../data/kmeans/204800
 LUD,64,../../../data/lud/64.dat
+LUD,256,../../../data/lud/256.dat
 LUD,512,../../../data/lud/512.dat
 LUD,2048,../../../data/lud/2048.dat
