@@ -1,7 +1,11 @@
 Architecture,Benchmark,DataSetSize,ExecutionDevice
-dividend,KMEANS,MEDIUM,GPU
-dividend,KMEANS,LARGE,GPU
-dividend,KMEANS,SMALL,CPU
-dividend,LUD,MEDIUM,GPU
-dividend,LUD,SMALL,GPU
-dividend,LUD,LARGE,GPU
+dividend,KMEANS,512,CPU
+dividend,KMEANS,204800,GPU
+dividend,KMEANS,102400,GPU
+dividend,KMEANS,1024,GPU
+dividend,KMEANS,256,CPU
+dividend,KMEANS,100,CPU
+dividend,LUD,512,GPU
+dividend,LUD,64,GPU
+dividend,LUD,2048,GPU
+dividend,LUD,256,GPU

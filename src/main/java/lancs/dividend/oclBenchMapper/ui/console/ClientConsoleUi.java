@@ -1,13 +1,14 @@
 package lancs.dividend.oclBenchMapper.ui.console;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Scanner;
 import java.util.StringJoiner;
 
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
-import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
+import lancs.dividend.oclBenchMapper.benchmark.BenchmarkData;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
 import lancs.dividend.oclBenchMapper.client.ExecutionItem;
 import lancs.dividend.oclBenchMapper.mapping.CmdToDeviceMapping;
@@ -36,8 +37,7 @@ public class ClientConsoleUi implements UserInterface {
 	private final String BENCHMARK_TOP_MENU;
 	
 	private final String MENU_UP = "back";
-	private final String DSET_SIZE_LIST;
-	private final String BENCHMARK_DSET_SIZE_MENU;
+	private final String BENCHMARK_DSET_SIZE_MENU_FORMAT;
 	
 	private final Scanner cmdIn;
 	private boolean exitClient;
@@ -54,11 +54,8 @@ public class ClientConsoleUi implements UserInterface {
 		"\n1. Enter benchmark name from selection: " + BENCHMARK_LIST + "\n" +
 		"2. Enter '" + EXIT_CMD + "' to shut down client.\n>> ";
 
-		join = new StringJoiner(",","{","}");
-		for (DataSetSize d : DataSetSize.values()) join.add(d.name());
-		DSET_SIZE_LIST = join.toString();
-		BENCHMARK_DSET_SIZE_MENU = 
-		"\n1. Enter dataset size from selection: " + DSET_SIZE_LIST + "\n" +
+		BENCHMARK_DSET_SIZE_MENU_FORMAT = 
+		"\n1. Enter dataset size from selection: %s\n" +
 		"2. Enter '" + MENU_UP + "' to return to benchmark selection.\n>> ";
 	}
 	
@@ -109,7 +106,7 @@ public class ClientConsoleUi implements UserInterface {
 				return new ExitCmd();
 			}
 			else if((rbin = isBenchmark(line.trim())) != null) {
-				DataSetSize dsetSize = displayDataSetSizeMenu();
+				String dsetSize = displayDataSetSizeMenu(rbin);
 				if(dsetSize != null) {
 					System.out.println("Benchmark: " + rbin + " selected with a " + dsetSize + 
 							" data set.\nRunning on server ...");
@@ -122,29 +119,22 @@ public class ClientConsoleUi implements UserInterface {
 		
 	}
 	
-	private DataSetSize displayDataSetSizeMenu() {
+	private String displayDataSetSizeMenu(Benchmark rbin) {
 		while(true) {
-			System.out.print(BENCHMARK_DSET_SIZE_MENU);
+			String[] dsetSizeList = BenchmarkData.getAvailableDSetSizes(rbin);
+			assert dsetSizeList != null && dsetSizeList.length > 0 : "No data set sizes assigned to " + rbin;
+			System.out.format(BENCHMARK_DSET_SIZE_MENU_FORMAT, Arrays.toString(dsetSizeList));
 			String line = cmdIn.nextLine();
 			
-			DataSetSize dsetSize = null;
 			if(line.trim().equals(MENU_UP)) {
 				System.out.println();
 				return null;
 			}
-			else if((dsetSize = isDsetSize(line.trim())) != null) {
-				return dsetSize;
+			else if(BenchmarkData.isValidDataSetSize(rbin,line.trim())) {
+				return line.trim();
 			} else {
 				System.err.println("ERROR: Invalid input.");
 			}
-		}
-	}
-
-	private DataSetSize isDsetSize(String dsetSize) {
-		try {
-			return DataSetSize.valueOf(dsetSize);
-		} catch(IllegalArgumentException e) {
-			return null;
 		}
 	}
 

@@ -3,7 +3,6 @@ package lancs.dividend.oclBenchMapper.mapping;
 import java.util.Hashtable;
 
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
-import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
 import lancs.dividend.oclBenchMapper.server.ExecutionDevice;
 import lancs.dividend.oclBenchMapper.server.OclMapperServer;
 import lancs.dividend.oclBenchMapper.server.ServerDescription;
@@ -29,7 +28,7 @@ import lancs.dividend.oclBenchMapper.utils.OclBenchMapperCsvHandler;
  */
 public class PredictiveMapper implements WorkloadMapper {
 	
-	private final Hashtable<String, Hashtable<Benchmark, Hashtable<DataSetSize, ExecutionDevice>>> preDeviceMapping;
+	private final Hashtable<String, Hashtable<Benchmark, Hashtable<String, ExecutionDevice>>> preDeviceMapping;
 	
 	public PredictiveMapper(PredictiveMapperConfig config) {
 		preDeviceMapping = OclBenchMapperCsvHandler.parsePrecomputedMapping(config.mappingPrecompute);
@@ -64,10 +63,10 @@ public class PredictiveMapper implements WorkloadMapper {
 
 	private ExecutionDevice getExecutionDevice(RunBenchCmd originalCommand, ServerDescription descr) throws WorkloadDistributionException {
 
-		Hashtable<Benchmark, Hashtable<DataSetSize, ExecutionDevice>> benchmarkMap = preDeviceMapping.get(descr.architecture);
+		Hashtable<Benchmark, Hashtable<String, ExecutionDevice>> benchmarkMap = preDeviceMapping.get(descr.architecture);
 		if(benchmarkMap == null) throw new WorkloadDistributionException("No mapping available for server architecture: " + descr.architecture);
 		
-		Hashtable<DataSetSize, ExecutionDevice> dataMap = benchmarkMap.get(originalCommand.getBinaryName());
+		Hashtable<String, ExecutionDevice> dataMap = benchmarkMap.get(originalCommand.getBinaryName());
 		if(dataMap == null) throw new WorkloadDistributionException("No data set size mappings found for benchmark: " + originalCommand.getBinaryName());
 		
 		ExecutionDevice device = dataMap.get(originalCommand.getDataSetSize());

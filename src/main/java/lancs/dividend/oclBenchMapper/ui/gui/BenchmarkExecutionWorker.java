@@ -12,7 +12,7 @@ import javax.swing.SwingWorker;
 
 import lancs.dividend.oclBenchMapper.benchmark.BenchExecutionResults;
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
-import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
+import lancs.dividend.oclBenchMapper.benchmark.BenchmarkData;
 import lancs.dividend.oclBenchMapper.client.ExecutionItem;
 import lancs.dividend.oclBenchMapper.mapping.CmdToDeviceMapping;
 import lancs.dividend.oclBenchMapper.mapping.WorkloadDistributionException;
@@ -79,9 +79,13 @@ public class BenchmarkExecutionWorker extends SwingWorker<Integer, List<GuiUpdat
 		Random rnd = new Random();
 		
 		Benchmark rbin = (Benchmark) gui.benchcbox.getSelectedItem();
-		DataSetSize dsetSize;
-		if(!randomDataSize) dsetSize = (DataSetSize) gui.datacbox.getSelectedItem();
-		else dsetSize = DataSetSize.values()[rnd.nextInt(DataSetSize.values().length)];
+		String dsetSize;
+		if(!randomDataSize) dsetSize = (String) gui.datacbox.getSelectedItem();
+		else {
+			String[] dsetSizeList = BenchmarkData.getAvailableDSetSizes(rbin);
+			assert dsetSizeList != null && dsetSizeList.length > 0 : "No data set sizes assigned to " + rbin;
+			dsetSize = dsetSizeList[rnd.nextInt(dsetSizeList.length)];
+		}
 			
 		return new RunBenchCmd(rbin, dsetSize);
 	}

@@ -7,6 +7,8 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
@@ -25,7 +27,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
-import lancs.dividend.oclBenchMapper.benchmark.BenchmarkRunner.DataSetSize;
+import lancs.dividend.oclBenchMapper.benchmark.BenchmarkData;
 import lancs.dividend.oclBenchMapper.client.ClientConnectionHandler;
 import lancs.dividend.oclBenchMapper.mapping.WorkloadMapper;
 import lancs.dividend.oclBenchMapper.server.ExecutionDevice;
@@ -113,11 +115,11 @@ public class ClientGui implements UserInterface {
 		gbc_cpanel.gridy = 0;
 		gui.benchcbox = new JComboBox<>();
 		gui.benchcbox.setModel(new DefaultComboBoxModel<>(Benchmark.values()));
+		gui.benchcbox.addItemListener(new BenchmarkItemChangeListener());
 		controlPanel.add(gui.benchcbox, gbc_cpanel);
 		
 		gbc_cpanel.gridy = 1;
 		gui.datacbox = new JComboBox<>();
-		gui.datacbox.setModel(new DefaultComboBoxModel<>(DataSetSize.values()));
 		controlPanel.add(gui.datacbox, gbc_cpanel);
 		
 		gbc_cpanel.gridy = 2;
@@ -157,7 +159,7 @@ public class ClientGui implements UserInterface {
 		gbc_cpanel.insets = new Insets(0, 10, 0, 0);
 		controlPanel.add(scrollPane, gbc_cpanel);
 	}
-
+	
 	private void initChartPanel() {
 		JPanel wlPanel = new JPanel();
 		wlPanel.setBorder(new TitledBorder(null, "Execution Statistics", TitledBorder.LEADING, TitledBorder.TOP, null, null));
@@ -229,6 +231,18 @@ public class ClientGui implements UserInterface {
 		}
 	}
 	
+	private class BenchmarkItemChangeListener implements ItemListener{
+	    @Override
+	    public void itemStateChanged(ItemEvent event) {
+	       if (event.getStateChange() == ItemEvent.SELECTED) {
+	    	  assert event.getItem() instanceof Benchmark : "Unexpected item change event.";
+	       
+	          Benchmark rbin = (Benchmark) event.getItem();
+	          setDataSetSizeModel(rbin);
+	       }
+	    }       
+	}
+	
 	@Override
 	public void run(ClientConnectionHandler cmdHandler, WorkloadMapper mapper) {
 		if(cmdHandler == null)
@@ -237,6 +251,9 @@ public class ClientGui implements UserInterface {
 		gui.cmdHandler = cmdHandler;
 		gui.wlMap = mapper;
 		initialiseChartSeries();
+		
+		Benchmark rbin = (Benchmark) gui.benchcbox.getSelectedItem();
+		setDataSetSizeModel(rbin);
 		
 		gui.resTable.setModel(new ExecutionResultsTableModel(gui.series));
 		
@@ -251,6 +268,12 @@ public class ClientGui implements UserInterface {
 				}
 			}
 		});
+	}
+
+	private void setDataSetSizeModel(Benchmark rbin) {
+		String[] dsetSizeList = BenchmarkData.getAvailableDSetSizes(rbin);
+		assert dsetSizeList != null && dsetSizeList.length > 0 : "No data set sizes assigned to " + rbin;
+		gui.datacbox.setModel(new DefaultComboBoxModel<>(dsetSizeList));
 	}
 	
 	private void printServerInfo() {

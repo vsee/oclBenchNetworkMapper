@@ -6,9 +6,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Hashtable;
 import java.util.List;
+import java.util.TreeMap;
 
 import lancs.dividend.oclBenchMapper.benchmark.Benchmark;
+import lancs.dividend.oclBenchMapper.benchmark.BenchmarkData;
 import lancs.dividend.oclBenchMapper.client.OclMapperClient;
 import lancs.dividend.oclBenchMapper.mapping.MapperFactory;
 import lancs.dividend.oclBenchMapper.mapping.MapperFactory.MapperType;
@@ -49,6 +52,9 @@ public class Main {
 		parser.addArgument("--benchmarkConfig")
 	    	.type(Arguments.fileType().verifyCanRead().verifyIsFile())
 			.help("Configuration file for available benchmarks.").setDefault(DEFAULT_BENCH_CONFIG);
+		parser.addArgument("--benchmarkDataConfig")
+	    	.type(Arguments.fileType().verifyCanRead().verifyIsFile())
+			.help("Configuration file for the benchmark's available data sets.").setDefault(DEFAULT_BENCH_ARGS_CONFIG);
 		
 	    Subparsers subparsers = parser.addSubparsers().help("Execution role of oclBenchMapper instance.");
 
@@ -97,9 +103,6 @@ public class Main {
 	    serverParser.addArgument("--benchExecConfig")
 	    	.type(Arguments.fileType().verifyCanRead().verifyIsFile())
 			.help("Configuration file for benchmark execution arguments.").setDefault(DEFAULT_BENCH_EXEC_CONFIG);
-	    serverParser.addArgument("--benchDataConfig")
-	    	.type(Arguments.fileType().verifyCanRead().verifyIsFile())
-			.help("Configuration file for benchmark data arguments.").setDefault(DEFAULT_BENCH_ARGS_CONFIG);
 	    serverParser.addArgument("--simulation")
 	    	.type(Arguments.fileType().verifyCanRead().verifyIsFile())
 			.help("Run a server simulation based on results from hardware measurements.");
@@ -137,8 +140,13 @@ public class Main {
 	    
 		Namespace ns = parseArguments(args);
 		
-		List<String> benchList = OclBenchMapperCsvHandler.parseBenchmarkConfig(Paths.get(ns.getString("benchmarkConfig")));
+		List<String> benchList = 
+				OclBenchMapperCsvHandler.parseBenchmarkConfig(Paths.get(ns.getString("benchmarkConfig")));
 		Benchmark.initialise(benchList);
+		
+		Hashtable<Benchmark, TreeMap<String, String>> dataArgConfig = 
+				OclBenchMapperCsvHandler.parseBenchmarkDataConfig(Paths.get(ns.getString("benchmarkDataConfig")));
+		BenchmarkData.initialise(dataArgConfig);
 		
 		ExecutionRole role = ns.get("role");
 		switch(role) {
@@ -171,11 +179,9 @@ public class Main {
 				try {
 					int port = ns.getInt("port");
 					Path benchExecConf = Paths.get(ns.getString("benchExecConfig"));
-					Path benchDataConf = Paths.get(ns.getString("benchDataConfig"));
 					Path simulationConf = ns.getString("simulation") != null ? Paths.get(ns.getString("simulation")) : null;
 						
-					new OclMapperServer(port, benchExecConf, benchDataConf, 
-							ns.get("architecture"), simulationConf).runServer();
+					new OclMapperServer(port, benchExecConf, ns.get("architecture"), simulationConf).runServer();
 				} catch (IOException e) {
 					throw new UncheckedIOException("ERROR: Starting server failed: ", e);
 				}
