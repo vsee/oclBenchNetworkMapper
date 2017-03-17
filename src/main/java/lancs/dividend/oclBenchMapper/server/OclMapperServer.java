@@ -160,12 +160,12 @@ public class OclMapperServer {
 				simulationData.get(cmd.getBinaryName()).get(cmd.getDataSetSize()).get(device);
 		BenchFullExecutionResults res = execResults.get(rnd.nextInt(execResults.size()));
 		
-		result = new BenchStatsResponseMessage(res.stdOut);
+		result = new BenchStatsResponseMessage(res.stdOut, res.benchmarkRuntimeMS);
 		((BenchStatsResponseMessage) result).setEnergyLog(
 				new EnergySimulationLog(DUMMY_ENERGY_LOG, res.energyJ, res.runtimeMS));
 
 		try {
-			Thread.sleep((long) res.runtimeMS);
+			Thread.sleep((long) res.benchmarkRuntimeMS);
 		} catch (InterruptedException e) {
 			System.err.println("Benchmark simulation interrupted: " + e.getMessage());
 			e.printStackTrace();

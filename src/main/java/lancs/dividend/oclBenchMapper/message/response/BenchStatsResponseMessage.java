@@ -8,17 +8,20 @@ public class BenchStatsResponseMessage extends ResponseMessage {
 	
 	private final String executionStdOut;
 	private EnergyLog elog;
+	private final long bechRuntimeMS;
 	
-	public BenchStatsResponseMessage(String stdOut) {
+	public BenchStatsResponseMessage(String stdOut, long benchmarkRuntimeMS) {
 		super(ResponseType.BENCHSTATS);
 		
 		if(stdOut == null) 
 			throw new IllegalArgumentException("Given standart output of benchmark execution must not be null.");
 		
 		executionStdOut = stdOut;
+		bechRuntimeMS = benchmarkRuntimeMS;
 	}
 	
 	public String getStdOut() { return executionStdOut; }
+	public long getBenchmarkExecutionTimeMS() { return bechRuntimeMS; }
 	
 	public boolean hasEnergyLog() { return elog != null; }
 	
