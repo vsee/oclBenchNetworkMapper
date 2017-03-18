@@ -78,35 +78,36 @@ $ java -jar ./build/libs/oclBenchMapper-x.x.x.jar server -h
 
 ### Client GUI
 
-The client provides a graphical user interface which can be started using the ```--gui``` flag. (I am not a designer, keep that in mind!)
+The client provides a graphical user interface which can be started using the ```--gui``` flag.
 
 ![](https://cloud.githubusercontent.com/assets/17176876/24053124/de6ae1d4-0b2f-11e7-94d1-e387b42e3a7b.png)
 
-The displayed GUI has control elements in the upper part and two graphs displaying energy consumption (left) and execution performance (right). 
+The displayed GUI has control elements in the upper left, a text message output in the upper center, an output for statistic totals in the upooer right and two graphs displaying energy consumption (left) and execution time (right) of executed OpenCL kernels. 
 * Two combo boxes allow the selection of a benchmark and a corresponding workload. 
 * Pressing the ```Run``` button executes the selected benchmark with the given workload on the available servers using the specified workload mapper.
 * Pressing the ```Start Automatic``` button initiates an automatic mode. In this mode the client automatically executes the selected benchmark over and over on the available servers. The dataset size is selected randomly for each execution.
 * Execution results of all servers are combined and displayed in the two charts.
 * The ```mapper``` series shows execution results using the device mapping made by the client.
 * Additionally, a graph is displayed for each possible combination of CPU or GPU depending on available servers. This allows comparing mapper results to alternative combinations. For example, the mapper executes a workload on the GPU of server 1 and the CPU of server 2. Alternative mappings for all combinations of server 1 and 2 as well as GPU or CPU are displayed for comparisson.
-* Alternative mapping results are not actually executed but taken from a [precomputation file](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/dividend_device_executionStats.csv).
-* Each chart shows energy and performance results normalised to the best execution device (CPU or GPU) for the executed benchmark and workload combination. Normalisation uses the same precomputed execution statistics like alternative mappings.
+* A checkbox is provided to enable or disable the actual execution of alternative mappings. If enabled, alternative mappings are executed together with the mappers choice for each benchmark execution. If disabled, execution statistics of alternative mappings are taken from a [precomputation file](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/serverConf/dividend_device_executionStats.csv) and only the mappers choice is executed on the server. By default this tick box is disabled to allow a fluent demo.
+* Each chart shows energy and performance results normalised to the best execution device (CPU or GPU) for the executed benchmark and workload combination.
 
 ### Non Interactive Client
 
 The client can be executed in ```non-interactive-client``` mode. 
 * In this mode no user interface is provided. The client executes a set of commands provided via [input file](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/cmdInputDummy.csv).
 * The client can connect to only a single server in this mode.
-* Execution statistics are saved in [precomputation file](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/dividend_device_executionStats.csv) format.
+* Execution statistics are saved in [precomputation file](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/serverConf/dividend_device_executionStats.csv) format which is used in the gui to display alternative mappings.
+* Also, a comprehensive set of execution statistics is saved as binary file and can be used for server simulation. By executing a server with the flag ```--simulation src/main/resources/serverConf/dividend_simulation_stats.dat```
 * Additionally an optimal execution device to benchmark mapping is generated and saved.
 
 ### Configuring Benchmarks
 
 New benchmarks can be configured to be used by the system:
 
-1. Add a name for the new benchmark to the [benchmark configuration](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/dividend_benchmark_config.csv) file. This file needs to be available to both client and server.
-2. Add necessary execution commands to the [benchmark execution configuration](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/dividend_rodinia_bench_config.csv). The ```BinDir``` column needs the location of the benchmarks directory relative to the server's working directory. The ```ExecCmd``` column needs the actual command to execute the benchmark minus the name of the data file.
-3. Add data set sizes to the [benchmark data configuration](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/dividend_rodinia_data_config.csv). The ```DataArgs``` column expects a data file location relative to the corresponding benchmark's working directory.
+1. Add a name for the new benchmark to the [benchmark configuration](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/benchmarkConf/dividend_benchmark_config.csv) file. This file needs to be available to both client and server.
+2. Add necessary execution commands to the [benchmark execution configuration](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/benchmarkConf/dividend_rodinia_bench_config.csv). The ```BinDir``` column needs the location of the benchmarks directory relative to the server's working directory. The ```ExecCmd``` column needs the actual command to execute the benchmark minus the name of the data file.
+3. Add data set sizes to the [benchmark data configuration](https://github.com/vsee/oclBenchNetworkMapper/blob/master/src/main/resources/benchmarkConf/dividend_rodinia_data_config.csv). The ```DataArgs``` column expects a data file location relative to the corresponding benchmark's working directory. This file also needs to be available to both client and server.
 4. To properly use the client's GUI, execution statistics and execution device predictions need to be generated and added to the corresponding configurations (see [Non Interactive Client](#non-interactive-client)).
 
 ---
